@@ -81,6 +81,7 @@ def reason(path):
         "garden/notes/feature-ledger.yaml",
         "garden/notes/feature-ledger.md",
         "garden/FLAGS.md",
+        "garden/notes/dormant-ideas.md",
     }:
         return (
             "FL-210, Linux neighbour walk records and F217's dated resolution; no other behavior."
@@ -151,6 +152,7 @@ def main():
                 "garden/reports/306-M7LF.md",
                 "garden/notes/feature-ledger.yaml",
                 "garden/notes/feature-ledger.md",
+                "garden/notes/dormant-ideas.md",
             ):
                 data["unmapped"][path] = reason(path)
         (folder / "ledger-report.json").write_text(json.dumps(data, indent=2) + "\n")

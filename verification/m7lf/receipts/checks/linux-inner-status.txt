@@ -1,0 +1,7 @@
+[stdout]
+NSpid:	3
+CapEff:	0000000000000000
+NoNewPrivs:	1
+Seccomp:	2
+Seccomp_filters:	1
+

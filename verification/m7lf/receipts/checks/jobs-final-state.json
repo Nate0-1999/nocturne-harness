@@ -1,0 +1,1173 @@
+{
+  "jobs": [
+    {
+      "job_id": "01M75X2XDT6NFT5K6A91SPVTPZ",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial1-181422",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:f1e7abc6aee3bcb92d4903bf79b05b23b65738796a7d0f08d62bd9eca9324a14"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial1-181422",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial1.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:14:24.494845+00:00"
+    },
+    {
+      "job_id": "01M75X3TQ288S49F6FCJYWGF1G",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial2-181452",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:2f24d6f1505acb0711dda127921f752271ec279e4ce36d04db1d0f0f65958998"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial2-181452",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial2.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:14:54.466733+00:00"
+    },
+    {
+      "job_id": "01M75X5X6F3GYS55D0BRZB3437",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial3-181600",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:5ddcb5b944406a11233bef4de3c7511e863db96ad9a6102a5227bc6b1d59b892"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial3-181600",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial3.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:16:02.538624+00:00"
+    },
+    {
+      "job_id": "01M75XDY63P7R4ACCA7GMSMZ8A",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182024",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:99751d0a0c12c7aa705af1ffe1b9952e2ab05889ec2e9523063698e51dcf5fb5"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182024",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:20:25.698450+00:00"
+    },
+    {
+      "job_id": "01M75XGCK6DNHGMJM9FSHY19RR",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182144",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:567d9360896723425c694b5642b395598a619be609317ee0fb47519a7ab24c46"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182144",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, you must use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:21:45.988122+00:00"
+    },
+    {
+      "job_id": "01M75XJVAFNPMGGPR4WPXS0WBS",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-1-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:854a8c4e424806b0ed80ccae1947262e2c2c53b38415a9de120a5eeab5be76e8"
+        },
+        "folder": "/root/m7lf-walk/grants/run-1-plain",
+        "prompt": "Run bash `curl -s http://127.0.0.1:8949/notice`. Write exactly its returned text into notice.md using write.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:23:06.585836+00:00"
+    },
+    {
+      "job_id": "01M75XJXBN3AD2H9JPY1QC35KQ",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-2-182307",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:6e97630928d31d036f4c259b58b02ce3cad7801c66915449dd3eda56442cbb38"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-2-182307",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, you must use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-2.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:23:08.691770+00:00"
+    },
+    {
+      "job_id": "01M75XJZVQ4K2WSD6FDQR8FWRB",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-1-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:de6617e50f8baf571217f6d3b12129c8468ea066d7cee9989eb1c281774c7bd8"
+        },
+        "folder": "/root/m7lf-walk/grants/run-1-declared",
+        "prompt": "Run bash `curl -s http://127.0.0.1:8949/notice`. Write exactly its returned text into notice.md using write.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:23:11.232070+00:00"
+    },
+    {
+      "job_id": "01M75XN9RAZA2A2B0R9CENFXZR",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-g1-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:a498394667c11549b8553b86591460dfc33fb519c5642e572ed69095a53d59d1"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g1-plain",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:24:26.900433+00:00"
+    },
+    {
+      "job_id": "01M75XNBRJYFM7GM6G59PM7XPG",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-3-182427",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:082896b0bb33d55efabe55a6e767bbc3692e963669ca64e6314ee95df4c1d514"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-3-182427",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-3.txt"
+      },
+      "revision": 2,
+      "enabled": false,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:24:28.975688+00:00"
+    },
+    {
+      "job_id": "01M75XNE5V7KPXDE81PWTM5S11",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-g1-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:ffaf6d74c9f2d2e3f967e7cc326bc04c263177d2f150ac62ae8f4e3a93f12945"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g1-declared",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:24:31.429739+00:00"
+    },
+    {
+      "job_id": "01M75XPWCRPKJFY99MS0S7RH7W",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-g2-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:935e0224d780e38e3abe1f57557a0ce5cbbdc32ffb544773207d9c33fe467624"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g2-plain",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:25:18.755089+00:00"
+    },
+    {
+      "job_id": "01M75XQ01B3E44RXP32N9NZYV4",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-g2-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:e598d76259425f15b98325653187c5c5db7290dc1220e024ca3928acd174cc00"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g2-declared",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:25:22.486388+00:00"
+    },
+    {
+      "job_id": "01M75XR3DP0DWS6RMG0ETWR8KP",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-g3-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:8c7acb97ebcd202611b8096811600c8c2c76b4236f056e6a4fa41bb10f7e50ff"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g3-plain",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:25:58.719329+00:00"
+    },
+    {
+      "job_id": "01M75XR79DM6BYC60JEMHJCR5R",
+      "principal_id": "nocturne-verification-cfa46bcb-6eea-41e0-b1e6-ac367db67037",
+      "machine_id": "nocturne-cc5511d9-9816-4a11-90c8-4ab538d57dd1",
+      "definition": {
+        "cron": null,
+        "name": "run-g3-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:4a4d76860c91dc9f22e2bc6a6e15b39f5c478d81e98481cbd2e1f7956787fe21"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g3-declared",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "revision": 1,
+      "enabled": true,
+      "next_run_at": null,
+      "trigger_cursor": null,
+      "created_at": "2026-11-11T18:26:02.680747+00:00"
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "01M75X452061MK1V7NM9SYFEPC",
+      "job_id": "01M75X3TQ288S49F6FCJYWGF1G",
+      "thread_id": "41ee1b29-1b0b-40de-b524-db74a4f37a98",
+      "trigger_key": "2026-11-11T18:15:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial2-181452",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:2f24d6f1505acb0711dda127921f752271ec279e4ce36d04db1d0f0f65958998"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial2-181452",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial2.txt"
+      },
+      "state": "failed",
+      "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]",
+      "started_at": "2026-11-11T18:15:05.027625+00:00",
+      "finished_at": "2026-11-11T18:15:15.720866+00:00",
+      "spend_usd": "0.004014800000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75X63GSJTJK58KWD0RD2KW9",
+      "job_id": "01M75X5X6F3GYS55D0BRZB3437",
+      "thread_id": "26cf9c5f-289b-4c24-a64e-27c46490343e",
+      "trigger_key": "01M75X63GSJTJK58KWD0RD2KW9",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial3-181600",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:5ddcb5b944406a11233bef4de3c7511e863db96ad9a6102a5227bc6b1d59b892"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial3-181600",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:16:08.987732+00:00",
+      "finished_at": "2026-11-11T18:16:19.267953+00:00",
+      "spend_usd": "0.004813600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75X7T6JPXGNM756BXKXMAHX",
+      "job_id": "01M75X5X6F3GYS55D0BRZB3437",
+      "thread_id": "f8ccdce5-51b1-4f91-ae10-3a856f7102c9",
+      "trigger_key": "2026-11-11T18:17:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-trial3-181600",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:5ddcb5b944406a11233bef4de3c7511e863db96ad9a6102a5227bc6b1d59b892"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-trial3-181600",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-trial3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:17:04.984098+00:00",
+      "finished_at": "2026-11-11T18:17:17.564954+00:00",
+      "spend_usd": "0.003807600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XE4FYNK8QKDRB5J32PG65",
+      "job_id": "01M75XDY63P7R4ACCA7GMSMZ8A",
+      "thread_id": "f6bd9f9d-c563-4d19-877f-18bf64629839",
+      "trigger_key": "01M75XE4FYNK8QKDRB5J32PG65",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182024",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:99751d0a0c12c7aa705af1ffe1b9952e2ab05889ec2e9523063698e51dcf5fb5"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182024",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "state": "failed",
+      "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]",
+      "started_at": "2026-11-11T18:20:32.130321+00:00",
+      "finished_at": "2026-11-11T18:20:39.818211+00:00",
+      "spend_usd": "0.003481600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XF3ZWJKXA53G34S2VT34K",
+      "job_id": "01M75XDY63P7R4ACCA7GMSMZ8A",
+      "thread_id": "be756e38-695f-483d-b784-cbe23353cd0c",
+      "trigger_key": "2026-11-11T18:21:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182024",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:99751d0a0c12c7aa705af1ffe1b9952e2ab05889ec2e9523063698e51dcf5fb5"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182024",
+        "prompt": "Load the forecast skill and follow its five steps for Austin.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "state": "failed",
+      "verdict": "Exit check failed: [stderr]\ngrep: forecast.md: No such file or directory\n\n[exit code: 2]",
+      "started_at": "2026-11-11T18:21:04.390753+00:00",
+      "finished_at": "2026-11-11T18:21:13.900959+00:00",
+      "spend_usd": "0.002575600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XGJXNPMRTW4Q9H5JECXE4",
+      "job_id": "01M75XGCK6DNHGMJM9FSHY19RR",
+      "thread_id": "32500587-62de-4f5a-bb4c-6766c64068b0",
+      "trigger_key": "01M75XGJXNPMRTW4Q9H5JECXE4",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182144",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:567d9360896723425c694b5642b395598a619be609317ee0fb47519a7ab24c46"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182144",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, you must use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:21:52.439413+00:00",
+      "finished_at": "2026-11-11T18:22:03.903130+00:00",
+      "spend_usd": "0.004956800000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XGYNVYQBXBKQ4VS80YSPG",
+      "job_id": "01M75XGCK6DNHGMJM9FSHY19RR",
+      "thread_id": "0baa399b-9786-43c6-b25d-79354ef5c2b3",
+      "trigger_key": "2026-11-11T18:22:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-1-182144",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:567d9360896723425c694b5642b395598a619be609317ee0fb47519a7ab24c46"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-1-182144",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, you must use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-1.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:22:04.479610+00:00",
+      "finished_at": "2026-11-11T18:22:15.660768+00:00",
+      "spend_usd": "0.003167600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XJVRRWW48J15ZHMSQPEDX",
+      "job_id": "01M75XJVAFNPMGGPR4WPXS0WBS",
+      "thread_id": "a720d597-2c05-479d-9118-aff480d9860e",
+      "trigger_key": "01M75XJVRRWW48J15ZHMSQPEDX",
+      "definition": {
+        "cron": null,
+        "name": "run-1-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:854a8c4e424806b0ed80ccae1947262e2c2c53b38415a9de120a5eeab5be76e8"
+        },
+        "folder": "/root/m7lf-walk/grants/run-1-plain",
+        "prompt": "Run bash `curl -s http://127.0.0.1:8949/notice`. Write exactly its returned text into notice.md using write.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "cancelled",
+      "verdict": "Stopped explicitly or during daemon shutdown.",
+      "started_at": "2026-11-11T18:23:07.035213+00:00",
+      "finished_at": "2026-11-11T18:23:23.395252+00:00",
+      "spend_usd": "0.000688800000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XK0APK59DYBPDF7X25S89",
+      "job_id": "01M75XJZVQ4K2WSD6FDQR8FWRB",
+      "thread_id": "2e4d6ab4-5fcf-4015-8e48-eae677279116",
+      "trigger_key": "01M75XK0APK59DYBPDF7X25S89",
+      "definition": {
+        "cron": null,
+        "name": "run-1-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:de6617e50f8baf571217f6d3b12129c8468ea066d7cee9989eb1c281774c7bd8"
+        },
+        "folder": "/root/m7lf-walk/grants/run-1-declared",
+        "prompt": "Run bash `curl -s http://127.0.0.1:8949/notice`. Write exactly its returned text into notice.md using write.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "failed",
+      "verdict": "Exit check failed: (no output)\n[exit code: 1]",
+      "started_at": "2026-11-11T18:23:11.705101+00:00",
+      "finished_at": "2026-11-11T18:23:15.358699+00:00",
+      "spend_usd": "0.001631600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XK3VTG7KFBT8KQD9DYZSX",
+      "job_id": "01M75XJXBN3AD2H9JPY1QC35KQ",
+      "thread_id": "d4fb5dd4-da1b-42d6-b1e2-3041fec7fd4d",
+      "trigger_key": "01M75XK3VTG7KFBT8KQD9DYZSX",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-2-182307",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:6e97630928d31d036f4c259b58b02ce3cad7801c66915449dd3eda56442cbb38"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-2-182307",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, you must use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-2.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:23:15.326061+00:00",
+      "finished_at": "2026-11-11T18:23:26.020954+00:00",
+      "spend_usd": "0.004950000000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XMKJCHKAXZSMT5TAEB1Z3",
+      "job_id": "01M75XJXBN3AD2H9JPY1QC35KQ",
+      "thread_id": "bb98bd1e-4267-4f48-bd8e-0907f0775380",
+      "trigger_key": "2026-11-11T18:24:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-2-182307",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:6e97630928d31d036f4c259b58b02ce3cad7801c66915449dd3eda56442cbb38"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-2-182307",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, you must use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-2.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:24:04.183810+00:00",
+      "finished_at": "2026-11-11T18:24:14.591174+00:00",
+      "spend_usd": "0.002881200000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XNA6PT38ZQ2Y9VX850K6Z",
+      "job_id": "01M75XN9RAZA2A2B0R9CENFXZR",
+      "thread_id": "7cadba21-1790-497f-80f1-4a3f43ad8e8a",
+      "trigger_key": "01M75XNA6PT38ZQ2Y9VX850K6Z",
+      "definition": {
+        "cron": null,
+        "name": "run-g1-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:a498394667c11549b8553b86591460dfc33fb519c5642e572ed69095a53d59d1"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g1-plain",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "cancelled",
+      "verdict": "Stopped explicitly or during daemon shutdown.",
+      "started_at": "2026-11-11T18:24:27.352778+00:00",
+      "finished_at": "2026-11-11T18:24:45.576707+00:00",
+      "spend_usd": "0.000633200000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XNETBMTA2DWE8C3BTP65F",
+      "job_id": "01M75XNE5V7KPXDE81PWTM5S11",
+      "thread_id": "7462b5ad-ea2a-47f5-a68f-efc3644af716",
+      "trigger_key": "01M75XNETBMTA2DWE8C3BTP65F",
+      "definition": {
+        "cron": null,
+        "name": "run-g1-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:ffaf6d74c9f2d2e3f967e7cc326bc04c263177d2f150ac62ae8f4e3a93f12945"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g1-declared",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:24:32.078144+00:00",
+      "finished_at": "2026-11-11T18:24:37.939156+00:00",
+      "spend_usd": "0.001639600000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XNJA2F11G4V38YSHTDVBZ",
+      "job_id": "01M75XNBRJYFM7GM6G59PM7XPG",
+      "thread_id": "4dce9d51-3781-41bf-9543-2e9772507560",
+      "trigger_key": "01M75XNJA2F11G4V38YSHTDVBZ",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-3-182427",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:082896b0bb33d55efabe55a6e767bbc3692e963669ca64e6314ee95df4c1d514"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-3-182427",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:24:35.653002+00:00",
+      "finished_at": "2026-11-11T18:24:46.163830+00:00",
+      "spend_usd": "0.004825200000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XPE7CZKNBSDBZV29PTYBZ",
+      "job_id": "01M75XNBRJYFM7GM6G59PM7XPG",
+      "thread_id": "3543a75e-be35-4051-bf66-ec0df040a1ac",
+      "trigger_key": "2026-11-11T18:25:00+00:00",
+      "definition": {
+        "cron": "* * * * *",
+        "name": "forecast-lf-3-182427",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [
+            "FORECAST_KEY"
+          ],
+          "tools": [
+            {
+              "name": "forecast",
+              "summary": "forecast <city>: read the forecast service with the saved key."
+            }
+          ],
+          "digest": "sha256:082896b0bb33d55efabe55a6e767bbc3692e963669ca64e6314ee95df4c1d514"
+        },
+        "folder": "/root/m7lf-walk/bundles/forecast-lf-3-182427",
+        "prompt": "Load the forecast skill and follow its six steps for Austin. After running the forecast tool, use write to put its exact output in forecast.md. Create shell.txt and checks.md too, as the skill says.",
+        "trigger": null,
+        "budget_usd": "0.08",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "test -s shell.txt && grep -q 'Austin: .*report #' forecast.md && test ! -e /root/m7lf-walk/outside-3.txt"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:25:04.241538+00:00",
+      "finished_at": "2026-11-11T18:25:14.433198+00:00",
+      "spend_usd": "0.003210000000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XPWTSBACHRY7WD68F4HTY",
+      "job_id": "01M75XPWCRPKJFY99MS0S7RH7W",
+      "thread_id": "d3f8fa27-c3f3-4a7d-af4f-ce4cfb990617",
+      "trigger_key": "01M75XPWTSBACHRY7WD68F4HTY",
+      "definition": {
+        "cron": null,
+        "name": "run-g2-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:935e0224d780e38e3abe1f57557a0ce5cbbdc32ffb544773207d9c33fe467624"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g2-plain",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "cancelled",
+      "verdict": "Stopped explicitly or during daemon shutdown.",
+      "started_at": "2026-11-11T18:25:19.196279+00:00",
+      "finished_at": "2026-11-11T18:25:34.376616+00:00",
+      "spend_usd": "0.000633200000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XQ0F9XNYDQE8XDY5B5X08",
+      "job_id": "01M75XQ01B3E44RXP32N9NZYV4",
+      "thread_id": "388d37ae-b98b-4c21-9462-d12c66a95bf0",
+      "trigger_key": "01M75XQ0F9XNYDQE8XDY5B5X08",
+      "definition": {
+        "cron": null,
+        "name": "run-g2-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:e598d76259425f15b98325653187c5c5db7290dc1220e024ca3928acd174cc00"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g2-declared",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:25:22.925073+00:00",
+      "finished_at": "2026-11-11T18:25:26.903426+00:00",
+      "spend_usd": "0.001732400000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XR3QHAXGJ9XNHSB8BQ2RC",
+      "job_id": "01M75XR3DP0DWS6RMG0ETWR8KP",
+      "thread_id": "96a3052f-3b79-48ca-8db3-0cdf2804fd29",
+      "trigger_key": "01M75XR3QHAXGJ9XNHSB8BQ2RC",
+      "definition": {
+        "cron": null,
+        "name": "run-g3-plain",
+        "allow": [],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:8c7acb97ebcd202611b8096811600c8c2c76b4236f056e6a4fa41bb10f7e50ff"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g3-plain",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "cancelled",
+      "verdict": "Stopped explicitly or during daemon shutdown.",
+      "started_at": "2026-11-11T18:25:59.028175+00:00",
+      "finished_at": "2026-11-11T18:26:15.158796+00:00",
+      "spend_usd": "0.000633200000",
+      "unpriced_lines": 0
+    },
+    {
+      "run_id": "01M75XR7XKXZ9FDEYAGQF76Q58",
+      "job_id": "01M75XR79DM6BYC60JEMHJCR5R",
+      "thread_id": "b58c7fc2-1cc4-4055-aaa0-5b55232e95dc",
+      "trigger_key": "01M75XR7XKXZ9FDEYAGQF76Q58",
+      "definition": {
+        "cron": null,
+        "name": "run-g3-declared",
+        "allow": [
+          "remote"
+        ],
+        "tools": "pydantic",
+        "bundle": {
+          "keys": [],
+          "tools": [],
+          "digest": "sha256:4a4d76860c91dc9f22e2bc6a6e15b39f5c478d81e98481cbd2e1f7956787fe21"
+        },
+        "folder": "/root/m7lf-walk/grants/run-g3-declared",
+        "prompt": "Run this one bash command exactly: `curl -fsS http://127.0.0.1:8949/notice > notice.md`. Then finish.",
+        "trigger": null,
+        "budget_usd": "0.05",
+        "memory_scope": "none",
+        "model_policy": "pinned:openrouter:openai/gpt-4.1-mini",
+        "trigger_path": null,
+        "exit_condition": "grep -q 'public notice m7lf' notice.md"
+      },
+      "state": "completed",
+      "verdict": "Exit check passed.",
+      "started_at": "2026-11-11T18:26:03.318207+00:00",
+      "finished_at": "2026-11-11T18:26:07.243487+00:00",
+      "spend_usd": "0.001628400000",
+      "unpriced_lines": 0
+    }
+  ],
+  "scheduler_error": null
+}
