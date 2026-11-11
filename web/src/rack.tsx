@@ -99,6 +99,7 @@ export type RackAction =
   | { type: 'jobs.save'; job_id?: string; definition: JsonValue; expected_revision: number; enabled: boolean }
   | { type: 'jobs.run'; job_id: string }
   | { type: 'jobs.stop'; run_id: string }
+  | { type: 'jobs.deliver'; workflow: string; target: string; action: 'push' | 'promote' }
   | { type: 'policies.load' }
   | { type: 'models.load'; thread_id: string | null }
   | { type: 'models.local'; url: string | null; model: string | null; when_offline: boolean }
@@ -192,7 +193,7 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'overwhelm' | 'palace'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'targets' | 'overwhelm' | 'palace'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
@@ -245,7 +246,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
-  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'scorer.retrain.status' | 'compaction.backtest'
+  Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'jobs.deliver' | 'scorer.retrain.status' | 'compaction.backtest'
     ? JsonValue
     : Action['type'] extends 'thread.create' | 'project.select'
     ? string
@@ -495,7 +496,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   jobs: {
     id: 'jobs', name: 'Jobs', version: '1.0.0', class: 'control', slot: 'panel',
-    streams: [], actions: ['jobs.save', 'jobs.run', 'jobs.stop', 'thread.select', 'rack.scope.get'],
+    streams: [], actions: ['jobs.save', 'jobs.run', 'jobs.stop', 'jobs.deliver', 'thread.select', 'rack.scope.get'],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'GLOBAL',
   },
@@ -567,6 +568,11 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(action.job_id ? `/v1/jobs/${encodeURIComponent(action.job_id)}` : '/v1/jobs', {
           method: action.job_id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ definition: action.definition, expected_revision: action.expected_revision, enabled: action.enabled }),
+        }) as Promise<RackActionResult<Action>>
+      case 'jobs.deliver':
+        return fetchJson('/v1/targets', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ workflow: action.workflow, target: action.target, action: action.action }),
         }) as Promise<RackActionResult<Action>>
       case 'jobs.run':
         return fetchJson(`/v1/jobs/${encodeURIComponent(action.job_id)}/run`, { method: 'POST' }) as Promise<RackActionResult<Action>>
@@ -916,6 +922,9 @@ export const rackQuerySurface: RackQuerySurface = {
     const asOf = request.as_of ?? null
     if (request.resource === 'palace') {
       return parseRackQueryResult(await fetchJson('/v1/rack/query?resource=palace'))
+    }
+    if (request.resource === 'targets') {
+      return { status: 'live', as_of: null, data: await fetchJson('/v1/targets', { cache: 'no-store' }) }
     }
     if (request.resource === 'jobs') {
       if (asOf !== null && asOf !== 'now') return { status: 'historical_unavailable', as_of: asOf, data: null }

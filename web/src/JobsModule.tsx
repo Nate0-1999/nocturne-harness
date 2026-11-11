@@ -10,6 +10,7 @@ type Definition = { name: string; prompt: string; folder: string; model_policy: 
 type Job = { job_id: string; definition: Definition; revision: number; enabled: boolean; next_run_at: string | null }
 type Run = { run_id: string; job_id: string; thread_id: string; started_at: string; finished_at: string | null; state: string; verdict: string | null; spend_usd: string; unpriced_lines: number }
 type Snapshot = { jobs: Job[]; runs: Run[]; scheduler_error: string | null }
+type Tier = { error?: string; workflows: Record<string, { digest: string | null; verdict: string; attempted_digest?: string; enabled: boolean; proven?: boolean }> }
 // M4VW: every time in the module reads in UTC, the zone its cron schedules are written in.
 const time = (value: string | null) => value ? `${new Date(value).toLocaleString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })} UTC` : '—'
 const spend = (runs: Run[]) => `$${runs.reduce((sum, run) => sum + Number(run.spend_usd), 0).toFixed(5)}${runs.some(run => run.unpriced_lines > 0) ? ' + unpriced' : ''}`
@@ -17,6 +18,7 @@ const spend = (runs: Run[]) => `$${runs.reduce((sum, run) => sum + Number(run.sp
 export function JobsModule() {
   const { query, events } = useRackPlugin()
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
+  const [tiers, setTiers] = useState<Record<string, Tier>>({})
   const [failure, setFailure] = useState<string | null>(null)
   const [loadFailure, setLoadFailure] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -35,9 +37,23 @@ export function JobsModule() {
     const timer = setInterval(() => void load(), 2000)
     return () => { clearTimeout(initial); clearInterval(timer) }
   }, [load])
+  const loadTiers = useCallback(async () => {
+    try {
+      const result = await query.query({ resource: 'targets', as_of: 'now' })
+      setTiers(result.data as unknown as Record<string, Tier>)
+    } catch { /* Local jobs remain usable when the deployment view is unavailable. */ }
+  }, [query])
+  useEffect(() => {
+    const initial = setTimeout(() => void loadTiers(), 0)
+    const timer = setInterval(() => void loadTiers(), 10000)
+    return () => { clearTimeout(initial); clearInterval(timer) }
+  }, [loadTiers])
   async function act(action: RackAction) {
     setBusy(true)
-    try { await events.dispatch(action); setFailure(null); await load() }
+    try {
+      await events.dispatch(action)
+      setFailure(null); await load(); await loadTiers()
+    }
     catch (error) { setFailure(error instanceof Error ? error.message : 'The job action failed.') }
     finally { setBusy(false) }
   }
@@ -55,6 +71,21 @@ export function JobsModule() {
       }} />
     </header>
     {(failure || loadFailure || snapshot?.scheduler_error) && <p role="alert">{failure || loadFailure || snapshot?.scheduler_error}</p>}
+    {Object.keys(tiers).length > 1 && <div className="jobs-scroll"><table aria-label="Workflow tiers">
+      <thead><tr><th>Workflow</th>{Object.keys(tiers).map(tier => <th key={tier}>{tier}</th>)}</tr></thead>
+      <tbody>{Array.from(new Set(Object.values(tiers).flatMap(tier => Object.keys(tier.workflows)))).filter(name => !selectedJob || name === selectedJob.definition.name).map(name => <tr key={name}>
+        <td>{name}</td>{Object.entries(tiers).map(([tier, state]) => {
+          const release = state.workflows[name]
+          const canPush = tier !== 'local' && !state.error && !!snapshot?.jobs.some(job => job.definition.name === name && job.definition.bundle)
+          const canPromote = tier !== 'local' && tier !== 'stage' && !state.error && tiers.stage?.workflows[name]?.proven && tiers.stage.workflows[name].enabled
+          return <td key={tier}><code title={release?.digest ?? undefined}>{release?.digest?.slice(7, 19) ?? '—'}</code><small>{state.error ?? (release ? `${release.verdict} · ${release.enabled ? 'enabled' : 'paused'}` : 'No release')}</small>
+            {release?.attempted_digest && release.attempted_digest !== release.digest && <small>Last proof: {release.attempted_digest.slice(7, 19)}</small>}
+            {canPush && <Button type="button" disabled={busy} data-tooltip-detail="Send this local bundle; enable only after its proof passes." onClick={() => void act({ type: 'jobs.deliver', workflow: name, target: tier, action: 'push' })}>Push to {tier}</Button>}
+            {canPromote && <Button type="button" disabled={busy} data-tooltip-detail="Send the exact bundle proven on stage; prove it again here." onClick={() => void act({ type: 'jobs.deliver', workflow: name, target: tier, action: 'promote' })}>Promote to {tier}</Button>}
+          </td>
+        })}
+      </tr>)}</tbody>
+    </table></div>}
     {!snapshot ? <p role="status">Loading jobs…</p> : snapshot.jobs.length === 0 ? <p>Import a recipe JSON file, or save one with <code>nocturne jobs save recipe.json</code>. A recipe names its prompt, folder, model policy, tools, memory scope, budget and exit check.</p> : <div className="jobs-scroll"><table>
       <thead><tr><th>Workflow</th><th>Next run</th><th>Last run</th><th>State</th><th>Spend</th><th>Exit verdict</th><th>Run</th></tr></thead>
       <tbody>{snapshot.jobs.map(job => {

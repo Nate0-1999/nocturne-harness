@@ -21,7 +21,7 @@ import urllib.request
 import uuid
 import webbrowser
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import resources
 from importlib.metadata import version as distribution_version
 from pathlib import Path
@@ -58,7 +58,7 @@ from harness.transcript import JournalCloudRecord, TranscriptJournal, Transcript
 LOCAL_URL = "http://127.0.0.1:8765"
 SPINE_URL = "http://127.0.0.1:8000"
 _CONFIG_FILE = "env"
-_CONFIG_VERSION = "5"
+_CONFIG_VERSION = "6"
 _DEFAULT_BACKUP_GENERATIONS = 5
 _LOWER_ULID_PATTERN = re.compile(r"[0-7][0-9a-hjkmnp-tv-z]{25}\Z")
 _API_CONTRACT_SEMVER_PATTERN = re.compile(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\Z")
@@ -101,6 +101,7 @@ class NocturneConfig:
     local_model_url: str = "http://127.0.0.1:11434/v1"
     palace_name: str = "main"
     daemon_port: int = 8765
+    targets: dict[str, str] = field(default_factory=dict)
 
     @property
     def local_url(self) -> str:
@@ -342,6 +343,17 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         _upgrade_v4_config(path)
         values = _parse_config(path)
         version = values.get("NOCTURNE_CONFIG_VERSION")
+    if version == "5":
+        lines = path.read_text().splitlines(keepends=True)
+        for index, line in enumerate(lines):
+            if line.startswith("NOCTURNE_CONFIG_VERSION="):
+                lines[index] = 'NOCTURNE_CONFIG_VERSION="6"\n'
+        _atomic_write_config(
+            path,
+            "".join(lines) + 'NOCTURNE_TARGETS="{}"\n',
+        )
+        values = _parse_config(path)
+        version = values.get("NOCTURNE_CONFIG_VERSION")
     if version != _CONFIG_VERSION:
         raise OnboardingError("Unsupported Nocturne config version; reinstall or reinitialize.")
     port = _parse_port(values.get("NOCTURNE_POSTGRES_PORT", "5432"))
@@ -375,6 +387,7 @@ def load_config(*, home: Path | None = None) -> NocturneConfig:
         spine_url=spine_url,
         postgres_port=port,
         daemon_port=_parse_port(values.get("NOCTURNE_PORT", "8765"), "NOCTURNE_PORT"),
+        targets=json.loads(values.get("NOCTURNE_TARGETS", "{}")),
         backup_generations=backup_generations,
         postgres_volume=postgres_volume,
         transcript_backup=transcript_backup,
@@ -991,6 +1004,7 @@ def _write_config(config: NocturneConfig) -> None:
         "NOCTURNE_DB_PASSWORD": config.database_password,
         "NOCTURNE_POSTGRES_PORT": str(config.postgres_port),
         "NOCTURNE_PORT": str(config.daemon_port),
+        "NOCTURNE_TARGETS": json.dumps(config.targets),
         "NOCTURNE_BACKUP_GENERATIONS": str(config.backup_generations),
         "NOCTURNE_POSTGRES_VOLUME": config.active_postgres_volume,
         "NOCTURNE_TRANSCRIPT_BACKUP": "true" if config.transcript_backup else "false",
@@ -1081,7 +1095,7 @@ def _upgrade_v4_config(path: Path) -> None:
         raise OnboardingError("Nocturne config has an invalid version field.")
     if any(line.startswith("NOCTURNE_TRANSCRIPT_BACKUP=") for line in lines):
         raise OnboardingError("Nocturne version 4 config has an unexpected transcript field.")
-    lines[version_lines[0]] = f"NOCTURNE_CONFIG_VERSION={json.dumps(_CONFIG_VERSION)}\n"
+    lines[version_lines[0]] = 'NOCTURNE_CONFIG_VERSION="5"\n'
     lines.append('NOCTURNE_TRANSCRIPT_BACKUP="false"\n')
     _atomic_write_config(path, "".join(lines))
 
