@@ -82,6 +82,7 @@ export function ModelDevice() {
   const [browserError, setBrowserError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortKey>('rank')
+  const [localUrl, setLocalUrl] = useState<string | null>(null)
   const parameterDialog = useRef<HTMLDialogElement>(null)
 
   const load = useCallback(async (asOf: string | null = null) => {
@@ -205,6 +206,10 @@ export function ModelDevice() {
     if (configuration.model !== resolved && !(await write('model.slug', configuration.model))) return
     try {
       await events.dispatch({ type: 'policies.save', role: 'chat', policy: configuration.policy })
+      if (configuration.model.startsWith('local:')) {
+        await events.dispatch({ type: 'models.local', url: browser?.local?.url ?? null,
+          model: configuration.model, when_offline: browser?.local?.when_offline ?? false })
+      }
       await loadBrowser()
       setStatus(`${policyName(configuration.policy)} · new conversations start here too`)
     } catch (error) {
@@ -307,6 +312,25 @@ export function ModelDevice() {
         </div>
         <div className="model-row model-row--head" aria-hidden="true">
           <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />
+        </div>
+        <div className="model-browser__tools">
+          <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"
+            value={localUrl ?? browser?.local?.url ?? ''}
+            onChange={(event) => setLocalUrl(event.target.value)} />
+          <Button type="button" onClick={() => { void events.dispatch({
+            type: 'models.local', url: (localUrl ?? browser?.local?.url) || null, model: browser?.local?.model ?? null,
+            when_offline: browser?.local?.when_offline ?? false,
+          }).then(loadBrowser).catch((error) => setBrowserError(String(error))) }}>Find local models</Button>
+          <label><input type="checkbox" checked={browser?.local?.when_offline ?? false}
+            onChange={(event) => {
+              const local = { url: browser?.local?.url ?? null,
+                model: resolved?.startsWith('local:') ? resolved : browser?.local?.model ?? null,
+                when_offline: event.target.checked }
+              setBrowser((current) => current === null ? current : { ...current, local })
+              void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
+                setBrowserError(String(error)); void loadBrowser()
+              })
+            }} /> Local when offline</label>
         </div>
         <ul data-testid="model-browser-list">
           {listed.map((item) => {

@@ -48,7 +48,7 @@ def test_pinned_direct_mode_uses_one_adapter_key_and_no_broker_catalog() -> None
 
     assert configured.effective_model_policy_chat == "pinned:openai:gpt-4o-mini"
     assert configured.model_policy_optimization_enabled is False
-    assert router.catalog is router._direct
+    assert router.remote_catalog is router._direct
     assert model.provider is not None
     assert model.provider.name == "openai"
 
@@ -205,6 +205,8 @@ async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_t
     seen: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "127.0.0.1":
+            raise httpx.ConnectError("No local server", request=request)
         seen.append(request)
         return httpx.Response(
             200,
