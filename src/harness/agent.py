@@ -59,7 +59,6 @@ from harness.tools_memory import (
     MemoryToolContext,
     create_remembered_memory,
     create_remembered_memory_split,
-    render_create_conflict,
     render_spine_error,
 )
 
@@ -700,7 +699,43 @@ class HarnessAgent:
         except QueuedForPalace as waiting:
             return RememberResult(True, str(waiting))
         except CreateMemoryConflictError as exc:
-            return RememberResult(False, f"Could not remember: {render_create_conflict(exc)}")
+            # A split is all-or-none. Confirm every fact before reinforcing any of it.
+            known = []
+            try:
+                for child in children:
+                    neighbors = await context.spine.search(
+                        SearchRequest(principal_id=context.principal_id, query=child.body, k=5)
+                    )
+                    match = next(
+                        (item for item in neighbors.results if item.body == child.body), None
+                    )
+                    if match is None:
+                        break
+                    known.append(match)
+            except SpineClientError:
+                known = []
+            if len(known) == len(children):
+                for item in known:
+                    result = await HarnessAgent._reinforce_duplicate_remember(
+                        context, item.memory_id, expected_body=item.body
+                    )
+                    if not result.ok:
+                        return result
+                return RememberResult(
+                    True,
+                    "Already known — reinforced "
+                    + ", ".join(repr(item.label) for item in known)
+                    + ".",
+                )
+            if isinstance(exc.conflict, DuplicateMemoryConflict):
+                detail = "One of these facts is already remembered."
+            else:
+                detail = f"The label {exc.conflict.label_conflict.label!r} is already in use."
+            return RememberResult(
+                False,
+                detail + " None of this note was saved. Review the existing memories "
+                "and try /remember again with the remaining facts.",
+            )
         except SpineClientError as exc:
             if queued is not None:
                 raise
@@ -830,6 +865,8 @@ class HarnessAgent:
     async def _reinforce_duplicate_remember(
         context: MemoryToolContext,
         memory_id: UUID,
+        *,
+        expected_body: str | None = None,
     ) -> RememberResult:
         """Record one deliberate re-derivation through the existing CAS lineage seam."""
 
@@ -840,7 +877,7 @@ class HarnessAgent:
                 False,
                 f"Could not reinforce the existing memory: {render_spine_error('refresh', exc)}",
             )
-        if target is None:
+        if target is None or (expected_body is not None and target.body != expected_body):
             return RememberResult(
                 False,
                 "Not saved: the matching memory changed before it could be reinforced. "

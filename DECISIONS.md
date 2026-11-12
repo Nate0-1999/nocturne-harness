@@ -4460,6 +4460,13 @@ re-enabling. The Jobs tier table uses localhost routes in Harness; Memory's API 
 0.1.92. Config 6 adds the SSH map, preserving version 5 settings. Linux services use
 systemd (system for root, user otherwise); the VPS page names the host prerequisites.
 
+## M8LC — Recognize every known fact before acknowledging a repeated note [P1.5]
+
+PRECEDENT: F219; ADR-021; A-049. A refused split checks each child's exact stored body
+before reinforcing through the existing CAS path. A partly known note remains unsaved
+with plain guidance, preserving the all-or-none boundary. Package pair 0.1.94;
+Memory API contract remains 0.1.92.
+
 ## M8SP — The strategy in force names the conversation; the history graph spans its panel; the Palace starts once [P2.3]
 
 PRECEDENT: PLAN M8SP; F218, F223, F226; M3SK (SD-077), M6MS (SD-090), M6LP, M5VW; FL-206, FL-138, FL-137.
