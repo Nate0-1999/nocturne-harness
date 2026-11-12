@@ -4460,9 +4460,9 @@ re-enabling. The Jobs tier table uses localhost routes in Harness; Memory's API 
 0.1.92. Config 6 adds the SSH map, preserving version 5 settings. Linux services use
 systemd (system for root, user otherwise); the VPS page names the host prerequisites.
 
-## M8SP — The strategy in force names the conversation; the history graph spans its panel [P2.3]
+## M8SP — The strategy in force names the conversation; the history graph spans its panel; the Palace starts once [P2.3]
 
-PRECEDENT: PLAN M8SP; F218, F226; M3SK (SD-077), M6MS (SD-090), M6LP; FL-206, FL-137.
+PRECEDENT: PLAN M8SP; F218, F223, F226; M3SK (SD-077), M6MS (SD-090), M6LP, M5VW; FL-206, FL-138, FL-137.
 - F218. A rail click switches this conversation with an explicit model write, which the run loop
   records as `human_command`; M6MS read a thread's own record first, so the paragraph, the chip
   and the thread list said "Pinned" beside the marked strategy. M3SK's rule is restored for
@@ -4474,3 +4474,13 @@ PRECEDENT: PLAN M8SP; F218, F226; M3SK (SD-077), M6MS (SD-090), M6LP; FL-206, FL
   clock, so bursts of signals hours apart fell into one column. The console's graph is drawn
   as wide as its panel and steps evenly in time order; hover still gives each point's time.
   Palace State's small generations chart keeps its square and takes the even steps.
+- F223. Not Efficient: the Palace's canvas starts its WebGPU renderer asynchronously, and R3F
+  configures the canvas again on every render. A render landing before the first start finished
+  repeated the set-up from a stale reading: a second renderer on the same canvas, and a second
+  camera R3F never sizes (aspect 0), so every body was drawn to nowhere while the counts ran. A
+  two-pixel resize brought the scene back, which is how the camera was found. The module now
+  hands R3F one start per canvas and its own camera. M5VW's "first Full canvas sometimes
+  empty" and the note above `sceneSnapshot` are the same fault.
+- F222 is not a product fault and nothing changed for it: the scout's browser had opened and
+  closed a second page, after which it hands a click meant for a module to the outer page until a
+  reload (the M8SP garden report has the replay).
