@@ -4459,3 +4459,10 @@ so promotion fetches stage's proven tar and rollback checks its prior bytes befo
 re-enabling. The Jobs tier table uses localhost routes in Harness; Memory's API stays
 0.1.92. Config 6 adds the SSH map, preserving version 5 settings. Linux services use
 systemd (system for root, user otherwise); the VPS page names the host prerequisites.
+
+## M8LC — Recognize every known fact before acknowledging a repeated note [P1.5]
+
+PRECEDENT: F219; ADR-021; A-049. A refused split checks each child's exact stored body
+before reinforcing through the existing CAS path. A partly known note remains unsaved
+with plain guidance, preserving the all-or-none boundary. Package pair 0.1.94;
+Memory API contract remains 0.1.92.
