@@ -2,12 +2,12 @@
   "packet": "M8LC",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "90f95bdae4ab74adbc528fb07d9042b1efa98af7690bd6d40e90e5ae462f6c25",
+  "ledger_sha256": "aadc4f2ed5bc6b8127c32ef1cf653a96e379b43f580d5dbd6cd0553fe822bd2e",
   "diffs": [
     {
       "repo": "harness",
       "base": "e72eab8db0245de13c78a5a3ef8d5b4299caedb2",
-      "head": "c48d00f3e53a71afdb5e9cb6dc4b018d15dc161e"
+      "head": "7e217508aca6a7cd4f648a85fc83fe364ce82cd0"
     }
   ],
   "unmapped": {
@@ -41,9 +41,34 @@
     "harness/verification/m8lc/FL-197.png": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
     "harness/verification/m8lc/FL-201.png": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
     "harness/verification/m8lc/SHA256SUMS": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
+    "harness/verification/m8lc/after-F224-scout-96/FL-061-96-False.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-96/FL-061-96-True.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-96/FL-061-96-lineage.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-96/results.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-112/FL-061-112-False.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-112/FL-061-112-True.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-112/FL-061-112-lineage.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-112/results.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-64/FL-061-64-False.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-64/FL-061-64-True.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-64/FL-061-64-lineage.png": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/after-F224-scout-repeat-64/results.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
     "harness/verification/m8lc/cleanup.json": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
     "harness/verification/m8lc/credential-scan.json": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
     "harness/verification/m8lc/diagnostic-boundary.json": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
+    "harness/verification/m8lc/gate-followup/cleanup.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/credential-scan.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/default-model-audit.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/final-console.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/final-scout-configuration.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/final-spend.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/free-model-list.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/key-finish.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/key-start.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/packet-spend.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/pypi-reservation.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/service-stop.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
+    "harness/verification/m8lc/gate-followup/three-run-proof.json": "Packet evidence, model receipts, free-catalog/default audit, spend and cleanup only; no separate product behavior. Scoped PASS and explicitly unproven context rows remain distinct.",
     "harness/verification/m8lc/key-finish.json": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
     "harness/verification/m8lc/key-start.json": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
     "harness/verification/m8lc/ledger-report.json": "Packet evidence, hashes, cleanup, receipts or generated metadata only; no independent product feature change. Reviewer should assess the declared charged corner and explicit context-only verdicts.",
@@ -73,7 +98,7 @@
     },
     "FL-038": {
       "label": "A cheap 80/20 duplicate check at memory creation, keeping the agent's memory work under 10% of build run time.",
-      "walk": "Save a fact already in the Palace: at cosine 0.92 or above the save comes back 'already known \u2014 reinforced' at once, between 0.80 and 0.92 it asks to confirm, without the agent reading other memories; these write-time bands are the C.4 defaults and are separate from the curator's own search band (v2.128).",
+      "walk": "Save a fact already in the Palace: at cosine 0.92 or above the save comes back 'already known — reinforced' at once, between 0.80 and 0.92 it asks to confirm, without the agent reading other memories; these write-time bands are the C.4 defaults and are separate from the curator's own search band (v2.128).",
       "protected": true,
       "verdict": "FAIL",
       "screenshot": "FL-038.png",
@@ -81,8 +106,8 @@
       "observed": "CONTEXT ONLY / NOT RE-WALKED. Required by broad file impact; no new feature-failure or regression claim. This packet changes only F219/F224/F225 corners. The reused fresh packet frame supplies context, not experiential proof for this row; retained as unproven under F086."
     },
     "FL-042": {
-      "label": "Constitution: 'Already known \u2014 reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day).",
-      "walk": "Re-save a known fact; the reply says 'already known \u2014 reinforced'; reject a candidate and re-save it unchanged; it is not proposed again.",
+      "label": "Constitution: 'Already known — reinforced' on re-saves; rejected candidates remembered and never re-proposed without material change (gate-day).",
+      "walk": "Re-save a known fact; the reply says 'already known — reinforced'; reject a candidate and re-save it unchanged; it is not proposed again.",
       "protected": true,
       "verdict": "FAIL",
       "screenshot": "FL-042.png",
@@ -231,7 +256,7 @@
       "verdict": "PASS",
       "screenshot": "FL-061.png",
       "flag": "",
-      "observed": "Three fresh browser runs at 96/64/112; both verification-history settings each; six completed replay receipts, candidate size shown with minimum match 0.31 and share 1%; active recipe unchanged. Generation metadata/text retained in per-run receipts. The original F224 400 did not reproduce under the mandated mini configuration and its cause remains OPEN; logging added, no guessed request fix."
+      "observed": "F224 gate return: three fresh final-source walks at 96/64/112, both history settings each, with SPINE_CHAT_MODEL absent and principal curator policy pinned to mini. Six generations show tested size, minimum match 0.32 and share 1%; active values unchanged. Each generation links to six actual mini request receipts. Code/free-catalog diagnosis established the old invalid default and policy bypass; no old-default paid replay. Timeout trials are retained separately. Fresh no-policy default remains unlisted under F234 and unchanged."
     },
     "FL-080": {
       "label": "Compaction triggered by fill percentage against the model's best working range and max, which vary by model.",
