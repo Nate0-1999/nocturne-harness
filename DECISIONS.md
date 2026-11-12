@@ -4459,3 +4459,18 @@ so promotion fetches stage's proven tar and rollback checks its prior bytes befo
 re-enabling. The Jobs tier table uses localhost routes in Harness; Memory's API stays
 0.1.92. Config 6 adds the SSH map, preserving version 5 settings. Linux services use
 systemd (system for root, user otherwise); the VPS page names the host prerequisites.
+
+## M8SP — The strategy in force names the conversation; the history graph spans its panel [P2.3]
+
+PRECEDENT: PLAN M8SP; F218, F226; M3SK (SD-077), M6MS (SD-090), M6LP; FL-206, FL-137.
+- F218. A rail click switches this conversation with an explicit model write, which the run loop
+  records as `human_command`; M6MS read a thread's own record first, so the paragraph, the chip
+  and the thread list said "Pinned" beside the marked strategy. M3SK's rule is restored for
+  every mark: the agent policy in force names a conversation while it runs on that policy's
+  pick, and the paragraph then gives the rail's reason. A conversation on any other model keeps
+  its own record. The daemon is unchanged (its record does not survive a restart; the rule
+  does). The spend module's model row has no model list and still reads the thread's record.
+- F226. The graph was a square viewBox centred in a wide panel, and its x axis followed the
+  clock, so bursts of signals hours apart fell into one column. The console's graph is drawn
+  as wide as its panel and steps evenly in time order; hover still gives each point's time.
+  Palace State's small generations chart keeps its square and takes the even steps.
