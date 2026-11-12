@@ -243,8 +243,10 @@ export function LearningTimeline({
   accuracy: readonly ScorerAccuracyPoint[]
   mode?: 'both' | 'generations'
 }) {
-  const model = learningTimelineModel(learning, accuracy)
   const showLive = mode === 'both'
+  // F226: the console's history graph is drawn as wide as its panel (rack.css keeps this ratio).
+  const width = showLive ? 560 : 100
+  const model = learningTimelineModel(learning, accuracy, width)
   const hasPoints = model.generations.length > 0 || (showLive && model.live.length > 0)
   const accessiblePoints = [
     ...(showLive ? model.live.map((point) => (
@@ -265,10 +267,10 @@ export function LearningTimeline({
       {!hasPoints ? (
         <p className="learning-timeline__empty">No measured learning scores yet.</p>
       ) : (
-        <svg viewBox="0 0 100 100" role="img" aria-label="Learning score timeline">
-          <line className="learning-timeline__grid" x1="8" y1="12" x2="92" y2="12" />
-          <line className="learning-timeline__grid" x1="8" y1="50" x2="92" y2="50" />
-          <line className="learning-timeline__grid" x1="8" y1="88" x2="92" y2="88" />
+        <svg viewBox={`0 0 ${width} 100`} role="img" aria-label="Learning score timeline">
+          <line className="learning-timeline__grid" x1={width * 0.08} y1="12" x2={width * 0.92} y2="12" />
+          <line className="learning-timeline__grid" x1={width * 0.08} y1="50" x2={width * 0.92} y2="50" />
+          <line className="learning-timeline__grid" x1={width * 0.08} y1="88" x2={width * 0.92} y2="88" />
           {mode === 'both' && model.annotations.map((annotation) => (
             <line
               key={annotation.event_uid}

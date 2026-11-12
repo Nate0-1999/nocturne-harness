@@ -134,6 +134,11 @@
   height: 10.5rem;
   overflow: visible;
 }
+/* F226: the history graph fills its panel's width; its height follows. */
+.learning-timeline--both svg {
+  height: auto;
+  aspect-ratio: 28 / 5;
+}
 .learning-timeline__grid {
   stroke: var(--seam-92f9a1f009b1);
   stroke-width: .35;
