@@ -90,7 +90,7 @@ export function CreationScoreboard({ data, onBacktest }: {
       <p>Preview only · {result.id
         ? result.fit.status === 'proposed' ? 'The joint replay would propose improved values.' : 'The joint replay kept current values.'
         : result.fit.status === 'insufficient_data' ? result.fit.reason : 'The model replay did not complete. Current values remain active.'}</p>
-      {result.joint_fit && <p>Tested size {result.joint_fit.memory_size} tokens · minimum match {result.joint_fit.tau.toPrecision(4)} · memory share {(100 * result.joint_fit.memory_context_share).toFixed(2)}% · {result.joint_fit.resized_memories} matched memories replayed. {result.joint_fit.proposal_eligible ? 'Creation candidate improved.' : 'Current creation policy kept.'}</p>}
+      {result.joint_fit && <p>Tested size {result.joint_fit.candidate_memory_size} tokens · minimum match {result.joint_fit.tau.toPrecision(4)} · memory share {(100 * result.joint_fit.memory_context_share).toFixed(2)}% · {result.joint_fit.resized_memories} matched memories replayed. {result.joint_fit.proposal_eligible ? 'Creation candidate improved.' : 'Current creation policy kept.'}</p>}
     </div>}
     {data?.compaction?.last_backtest === 'failed' && <p role="status">The last instruction back-test did not complete. Current instructions remain active.</p>}
     <details><summary>Compaction instruction generations</summary>
@@ -243,8 +243,10 @@ export function LearningTimeline({
   accuracy: readonly ScorerAccuracyPoint[]
   mode?: 'both' | 'generations'
 }) {
-  const model = learningTimelineModel(learning, accuracy)
   const showLive = mode === 'both'
+  // F226: the console's history graph is drawn as wide as its panel (rack.css keeps this ratio).
+  const width = showLive ? 560 : 100
+  const model = learningTimelineModel(learning, accuracy, width)
   const hasPoints = model.generations.length > 0 || (showLive && model.live.length > 0)
   const accessiblePoints = [
     ...(showLive ? model.live.map((point) => (
@@ -265,10 +267,10 @@ export function LearningTimeline({
       {!hasPoints ? (
         <p className="learning-timeline__empty">No measured learning scores yet.</p>
       ) : (
-        <svg viewBox="0 0 100 100" role="img" aria-label="Learning score timeline">
-          <line className="learning-timeline__grid" x1="8" y1="12" x2="92" y2="12" />
-          <line className="learning-timeline__grid" x1="8" y1="50" x2="92" y2="50" />
-          <line className="learning-timeline__grid" x1="8" y1="88" x2="92" y2="88" />
+        <svg viewBox={`0 0 ${width} 100`} role="img" aria-label="Learning score timeline">
+          <line className="learning-timeline__grid" x1={width * 0.08} y1="12" x2={width * 0.92} y2="12" />
+          <line className="learning-timeline__grid" x1={width * 0.08} y1="50" x2={width * 0.92} y2="50" />
+          <line className="learning-timeline__grid" x1={width * 0.08} y1="88" x2={width * 0.92} y2="88" />
           {mode === 'both' && model.annotations.map((annotation) => (
             <line
               key={annotation.event_uid}
