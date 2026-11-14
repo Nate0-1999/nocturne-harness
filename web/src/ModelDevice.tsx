@@ -6,7 +6,7 @@ import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
 import {
   browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
-  policyName, shortName, strategyMeaning, takesParameter, type Configuration, type ModelBrowser, type SortKey,
+  policyInForce, policyName, shortName, strategyMeaning, strategyName, takesParameter, type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
 type ParameterValue = string | number | null
@@ -188,10 +188,15 @@ export function ModelDevice() {
   // FL-206: the summary's "since" is the last model change here, else when the thread began (M3SK).
   const since = view?.changes.filter((change) => change.parameter_id === 'model.slug').at(-1)?.timestamp
     ?? snapshot.catalog.find((entry) => entry.thread_id === threadId)?.created_at ?? null
+  // F218: the paragraph names the strategy in force while this conversation runs on its pick, as the
+  // rail and the chip do; the reason is then the rail's (the daemon's readout explains the thread's own).
+  const own = currentStrategy(browser, resolved)
+  const inForce = browser === null || browser.current?.model !== resolved ? null : policyInForce(browser, resolved)
+  const taken = inForce !== null && policyName(inForce.policy) !== strategyName(own)
   const summary = modelSummary({
     model: resolved, entry: inUse, models: browser?.models ?? [],
     effort: view?.values['model.effort'] == null ? null : String(view.values['model.effort']),
-    policy: currentStrategy(browser, resolved), explanation: view?.policy_explanation,
+    policy: inForce?.policy ?? own, explanation: taken ? inForce.reason : view?.policy_explanation,
     since: since === null ? null : formatSince(since),
   })
   const localModel = browser?.local?.model == null ? null

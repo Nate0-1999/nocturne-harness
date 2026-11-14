@@ -1,0 +1,6 @@
+Resolved 4 packages in 1.04s
+Prepared 2 packages in 48ms
+Installed 3 packages in 18ms
+ + build==1.6.1
+ + pip==26.3
+ + pyproject-hooks==1.3.3
