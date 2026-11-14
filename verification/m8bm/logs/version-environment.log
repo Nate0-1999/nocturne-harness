@@ -1,0 +1,12 @@
+Resolved 2 packages in 887ms
+   Building nocturne-memory @ file:///Users/nateoswalt/relay/m8bm/spine
+   Building nocturne-harness @ file:///Users/nateoswalt/relay/m8bm/harness
+      Built nocturne-memory @ file:///Users/nateoswalt/relay/m8bm/spine
+      Built nocturne-harness @ file:///Users/nateoswalt/relay/m8bm/harness
+Prepared 2 packages in 135ms
+Uninstalled 2 packages in 6ms
+Installed 2 packages in 2ms
+ - nocturne-harness==0.1.95 (from file:///Users/nateoswalt/relay/m8bm/harness)
+ + nocturne-harness==0.1.96 (from file:///Users/nateoswalt/relay/m8bm/harness)
+ - nocturne-memory==0.1.95 (from file:///Users/nateoswalt/relay/m8bm/spine)
+ + nocturne-memory==0.1.96 (from file:///Users/nateoswalt/relay/m8bm/spine)

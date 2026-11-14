@@ -1,0 +1,13 @@
+Processing ./harness-dist/nocturne_harness-0.1.96.tar.gz
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: nocturne-harness
+  Building wheel for nocturne-harness (pyproject.toml): started
+  Building wheel for nocturne-harness (pyproject.toml): finished with status 'done'
+  Created wheel for nocturne-harness: filename=nocturne_harness-0.1.96-py3-none-any.whl size=1118809 sha256=87eb5135bd49964727441dbcf73f5de6588a0b91cea26ad40bee476cd8fa2117
+  Stored in directory: /Users/nateoswalt/Library/Caches/pip/wheels/39/dd/8c/9c7a589fd243e02fa71106a28fe696e0ab8720c38751b060be
+Successfully built nocturne-harness
