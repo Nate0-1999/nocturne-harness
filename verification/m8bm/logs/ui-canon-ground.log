@@ -1,0 +1,178 @@
+Ledger valid: 214 rows; 199 built/partial
+Out Loud browser regression PASS {
+  speech_doubles: true,
+  dictation_waits_for_send: true,
+  send_uses_memory_gate: true,
+  response_spoken: true,
+  listening_after_response: true,
+  typing_interrupts_dictation: true,
+  control_interrupts_speech: true,
+  preference_survives_reload: true,
+  microphone_denied_explained: true,
+  unsupported_keeps_typing: true
+}
+M3FP packaged heartbeat PASS: {"fixture":"M3FP REGRESSION","packaged_assets":true,"first_prompt_prepare_calls":1,"first_prompt_commit_calls":1,"receipt_lines":2,"journal_has_prompt_and_answer":true,"tool_turn_ends_clean_with_proposal_and_journal":true,"consecutive_sends_without_reload":true,"compaction_and_durable_history":true,"failure_reason_survives_reload":true,"external_rack_host_refused":true}
+M3FP reinstall heartbeat PASS: {"fixture":"M3FP REGRESSION","packaged_assets":true,"first_prompt_prepare_calls":1,"first_prompt_commit_calls":1,"receipt_lines":2,"journal_has_prompt_and_answer":true,"tool_turn_ends_clean_with_proposal_and_journal":true,"consecutive_sends_without_reload":true,"compaction_and_durable_history":true,"failure_reason_survives_reload":true,"external_rack_host_refused":true,"reinstall_restores_journal_and_failure":true}
+M3FX fixture curtain PASS: M2ST4 REGRESSION (M2ST4)
+M2UX1 audit 390px factory
+M2UX1 audit 390px model_device
+M2UX1 audit 390px threads-drawer
+M2UX1 audit 390px palace_queue
+M2UX1 audit 390px memory_graph
+M2UX1 audit 390px injection_console
+M2UX1 audit 390px thread_end
+M2UX1 audit 480px factory
+M2UX1 audit 480px model_device
+M2UX1 audit 480px palace_queue
+M2UX1 audit 480px memory_graph
+M2UX1 audit 480px injection_console
+M2UX1 audit 480px thread_end
+M2UX1 audit 768px factory
+M2UX1 audit 768px model_device
+M2UX1 audit 768px palace_queue
+M2UX1 audit 768px memory_graph
+M2UX1 audit 768px injection_console
+M2UX1 audit 768px thread_end
+M2UX1 audit 1024px factory
+M2UX1 audit 1024px model_device
+M2UX1 audit 1024px palace_queue
+M2UX1 audit 1024px memory_graph
+M2UX1 audit 1024px injection_console
+M2UX1 audit 1024px thread_end
+M2UX1 audit 1280px factory
+M2UX1 audit 1280px model_device
+M2UX1 audit 1280px palace_queue
+M2UX1 audit 1280px memory_graph
+M2UX1 audit 1280px injection_console
+M2UX1 audit 1280px thread_end
+M2UX1 audit 1440px factory
+M2UX1 audit 1440px model_device
+M2UX1 audit 1440px palace_queue
+M2UX1 audit 1440px memory_graph
+M2UX1 audit 1440px injection_console
+M2UX1 audit 1440px thread_end
+M2UX1 audit 1920px factory
+M2UX1 audit 1920px model_device
+M2UX1 audit 1920px palace_queue
+M2UX1 audit 1920px memory_graph
+M2UX1 audit 1920px injection_console
+M2UX1 audit 1920px thread_end
+M2UX1 rendered sweep PASS: 43 states
+M2ST1 stage PASS: overview, layers, remove/restore, recall, and reload
+M2ST2 chrome diet PASS: rare settings contained, scope honest, labels useful
+M2ST3 honest display PASS: human numbers, honest Palace status, compact absence, and graph declutter
+M3FX fixture curtain PASS: SYM13 REGRESSION (SYM13)
+file:///Users/nateoswalt/relay/m8bm/harness/verification/sym13/browser_check.mjs:122
+    throw new Error(`expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`)
+          ^
+
+Error: expected ["Packet / input","Own prep","Stage 1","Stage 2","Stage 3","Stage 4","Stage 5","Stage 6","Stage 7","Stage 8","Stage 9","Stage 10","Stage 11","Milestone"], got []
+    at assertJsonEqual (file:///Users/nateoswalt/relay/m8bm/harness/verification/sym13/browser_check.mjs:122:11)
+    at file:///Users/nateoswalt/relay/m8bm/harness/verification/sym13/browser_check.mjs:52:3
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:472:9)
+
+Node.js v25.8.0
+INFO:     Started server process [67620]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:53383 (Press CTRL+C to quit)
+INFO:     127.0.0.1:53412 - "GET /__scenario__/identity?fixture=SYM13%20REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53416 - "GET /?fixture=SYM13%20REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53416 - "GET /assets/index-B61PItaX.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53418 - "GET /assets/index-DaR1Y0Rq.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53420 - "GET /__scenario__/identity HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53421 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53423 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53423 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53425 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&conversation_mode=focused HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53423 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53427 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53423 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53423 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53425 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53423 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53427 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&conversation_mode=focused&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53429 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53425 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53425 - "GET /?rack_module=spend_strip&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53431 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53425 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53433 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53423 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53425 - "GET /?rack_module=spend_strip&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53429 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53427 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53431 - "GET /assets/index-B61PItaX.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53433 - "GET /assets/index-DaR1Y0Rq.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53421 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53434 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53421 - "GET /v1/rack/query?resource=palace HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53420 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53435 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53436 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53420 - "GET /v1/jobs HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53421 - "GET /v1/models HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53436 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53435 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:53436 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53436 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53421 - "GET /v1/model-policies HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53437 - "GET /v1/curation HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53420 - "GET /v1/models HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53438 - "GET /v1/local-copy HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53435 - "GET /v1/approval-queue HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53436 - "GET /v1/seeds/jump-start HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53444 - "GET /?fixture=SYM13%20REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53445 - "GET /assets/index-DaR1Y0Rq.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53444 - "GET /assets/index-B61PItaX.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53450 - "GET /__scenario__/identity HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53451 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53453 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53453 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53455 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&conversation_mode=focused HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53457 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53457 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53453 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53457 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53463 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53455 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53459 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&conversation_mode=focused&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53455 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53455 - "GET /?rack_module=spend_strip&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53461 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53455 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53463 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53457 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53453 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53455 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53459 - "GET /?rack_module=spend_strip&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53463 - "GET /assets/index-DaR1Y0Rq.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53453 - "GET /assets/index-B61PItaX.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53461 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53451 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53464 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:53453 - "GET /?rack_module=memory_graph&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53453 - "GET /?rack_module=memory_graph&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53453 - "GET /?rack_module=recipe&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir HTTP/1.1" 307 Temporary Redirect
+INFO:     127.0.0.1:53453 - "GET /?rack_module=recipe&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A53383&theme=neo-noir&fixture=SYM13+REGRESSION HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53451 - "GET /v1/rack/query?resource=palace HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53450 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53450 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53451 - "GET /v1/rack/query?resource=recipe_graph&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53465 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53466 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:53467 - "GET /v1/rack/query?resource=memory_graph&as_of=now HTTP/1.1" 200 OK
+
+Traceback (most recent call last):
+  File "/Users/nateoswalt/relay/m8bm/harness/scripts/run_ui_canon.py", line 205, in <module>
+    main()
+  File "/Users/nateoswalt/relay/m8bm/harness/scripts/run_ui_canon.py", line 90, in main
+    _run_canon(
+  File "/Users/nateoswalt/relay/m8bm/harness/scripts/run_ui_canon.py", line 141, in _run_canon
+    subprocess.run(
+  File "/Users/nateoswalt/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py", line 573, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['node', 'verification/sym13/browser_check.mjs', '--base-url', 'http://127.0.0.1:53383', '--fixture', 'SYM13 REGRESSION', '--evidence-dir', '/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/nocturne-m2st4-canon-bjus73b9/sym13/recipe-grid']' returned non-zero exit status 1.

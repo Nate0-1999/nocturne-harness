@@ -4491,3 +4491,11 @@ PRECEDENT: PLAN M8SP; F218, F223, F226; M3SK (SD-077), M6MS (SD-090), M6LP, M5VW
 - F222 is not a product fault and nothing changed for it: the scout's browser had opened and
   closed a second page, after which it hands a click meant for a module to the outer page until a
   reload (the M8SP garden report has the replay).
+
+## M8BM — Background-model proof, package twin only [P1.2, P4]
+
+PRECEDENT: PLAN M8BM; SD-094; F234; A-086; ADR-019 lockstep packaging; M8LC report 309.
+Memory's twelve-row live comparison passed before the default switched. Harness changes
+only its 0.1.96 package version and Memory pin, with the packet's frozen ledger/law copies.
+Chat, sub-agent and judge stayed pinned to gpt-4.1-mini in every disposable walk; no web or
+daemon behavior changed. Both product branches inherit the pending 0.1.95 pair and target main.

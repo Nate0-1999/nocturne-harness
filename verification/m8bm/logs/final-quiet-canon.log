@@ -1,0 +1,14 @@
+Ledger valid: 214 rows; 199 built/partial
+harness: mapped surfaces changed after report head: docs/frozen-law.json
+spine: mapped surfaces changed after report head: docs/frozen-law.json
+Handoff REFUSED: 61 required rows checked
+Traceback (most recent call last):
+  File "/Users/nateoswalt/relay/m8bm/harness/scripts/run_ui_canon.py", line 205, in <module>
+    main()
+  File "/Users/nateoswalt/relay/m8bm/harness/scripts/run_ui_canon.py", line 81, in main
+    check_ledger(args.packet_dir)
+  File "/Users/nateoswalt/relay/m8bm/harness/scripts/run_ui_canon.py", line 65, in check_ledger
+    subprocess.run([*command, "verify", str(packet_dir.resolve())], check=True)
+  File "/Users/nateoswalt/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/subprocess.py", line 573, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Users/nateoswalt/relay/m8bm/harness/.venv/bin/python', '/Users/nateoswalt/relay/m8bm/garden/bin/ledger', 'verify', '/Users/nateoswalt/relay/m8bm/garden/verification/m8bm']' returned non-zero exit status 1.
