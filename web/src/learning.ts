@@ -197,6 +197,7 @@ export function learningNoticeAfterSnapshot(
 export function learningTimelineModel(
   learning: ScorerConsoleLearning,
   accuracy: readonly ScorerAccuracyPoint[],
+  width = 100,
 ): LearningTimelineModel {
   const measuredGenerations = accuracy.filter(
     (point): point is ScorerAccuracyPoint & { accuracy_percent: string } =>
@@ -207,11 +208,12 @@ export function learningTimelineModel(
     ...measuredGenerations.map((point) => timestamp(point.created_at)),
     ...learning.annotations.map((annotation) => timestamp(annotation.ts)),
   ]
-  const first = timestamps.length === 0 ? 0 : Math.min(...timestamps)
-  const last = timestamps.length === 0 ? 0 : Math.max(...timestamps)
-  const x = (value: string) => last === first
-    ? 50
-    : 8 + ((timestamp(value) - first) / (last - first)) * 84
+  // F226: one even step per moment, in time order. Signals come in bursts with long gaps between,
+  // so an axis proportional to the clock bunched every point into one column.
+  const order = new Map([...new Set(timestamps)].sort((left, right) => left - right).map((value, index) => [value, index]))
+  const x = (value: string) => width * (order.size < 2
+    ? 0.5
+    : 0.08 + (order.get(timestamp(value))! / (order.size - 1)) * 0.84)
   const y = (value: string) => 88 - percent(value) * 0.76
   const live = learning.live_agreement
     .map((point) => ({

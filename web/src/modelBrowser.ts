@@ -119,8 +119,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** FL-205 / FL-206: one model mark wherever a thread is named — the strategy that chose it, the
  * model and its thinking level; the conversation chip (`full`) adds the context window and the
- * price. A thread's own strategy (`policy`, from its resolution) comes first; before it has one
- * the agent policy in force names what it will start on. */
+ * price. The agent policy in force names a thread running on that policy's pick, or with no
+ * model yet (M3SK; F218: a rail click switches the model as an explicit choice, which read
+ * "Pinned" beside the marked strategy); any other thread keeps its own strategy (`policy`). */
 export function modelMark(
   browser: Pick<ModelBrowser, 'chat_policy' | 'configurations' | 'models'> | null,
   model: string | null,
@@ -134,7 +135,7 @@ export function modelMark(
   const entry = browser?.models.find((item) => item.model === shown)
   const parts = chipParts(shown, entry, effort)
   const mark = full ? parts : parts.slice(0, entry?.reasoning ? 2 : 1)
-  const strategy = strategyName(policy) ?? (inForce === null ? null : policyName(inForce.policy))
+  const strategy = inForce === null ? strategyName(policy) : policyName(inForce.policy)
   return (strategy === null ? mark : [strategy, ...mark]).join(' · ')
 }
 

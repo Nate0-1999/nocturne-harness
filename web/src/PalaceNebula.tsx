@@ -10,6 +10,7 @@ import {
   InstancedMesh,
   LineBasicMaterial,
   Matrix4,
+  PerspectiveCamera,
   Mesh,
   PointsMaterial,
   REVISION,
@@ -260,7 +261,14 @@ function ThreeNebula({
   const mostInjected = Math.max(0, ...bodies.map((body) => body.injections))
   // Memories present when the Palace opens are already there; any later one arrives.
   const [present] = useState(() => new Set(bodies.map((body) => body.id)))
-  const createRenderer = useMemo(() => async (defaults: RendererDefaults) => {
+  // F223: R3F configures the canvas again on every render, and a render that lands before the first
+  // WebGPU start has finished repeats the whole set-up from a stale reading: a second renderer on the
+  // same canvas, and a second camera R3F never sizes (aspect 0), so the scene projected to nothing
+  // while the counts kept running. One start per canvas, and one camera.
+  const createRenderer = useMemo(() => {
+    let started: Promise<WebGPURenderer> | undefined
+    return (defaults: RendererDefaults) => (started ??= start(defaults))
+  async function start(defaults: RendererDefaults) {
     if (!(defaults.canvas instanceof HTMLCanvasElement)) {
       throw new Error('Palace Nebula requires a browser canvas')
     }
@@ -271,12 +279,14 @@ function ThreeNebula({
     // Size this renderer too, rather than leaving its depth attachment at 300×150.
     renderer.setSize(defaults.canvas.clientWidth, defaults.canvas.clientHeight, false)
     return renderer
+  }
   }, [tier])
+  const camera = useMemo(() => new PerspectiveCamera(48, 1, 0.1, 1000), [])
 
   return <Canvas
     key={tier}
     aria-label={`Living Memory: ${bodies.length} active memories, ${events.length} memory events, ${filaments.length} relationships`}
-    camera={{ fov: 48, position: [0, 0.4, 21] }}
+    camera={camera}
     dpr={tier === 'full' ? [1, 2] : 1}
     gl={createRenderer}
     onCreated={({ gl }) => {
