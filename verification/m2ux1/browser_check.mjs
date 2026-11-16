@@ -126,6 +126,10 @@ async function openModule(targetPage, moduleId) {
     await frame(targetPage, 'threads').locator('.thread-item--selected')
       .getByRole('button', { name: /^Archive / })
       .evaluate((element) => element.click())
+    // M8UX (SD-096 d): archiving asks first.
+    await frame(targetPage, 'threads').locator('.thread-item--selected')
+      .getByRole('button', { name: 'Yes', exact: true })
+      .evaluate((element) => element.click())
   }
   await targetPage.getByTestId(`rack-plugin-frame-${moduleId}`).waitFor()
 }
