@@ -106,7 +106,7 @@ export function ConfirmButton({ question, lost, onConfirm, ...rest }: Omit<Param
   const [asking, setAsking] = useState(false)
   return <>
     <Button aria-haspopup="dialog" aria-expanded={asking} {...rest} onClick={() => setAsking(true)} />
-    {asking && <Confirm question={question} lost={lost} onYes={() => { setAsking(false); onConfirm() }} onNo={() => setAsking(false)} />}
+    {asking && <Confirm question={question} lost={lost} disabled={rest.disabled} onYes={() => { setAsking(false); onConfirm() }} onNo={() => setAsking(false)} />}
   </>
 }
 
