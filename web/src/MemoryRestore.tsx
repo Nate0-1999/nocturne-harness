@@ -83,7 +83,7 @@ export function MemoryRestore() {
         <ul>{preview.manifest.event_counts.map((count) => <li key={count.table}>{count.table}: {count.current} → {count.candidate}</li>)}</ul>
         <p>To restore, stop Nocturne and run <code>nocturne restore {preview.backup_id}</code>. The command rechecks this list and asks for confirmation before switching.</p>
       </>}
-      <Button action="close" type="button" data-tooltip-detail="Close without restoring anything." onClick={() => dialog.current?.close()}>Close preview</Button>
+      <Button action="close" type="button" data-tooltip-detail="Close without restoring anything." onClick={() => dialog.current?.close()} />
     </dialog>
   </section>
 }
