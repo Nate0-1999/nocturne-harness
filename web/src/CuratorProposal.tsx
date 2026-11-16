@@ -55,7 +55,7 @@ export function CuratorProposal({ card, onChanged }: {
       </label> : <p>{card.candidate.body}</p>}
     </section>
     <div>
-      <Button type="button" disabled={busy} onClick={() => void decide('deny')}>Keep as is</Button>
+      <Button action="deny" type="button" disabled={busy} data-tooltip-detail="Keep the memories as they are." onClick={() => void decide('deny')}>Deny repair</Button>
       <Button action="approve" variant="primary" type="button" disabled={busy || !body.trim()} onClick={() => void decide('approve')}>
         {replacement && body !== card.candidate.body ? 'Approve amended repair' : 'Approve repair'}
       </Button>
