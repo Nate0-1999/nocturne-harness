@@ -29,7 +29,7 @@ export function RewindControl({ threadId, promptId, prompt, disabled, onRewound 
         the pointer instead of "No" sliding beneath it and its tip covering the prompt. */}
     {confirming && <span className="rewind-control__confirm" role="dialog" aria-label="Rewind to before this turn?">
       <span>Rewind here?</span>
-      <Button action="confirm" variant="danger" type="button" autoFocus disabled={busy || disabled}
+      <Button action="approve" variant="danger" type="button" autoFocus disabled={busy || disabled}
         data-tooltip-detail="Yes: later turns are set aside and their edits undone." onClick={() => void rewind()}>Yes</Button>
       <Button action="close" type="button" data-tooltip-detail="Keep the conversation as it is." onClick={() => setConfirming(false)}>No</Button>
     </span>}

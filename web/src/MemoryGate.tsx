@@ -706,7 +706,7 @@ function GateCard({
       action={
         <>
           {onAdd !== undefined && (
-            <Button action={added ? 'confirm' : 'add'} iconOnly variant="primary"
+            <Button action={added ? 'approve' : 'add'} iconOnly variant="primary"
               className="memory-card__add"
               type="button"
               data-testid="near-miss-toggle"
@@ -779,7 +779,7 @@ function GateCard({
               data-testid="memory-delete-confirm"
             >
               <span>Permanently delete?</span>
-              <Button action="confirm" variant="danger" type="button" autoFocus disabled={disabled}
+              <Button action="approve" variant="danger" type="button" autoFocus disabled={disabled}
                 data-tooltip-detail="Yes: delete it from the Palace when you continue."
                 onClick={() => onDelete(card.memory_id)}>
                 Yes

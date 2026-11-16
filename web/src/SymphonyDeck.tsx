@@ -345,10 +345,10 @@ export function SymphonyDeck() {
           ) : (
             <footer>
               <small>{String(card.judge)} · {String(card.policy)}</small>
-              <Button action="confirm" type="button" disabled={deciding} data-testid="boundary-allow-once"
+              <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-once"
                 data-tooltip-detail="Let this request cross this wall; the next one asks again."
                 onClick={() => decide(card, 'allowed_once')}>Allow once</Button>
-              <Button action="confirm" type="button" disabled={deciding} data-testid="boundary-allow-thread"
+              <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-thread"
                 data-tooltip-detail="Let every request in this thread cross this wall."
                 onClick={() => decide(card, 'allowed_thread')}>Allow for this thread</Button>
               <Button action="close" type="button" disabled={deciding} data-testid="boundary-deny"

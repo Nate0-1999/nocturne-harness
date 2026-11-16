@@ -56,7 +56,7 @@ export function CuratorProposal({ card, onChanged }: {
     </section>
     <div>
       <Button type="button" disabled={busy} onClick={() => void decide('deny')}>Keep as is</Button>
-      <Button action="confirm" variant="primary" type="button" disabled={busy || !body.trim()} onClick={() => void decide('approve')}>
+      <Button action="approve" variant="primary" type="button" disabled={busy || !body.trim()} onClick={() => void decide('approve')}>
         {replacement && body !== card.candidate.body ? 'Approve amended repair' : 'Approve repair'}
       </Button>
     </div>

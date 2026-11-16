@@ -562,7 +562,7 @@ export function MemoryPanel({
                         </p>
                       )}
                       <div className="principal-memory__editor-actions">
-                        <Button action={editSaved ? "confirm" : "close"}
+                        <Button action={editSaved ? "approve" : "close"}
                           type="button"
                           onClick={() => setEditor(null)}
                         >
@@ -607,7 +607,7 @@ export function MemoryPanel({
           </Select>
         </label>
         <div className="app-settings-actions">
-          <Button action="confirm" variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
+          <Button action="approve" variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
           <Button action="close" type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => deleteDialog.current?.close()}>No</Button>
         </div>
       </dialog>

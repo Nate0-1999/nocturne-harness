@@ -242,6 +242,33 @@ label:has(> .kit-select-wrap, > .kit-field),
   color: var(--ink);
 }
 
+/* SD-096 (d): a confirm is its own row beside the button it answers, never over content:
+   the question and the one line of what is lost, then Yes and No side by side. */
+.kit-confirm {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--seam-b9b5dc7768ae);
+  text-align: left;
+}
+
+.kit-confirm > p {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.kit-confirm small {
+  color: var(--muted);
+}
+
 /* One touch-target rule replaces the per-module 2.75rem copies. */
 @media (pointer: coarse) {
   .kit-button,

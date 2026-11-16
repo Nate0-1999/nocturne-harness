@@ -3261,7 +3261,7 @@ function VisibleQueueRow({
       )}
       <div className="thread-end-row__actions">
         <Button action="close" variant="danger" type="button" disabled={disabled} data-tooltip-detail="Leave it out of your Palace." onClick={onDeny}>Deny</Button>
-        <Button action="confirm" variant="primary" type="button" disabled={disabled} data-tooltip-detail="Save it to your Palace as a memory." onClick={onApprove}>Approve</Button>
+        <Button action="approve" variant="primary" type="button" disabled={disabled} data-tooltip-detail="Save it to your Palace as a memory." onClick={onApprove}>Approve</Button>
       </div>
     </article>
   )
@@ -3595,7 +3595,7 @@ function PalaceQueueModule() {
                   </div>
                   <div className="seed-batch__actions">
                     <Button action="close" variant="danger" type="button" data-tooltip-detail="Discard every memory from this document." disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</Button>
-                    <Button action="confirm" variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
+                    <Button action="approve" variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
                   </div>
                 </header>
                 <div className="seed-batch__memories">
@@ -3603,7 +3603,7 @@ function PalaceQueueModule() {
                     <div key={card.item_uid} className="seed-memory" data-verdict={card.verdict}>
                       <div className="seed-memory__actions">
                         <Button action="remove" iconOnly type="button" data-testid="seed-memory-reject" data-tooltip-detail="Discard just this memory." aria-label={`Reject ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'deny')}>Reject</Button>
-                        <Button action="confirm" iconOnly type="button" data-testid="seed-memory-approve" data-tooltip-detail="Admit just this memory." aria-label={`Approve ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'approve')}>Approve</Button>
+                        <Button action="approve" iconOnly type="button" data-testid="seed-memory-approve" data-tooltip-detail="Admit just this memory." aria-label={`Approve ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'approve')}>Approve</Button>
                       </div>
                       <span>{card.verdict} · {card.candidate.keywords.join(' · ')}</span>
                       <strong>{card.candidate.label}</strong>
