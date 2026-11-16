@@ -4499,3 +4499,31 @@ Memory's twelve-row live comparison passed before the default switched. Harness 
 only its 0.1.96 package version and Memory pin, with the packet's frozen ledger/law copies.
 Chat, sub-agent and judge stayed pinned to gpt-4.1-mini in every disposable walk; no web or
 daemon behavior changed. Both product branches inherit the pending 0.1.95 pair and target main.
+
+## M8UX — One word per action, one icon per meaning, confirmations that say what is lost [P2.2]
+
+PRECEDENT: PLAN M8UX; SD-096 (the owner's sentence and the gate's eight rules); SD-069 / FL-199
+(the one icon table); FL-121 and ui-taste 4 (destructive asks Yes or No); M3UI, M3UI2, M4UX;
+SPEC C.6; F240.
+- The two tables are code, not prose: `ACTION_ICONS` and `ACTION_WORDS` in web/src/kit.tsx. A
+  Button with an action and no words of its own says the table's word, so the hidden hand-drawn
+  glyphs are gone without leaving icon buttons nameless.
+- X keeps two keys, remove and close, as one meaning: off this surface, nothing destroyed. The
+  owner's "× to remove" (ui-taste 3) and the universal close both stand; what X stopped meaning is
+  deny, cancel, No and restore. Deny has the barred circle; Yes, No, Cancel and Reset have none.
+- Stop moved from the bare square to the ringed square: the bare square is the kit's "off" mark
+  on every switch, and "□ Stop run" beside "□ Stage" read as an unticked box.
+- One Confirm in the kit replaces three hand-built ones. It opens under the buttons it answers
+  so the button just clicked does not move (M3W6B-21's reason, kept).
+- New yes/no (rule d) only where the same surface cannot bring the thing back: delete colorway,
+  restore and reset layout, archive a thread (list and composer), deny a whole seed batch, stop a
+  Symphony attempt, Activate, Force values. Not added, because the surface brings it back or
+  nothing is lost: remove a module or layer (the Library restores), pop off a memory (re-add),
+  stop a run (work so far is kept), remove fixture threads (a client-side filter), deny one
+  candidate (the card is itself the question).
+- Kept against a rule, the owner's or the law's words: Queue, Interject, Force retrain, Force
+  values, Rewind, Pin, Audition, Pop off (FL-103), Deny (v2.25), and the gate's Continue, Wrong
+  and Never (SPEC C.6; F240 asks for the ruling). "Try again" stays the word after a failure
+  (it is what the messages say to do; M8MG owns those), Refresh when nothing failed.
+- No behavior change beyond the yes/no above; the daemon and Memory are unchanged. Package
+  0.1.97 with its Memory pin.
