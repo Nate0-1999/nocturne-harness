@@ -2769,7 +2769,7 @@ function ChatModule() {
               })}
             />
           )}
-          <Button variant="bare" action="open"
+          <Button variant="bare"
             type="button"
             className="chat-header__model"
             data-testid="active-model"
@@ -2845,7 +2845,7 @@ function ChatModule() {
 
       {hasUnread && (
         <Button variant="bare" action="latest" iconOnly className="new-response" type="button" data-testid="new-response" onClick={scrollToLatest}>
-          New response ↓
+          New response
         </Button>
       )}
 
@@ -2890,7 +2890,7 @@ function ChatModule() {
             rows={1}
             placeholder={selectedThread?.workspaceMissing === true
               ? "This thread's folder moved; choose its new folder in Threads"
-              : snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
+              : snapshot.connection === 'connected' ? 'Send to Nocturne' : 'Waiting for Nocturne'}
             disabled={promptBusy /* WALL money / C.6: preserve the accepted turn while sending. */}
             onChange={(event) => {
               const value = event.target.value
@@ -2964,18 +2964,20 @@ function ChatModule() {
         </div>
         <div className="composer__actions">
           {activeRun === null && messages.length > 0 && (
-            <Button variant="bare" action="archive" iconOnly
+            <ConfirmButton variant="bare" action="archive" iconOnly={!archiveBusy}
               className="archive-button"
               type="button"
               data-testid="archive-thread"
               aria-label="Archive this thread"
               data-tooltip="Archive this thread"
-              data-tooltip-detail="Extract its memories for review, then close the thread."
+              data-tooltip-detail="Extract its memories for review, then close the thread. Asks first."
               disabled={archiveBusy || openGate !== null /* WALL Palace writes / ADR-022: finish the reviewed gate before extraction. */}
-              onClick={archiveThread}
+              question="Archive this thread?"
+              lost="The thread closes and leaves the list; its memories go to your review."
+              onConfirm={archiveThread}
             >
-              <span aria-hidden="true">{archiveBusy ? '…' : '⤓'}</span>
-            </Button>
+              {archiveBusy ? 'Archiving…' : undefined}
+            </ConfirmButton>
           )}
           {activeRun !== null && (
             <Button type="button" disabled={!canSend || pendingImage !== null /* F104: interjections carry text into the active request. */}
@@ -3003,7 +3005,7 @@ function ChatModule() {
             disabled={!canSend /* WALL attention / C.6, H7: respect the current gate and snapshot. */}
             onClick={transmitPrompt}
           >
-            {activeRun === null ? 'Transmit' : 'Queue'}
+            {activeRun === null ? 'Send' : 'Queue'}
           </Button>
         </div>
       </form>
