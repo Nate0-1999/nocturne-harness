@@ -247,6 +247,16 @@
   padding: 0;
 }
 
+/* SD-096: while it archives the button says so, and its question takes the row's full width. */
+.thread-item__archive:not(.kit-button--icon-only) {
+  width: auto;
+  padding: 0 var(--space-2);
+}
+
+.thread-item > .kit-confirm {
+  grid-column: 1 / -1;
+}
+
 .thread-archive-error {
   margin: .55rem .35rem 0;
   color: var(--danger);

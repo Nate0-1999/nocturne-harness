@@ -2120,9 +2120,7 @@ function ThreadsModule() {
           aria-label="Close threads"
           data-tooltip-detail="Return to the conversation."
           onClick={() => selection.select(null)}
-        >
-          Back
-        </Button>
+        />
       </div>
 
       <div className="thread-rail__actions">
@@ -2246,7 +2244,7 @@ function ThreadsModule() {
                     event.preventDefault()
                     bindDraftFolder(selectedEntry.thread_id)
                   }}
-                >Bind</Button>
+                >Bind folder</Button>
               </div>
             </form>
           )}
@@ -2306,14 +2304,16 @@ function ThreadsModule() {
                   {threadModelMark(browser, entry, isSelected ? { model: selectedModel } : null)}
                 </span>
               </Button>
-              <Button action="archive" iconOnly
+              <ConfirmButton action="archive" iconOnly={archiveBusyThreadId !== entry.thread_id}
                 className="thread-item__archive"
                 type="button"
                 aria-label={`Archive ${title}`}
                 data-tooltip={`Archive ${title}`}
-                data-tooltip-detail="Extract its memories for review, then close the thread."
+                data-tooltip-detail="Extract its memories for review, then close the thread. Asks first."
                 disabled={archiveDisabled}
-                onClick={() => {
+                question={`Archive “${title}”?`}
+                lost="The thread closes and leaves this list; its memories go to your review."
+                onConfirm={() => {
                   setArchiveBusyThreadId(entry.thread_id)
                   setArchiveFailure(null)
                   void events.dispatch({ type: 'thread.archive', thread_id: entry.thread_id })
@@ -2321,8 +2321,8 @@ function ThreadsModule() {
                     .finally(() => setArchiveBusyThreadId(null))
                 }}
               >
-                <span aria-hidden="true">{archiveBusyThreadId === entry.thread_id ? '…' : '⤓'}</span>
-              </Button>
+                {archiveBusyThreadId === entry.thread_id ? 'Archiving…' : undefined}
+              </ConfirmButton>
             </div>
           )
         })}
