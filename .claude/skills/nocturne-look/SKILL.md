@@ -13,7 +13,7 @@ meaning, same test ids. If something is broken, write one flag and move on.
 1. Words earn their place. 2. Glance first, detail on demand: a row shows
 the aggregate, the name, the content; the breakdown pops up on hover.
 3. One button style, right-sized, chamfered, tipped; row actions are small
-icon buttons (× remove, ×! delete permanently). 4. Destructive needs a
+icon buttons (the X removes, the bin deletes permanently). 4. Destructive needs a
 yes/no. 5. Cohesion over character. 6. Density is the reward.
 
 Ruled 2026-09-22 for memory cards: score, name, memory only; a spider-web
@@ -29,6 +29,27 @@ chart of the relevance features on hover; × and ×! with a confirmation.
 - neo-noir stays the default; every theme keeps working (the three-theme ruling)
 - "Icons reused across modules should be the same size, similarly text should be the same size and font. Not every icon needs a box around it" (2026-10-01: one scale; boxes only on icon buttons)
 - "I don't want this to look like pure ai website" (2026-10-01: the tells law, M3UI2)
+
+## Words, icons and questions (SD-096, owner 2026-11-16: "buttons and user instructions and symbols … to simplify things")
+
+The two tables are in `web/src/kit.tsx`: ACTION_ICONS (meaning → icon) and ACTION_WORDS
+(action → word). A new word or icon gets its row there first.
+
+- a. A worded button names what happens: a verb, and the thing when the verb alone is unclear
+  ("Save invoice"). Never OK, Done or Continue (the memory gate's Continue stands on SPEC C.6
+  until F240 is ruled).
+- b. One word per action in every module. The owner's words stay as he said them: queue,
+  interject, force retrain, force values, rewind, pin, audition, pop off, deny.
+- c. One icon per meaning and one meaning per icon. The X takes a thing off the surface and
+  destroys nothing; the bin destroys; the check approves. Yes, No, Cancel and Reset carry no icon.
+- d. A confirmation's question names the action and the thing, and one line says what is lost;
+  its buttons are Yes and No (the kit's Confirm). What the same surface cannot bring back asks first.
+- e. An error says what failed and what to do next, in plain words: never a raw exception, a bare
+  status code or JSON.
+- f. An empty state is one line that says what fills it.
+- g. A standing instruction is one short sentence, action first; anything longer lives in a tip
+  or a legend opened on demand.
+- h. Meaning is never carried by color alone: a word, an icon, a shape or a tip says it too.
 
 ## Procedure, module by module
 
