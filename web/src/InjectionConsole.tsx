@@ -18,7 +18,7 @@ import {
   type ScorerConsoleLearning,
 } from './learning'
 import { useRackPlugin, useRackSnapshot } from './rack'
-import { Button, Select, TextField } from './kit'
+import { Button, ConfirmButton, Select, TextField } from './kit'
 
 type Values = {
   tau: number
@@ -552,14 +552,16 @@ export function InjectionConsole() {
                   >
                     {AUDITION_LABEL}
                   </Button>
-                  <Button variant="primary"
+                  <ConfirmButton variant="primary"
                     className="enact"
-                    data-tooltip-detail="Make this proposal the governing scorer."
+                    data-tooltip-detail="Make this proposal the governing scorer. Asks first."
                     disabled={busy}
-                    onClick={() => void activateProposal(proposal.version)}
+                    question={`Activate proposal ${proposal.version}?`}
+                    lost="It replaces the scorer in force; this console cannot bring that one back."
+                    onConfirm={() => void activateProposal(proposal.version)}
                   >
                     {ACTIVATE_LABEL}
-                  </Button>
+                  </ConfirmButton>
                 </div>
                 {injectionId === undefined && (
                   <small>Select a thread with a frozen gate to audition. Activation remains available.</small>
@@ -634,14 +636,16 @@ export function InjectionConsole() {
                 >
                   Run DEEP simulation
                 </Button>
-                <Button variant="primary"
+                <ConfirmButton variant="primary"
                   className="enact"
-                  data-tooltip-detail="Apply these values by hand; needs a simulation receipt first."
+                  data-tooltip-detail="Apply these values by hand; needs a simulation receipt first. Asks first."
                   disabled={receipt === null || busy}
-                  onClick={() => void enact()}
+                  question="Force these values?"
+                  lost="They replace the scorer in force; this console cannot bring that one back."
+                  onConfirm={() => void enact()}
                 >
                   {FORCE_VALUES_LABEL}
-                </Button>
+                </ConfirmButton>
               </div>
               <div aria-label="Terrain parameters">
                 {(['X', 'Depth'] as const).map((label, index) => <label key={label}>{label}
