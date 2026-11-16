@@ -30,7 +30,7 @@ export function ToolInventory({ threadId }: { threadId: string | null }) {
     }
   }
   return <div className="tool-inventory">
-    <Button type="button" data-tooltip-detail="List the tools and skills this conversation can use." disabled={threadId === null} aria-expanded={open} onClick={() => void toggle()}>Tools & skills</Button>
+    <Button action={open ? 'collapse' : 'expand'} type="button" data-tooltip-detail="List the tools and skills this conversation can use." disabled={threadId === null} aria-expanded={open} onClick={() => void toggle()}>Tools & skills</Button>
     {open && <section aria-label="Tools and skills" className="tool-inventory__panel">
       <p role="status">{status}</p>
       <ul>{entries.map((entry) => <li key={`${entry.kind}:${entry.name}`}>
