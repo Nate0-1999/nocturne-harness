@@ -266,9 +266,7 @@ function LocalCopy({ copy, onDismiss }: { copy: LocalCopyView; onDismiss: (uid: 
           <header className="memory-card__header">
             <div className="memory-card__title"><h4>{WRITE_KINDS[card.kind] ?? card.kind} “{card.label}” came back</h4></div>
             <div className="memory-card__decision">
-              <Button action="close" iconOnly type="button" data-tooltip="Dismiss" data-tooltip-detail="Remove this card; the Palace already decided." aria-label={`Dismiss ${card.label}`} onClick={() => onDismiss(card.uid)}>
-                <span aria-hidden="true">×</span>
-              </Button>
+              <Button action="remove" iconOnly type="button" data-tooltip-detail="Take this card away; the Palace already decided." aria-label={`Remove ${card.label}`} onClick={() => onDismiss(card.uid)} />
             </div>
           </header>
           <p className="memory-card__body">{card.reason}</p>
