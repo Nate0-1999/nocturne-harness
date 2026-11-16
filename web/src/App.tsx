@@ -159,7 +159,7 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
-import { ActionIcon, Button, ConfirmButton, Select, TextField, Toggle } from './kit'
+import { ActionIcon, Button, Confirm, ConfirmButton, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -2412,6 +2412,7 @@ function ChatModule() {
   const [promptBusy, setPromptBusy] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const [archiveBusy, setArchiveBusy] = useState(false)
+  const [archiveAsking, setArchiveAsking] = useState<string | null>(null) // the thread the question is about
   const [orchestrationChoice, setOrchestration] = useState<'Duet' | 'Symphony' | null>(null)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
@@ -2850,6 +2851,9 @@ function ChatModule() {
       )}
 
       <form className="composer" onSubmit={submitPrompt} aria-label="Prompt composer">
+        {/* SD-096 (d): the question takes the composer's full width; the action column is too narrow for it. */}
+        {archiveAsking !== null && archiveAsking === selectedThreadId && <Confirm question="Archive this thread?" lost="The thread closes and leaves the list; its memories go to your review."
+          onYes={() => { setArchiveAsking(null); archiveThread() }} onNo={() => setArchiveAsking(null)} />}
         <div className="composer__body">
           {pendingImage !== null && (
             <div className="composer-attachment" role="group" aria-label="Attached image">
@@ -2957,27 +2961,27 @@ function ChatModule() {
             {openGate !== null
               ? 'Review memory before the model starts'
               : activeRun === null
-                ? 'Enter to transmit'
+                ? 'Enter to send'
                 : 'New prompts queue at the turn boundary'}
             <span>Shift+Enter for newline</span>
           </p>
         </div>
         <div className="composer__actions">
           {activeRun === null && messages.length > 0 && (
-            <ConfirmButton variant="bare" action="archive" iconOnly={!archiveBusy}
+            <Button variant="bare" action="archive" iconOnly={!archiveBusy}
               className="archive-button"
               type="button"
               data-testid="archive-thread"
               aria-label="Archive this thread"
               data-tooltip="Archive this thread"
               data-tooltip-detail="Extract its memories for review, then close the thread. Asks first."
+              aria-haspopup="dialog"
+              aria-expanded={archiveAsking === selectedThreadId}
               disabled={archiveBusy || openGate !== null /* WALL Palace writes / ADR-022: finish the reviewed gate before extraction. */}
-              question="Archive this thread?"
-              lost="The thread closes and leaves the list; its memories go to your review."
-              onConfirm={archiveThread}
+              onClick={() => setArchiveAsking(selectedThreadId)}
             >
               {archiveBusy ? 'Archiving…' : undefined}
-            </ConfirmButton>
+            </Button>
           )}
           {activeRun !== null && (
             <Button type="button" disabled={!canSend || pendingImage !== null /* F104: interjections carry text into the active request. */}
