@@ -320,9 +320,7 @@ export function MemoryPanel({
           aria-label="Close memory drawer"
           data-tooltip-detail="Return to the conversation."
           onClick={onClose}
-        >
-          Back
-        </Button>
+        />
       </header>
 
       <div className="memory-panel__toolbar">
@@ -434,14 +432,12 @@ export function MemoryPanel({
                       <Button action="remove" iconOnly
                         className="memory-card__remove principal-memory__remove"
                         type="button"
-                        data-tooltip="Remove"
+                        data-tooltip="Pop off"
                         data-tooltip-detail="Leave this memory out of the conversation from the next request."
-                        aria-label={`Remove ${memoryTitle(memory)} from the conversation`}
+                        aria-label={`Pop off ${memoryTitle(memory)} from the conversation`}
                         disabled={!connected || !removeEnabled || busy}
                         onClick={() => remove(memory.memory_id)}
-                      >
-                        <span aria-hidden="true">×</span>
-                      </Button>
+                      />
                     )}
                     {(threadExcluded || nearMiss) && (
                       <Button action="add" iconOnly variant="primary"
@@ -452,9 +448,7 @@ export function MemoryPanel({
                         aria-label={`${nearMiss ? 'Add' : 'Re-add'} ${memoryTitle(memory)}`}
                         disabled={!connected || !removeEnabled || busy || unavailable}
                         onClick={() => add(memory.memory_id)}
-                      >
-                        <span aria-hidden="true">+</span>
-                      </Button>
+                      />
                     )}
                     <Button action="edit" iconOnly
                       className="memory-card__remove"
@@ -464,9 +458,7 @@ export function MemoryPanel({
                       disabled={!connected || busy || unavailable}
                       onClick={() => beginEdit(memory)}
                       aria-label="Edit body"
-                    >
-                      <span aria-hidden="true">✎</span>
-                    </Button>
+                    />
                     <Button action={memory.pin ? "unpin" : "pin"} iconOnly
                       className="memory-card__remove"
                       type="button"
@@ -476,16 +468,14 @@ export function MemoryPanel({
                       data-tooltip-detail="A pinned memory is always injected, beyond the score and the share."
                       disabled={!connected || busy || unavailable}
                       onClick={() => togglePin(memory)}
-                    >
-                      <span aria-hidden="true">⚑</span>
-                    </Button>
+                    />
                     {originThread !== undefined && (
-                      <Button action="open" iconOnly className="memory-card__remove" type="button"
-                        data-tooltip="Open the conversation" data-tooltip-detail="Go to the thread this memory was born in."
+                      <Button action="thread" iconOnly className="memory-card__remove" type="button"
+                        data-tooltip-detail="Go to the thread this memory was born in."
                         onClick={() => {
                           void events.dispatch({ type: 'thread.select', thread_id: originThread.thread_id })
                             .catch((error: unknown) => reportClientError(error, 'Origin conversation could not be opened'))
-                        }}>Open the conversation</Button>
+                        }} />
                     )}
                     <Button action="delete" iconOnly variant="danger"
                       className="memory-card__delete"
@@ -498,9 +488,7 @@ export function MemoryPanel({
                       aria-haspopup="dialog"
                       disabled={!connected || busy || unavailable}
                       onClick={() => { setDeletionReason('no_longer_needed'); setDeleting(memory); deleteDialog.current?.showModal() }}
-                    >
-                      <span aria-hidden="true">×!</span>
-                    </Button>
+                    />
                   </>}
                 >
                   {auditions[memory.memory_id] !== undefined && <p className="scorer-preview-mark">Audition: {formatHumanScore(auditions[memory.memory_id].preview_score)} · #{auditions[memory.memory_id].preview_rank} {auditions[memory.memory_id].disposition.replace('_', ' ')}</p>}
@@ -562,11 +550,11 @@ export function MemoryPanel({
                         </p>
                       )}
                       <div className="principal-memory__editor-actions">
-                        <Button action={editSaved ? "approve" : "close"}
+                        <Button action={editSaved ? "close" : undefined}
                           type="button"
                           onClick={() => setEditor(null)}
                         >
-                          {editSaved ? 'Done' : 'Cancel'}
+                          {editSaved ? 'Close' : 'Cancel'}
                         </Button>
                         {!editSaved && (
                           <Button action="save" variant="bare"
@@ -597,9 +585,8 @@ export function MemoryPanel({
       </div>
       <dialog ref={deleteDialog} aria-labelledby="delete-memory-title" className="memory-restore-dialog memory-delete-dialog"
         onClose={() => setDeleting(null)}>
-        <h2 id="delete-memory-title">Permanently delete?</h2>
-        <p><strong>{deleting?.label}</strong></p>
-        <p>It will not be offered to a conversation again unless you restore it from the Memory Graph. Past conversations keep it.</p>
+        <h2 id="delete-memory-title">Delete “{deleting?.label}” permanently?</h2>
+        <p>It is not offered to a conversation again; the Memory Graph can restore it.</p>
         <label>Why
           <Select value={deletionReason} data-tooltip-detail="Your reason trains what gets saved in future." onChange={(event) => setDeletionReason(event.target.value as typeof deletionReason)}>
             <option value="no_longer_needed">No longer needed</option>
@@ -607,8 +594,8 @@ export function MemoryPanel({
           </Select>
         </label>
         <div className="app-settings-actions">
-          <Button action="approve" variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
-          <Button action="close" type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => deleteDialog.current?.close()}>No</Button>
+          <Button variant="danger" type="button" data-tooltip-detail="Yes: delete it from the Palace." disabled={!connected || busy || deleting === null} onClick={() => void deleteMemory()}>Yes</Button>
+          <Button type="button" data-tooltip-detail="Keep the memory as it is." onClick={() => deleteDialog.current?.close()}>No</Button>
         </div>
       </dialog>
     </aside>
@@ -643,9 +630,7 @@ export function MemoryTrace() {
         data-tooltip-detail={item.in_context ? 'Leave this memory out from the next request.' : 'Bring this memory in from the next request.'}
         aria-label={`${item.in_context ? 'Pop off' : item.near_miss ? 'Add' : 'Re-add'} ${item.memory.label}`}
         disabled={disabled || (!item.in_context && item.memory.status !== 'active')}
-        onClick={() => change(item.in_context ? 'memory.remove' : 'memory.add', item.memory.memory_id)}>
-        <span aria-hidden="true">{item.in_context ? '×' : '+'}</span>
-      </Button>} />)}
+        onClick={() => change(item.in_context ? 'memory.remove' : 'memory.add', item.memory.memory_id)} />} />)}
   </section>
 }
 
