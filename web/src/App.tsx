@@ -159,7 +159,7 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
-import { ActionIcon, Button, Select, TextField, Toggle } from './kit'
+import { ActionIcon, Button, ConfirmButton, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -882,15 +882,13 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           data-tooltip-detail="Choose the app theme, manage conversation backup, or save and restore your Stage layout."
           aria-expanded={appSettingsOpen}
           onClick={() => setAppSettingsOpen((open) => !open)}
-        >
-          <span aria-hidden="true">⚙</span>
-        </Button>
+        />
       </div>
       {appSettingsOpen && (
         <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings">
           <header>
             <strong>Settings</strong>
-            <Button action="close" iconOnly type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)}>×</Button>
+            <Button action="close" iconOnly type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)} />
           </header>
           <section>
             <h2>Appearance</h2>
@@ -930,14 +928,16 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {platePressBusy ? 'Pressing…' : 'Press image'}
               </Button>
               {selectedColorway !== null ? (
-                <Button action="remove" variant="bare"
+                <ConfirmButton action="delete" variant="bare"
                   className="plate-remove-button"
                   type="button"
                   data-testid="plate-remove-button"
-                  onClick={removeSelectedColorway}
+                  question={`Delete the colorway “${selectedColorway.label}”?`}
+                  lost="Its colors are gone until you press the image again."
+                  onConfirm={removeSelectedColorway}
                 >
-                  Remove colorway
-                </Button>
+                  Delete colorway
+                </ConfirmButton>
               ) : null}
             </div>
           </section>
@@ -970,17 +970,18 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <p data-testid="layout-status">{layoutStatus}</p>
             <div className="app-settings-actions">
               <Button action="save" type="button" data-testid="layout-save" data-tooltip="Save layout" data-tooltip-detail="Keep the current stage layout as your saved set." onClick={saveCurrentSet}>Save</Button>
-              <Button action="restore"
+              <ConfirmButton action="restore"
                 type="button"
                 data-testid="layout-restore"
                 data-tooltip="Restore layout"
-                data-tooltip-detail="Return the stage to your saved set."
+                data-tooltip-detail="Return the stage to your saved set. Asks first."
                 disabled={savedSet === null}
-                onClick={restoreSavedSet}
-              >
-                Restore
-              </Button>
-              <Button action="refresh" type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout." onClick={resetFactorySet}>Reset</Button>
+                question="Restore the saved layout?"
+                lost="The layout on screen now is replaced."
+                onConfirm={restoreSavedSet}
+              />
+              <ConfirmButton type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout. Asks first."
+                question="Reset the layout to factory?" lost="The layout on screen now is replaced; your saved set stays." onConfirm={resetFactorySet}>Reset</ConfirmButton>
             </div>
           </section>
           <MemoryRestore />
@@ -1010,9 +1011,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 data-tooltip="Remove layer"
                 data-tooltip-detail="Shelve this layer; the library can bring it back."
                 onClick={() => setLayout((current) => removeStageLayer(current, candidate.layer_id))}
-              >
-                ×
-              </Button>
+              />
             </div>
           ))}
         </div>
@@ -1023,18 +1022,15 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           data-tooltip="Create a layer"
           data-tooltip-detail="Open a new empty layer on this Stage."
           onClick={() => setLayout(createStageLayer)}
-        >
-          <span aria-hidden="true">＋</span>
-          Layer
-        </Button>
+        />
         <div className="stage-camera-controls" role="group" aria-label="View layout">
           <Button variant="bare" type="button" data-tooltip-detail="Free placement: drag, resize and zoom the modules." aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</Button>
           <Button variant="bare" type="button" data-tooltip-detail="The same modules laid out full size in one scrolling sheet." aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</Button>
         </div>
         <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
-          <Button action="zoomOut" iconOnly variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</Button>
+          <Button action="zoomOut" iconOnly variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)} />
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
-          <Button action="zoomIn" iconOnly variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</Button>
+          <Button action="zoomIn" iconOnly variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)} />
           <Button action="fit" iconOnly variant="bare"
             type="button"
             data-testid="stage-fit"
@@ -1044,7 +1040,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             Whole stage
           </Button>
         </div>
-        <Button action="open" iconOnly variant="bare"
+        <Button variant="bare"
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
@@ -1169,7 +1165,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <aside className="stage-library" data-testid="stage-library" aria-label="Stage library">
           <header>
             <strong>Stage library</strong>
-            <Button action="close" iconOnly variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</Button>
+            <Button action="close" iconOnly variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)} />
           </header>
           <RackPluginUpload onInstalled={(id) => setLayout((current) => restoreStageModule(current, id))} />
           <ul>
@@ -1621,9 +1617,7 @@ function RackModuleFrame({
               data-tooltip="Remove module"
               data-tooltip-detail="Take it off this layer; the Library brings it back."
               onClick={() => onRemove(instanceId)}
-            >
-              ×
-            </Button>
+            />
           )}
           {onCollapseToggle !== undefined && (
             <Button action={collapsed ? "expand" : "collapse"} iconOnly variant="bare"
@@ -1634,7 +1628,6 @@ function RackModuleFrame({
               aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${manifest.name}`}
               onClick={onCollapseToggle}
             >
-              <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
               {collapsed ? 'Expand' : 'Collapse'}
             </Button>
           )}
@@ -1762,9 +1755,7 @@ function RackSettingsControl({
         data-tooltip={`${manifest.name} settings`}
         data-tooltip-detail="Open its view and module options."
         onClick={toggle}
-      >
-        <span aria-hidden="true">⚙</span>
-      </Button>
+      />
       {open && (
         <dialog open className="rack-module__settings-dialog" aria-label={`${manifest.name} settings`}>
           {scopeAdjustable ? (
@@ -1775,9 +1766,7 @@ function RackSettingsControl({
                   type="button"
                   aria-label={`Close ${manifest.name} settings`}
                   onClick={toggle}
-                >
-                  ×
-                </Button>
+                />
               </header>
               <p>Choose what this module {spatial ? 'watches' : 'follows'}.</p>
               <div className="rack-module__scope" aria-label={`${manifest.name} view`}>

@@ -47,7 +47,7 @@ test('the Stage exposes a labelled one-click layer creator beside its tabs', asy
   assert.match(app, /data-testid="stage-layer-create"/u)
   assert.match(app, /data-tooltip="Create a layer"/u)
   assert.match(app, /onClick=\{\(\) => setLayout\(createStageLayer\)\}/u)
-  assert.match(app, /<span aria-hidden="true">＋<\/span>\s*Layer/u)
+  assert.match(app, /<Button action="add" iconOnly aria-label="Create a layer"/u)
 })
 
 /** M3EX-29 / P2.5: Escape closes the Settings panel and the Library, like the module gear dialog. */
