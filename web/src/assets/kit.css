@@ -242,11 +242,13 @@ label:has(> .kit-select-wrap, > .kit-field),
   color: var(--ink);
 }
 
-/* SD-096 (d): a confirm is its own row beside the button it answers, never over content:
-   the question and the one line of what is lost, then Yes and No side by side. */
+/* SD-096 (d): a confirm is its own row under the buttons it answers, never over content, and
+   the button just clicked stays where it was: the question and the one line of what is lost,
+   then Yes and No side by side. */
 .kit-confirm {
   display: flex;
   flex: 1 0 100%;
+  order: 1;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
