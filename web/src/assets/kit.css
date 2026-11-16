@@ -258,6 +258,11 @@ label:has(> .kit-select-wrap, > .kit-field),
   text-align: left;
 }
 
+/* The row that holds a confirm wraps, so the confirm can take a line of its own. */
+:where(:has(> .kit-confirm)) {
+  flex-wrap: wrap;
+}
+
 .kit-confirm > p {
   flex: 1 1 12rem;
   min-width: 0;

@@ -1673,7 +1673,6 @@ button.rack-module__resize-handle--nw {
 }
 
 .composer__actions:has(> .kit-confirm) {
-  flex-wrap: wrap;
   justify-content: flex-end;
   max-width: 22rem;
 }
