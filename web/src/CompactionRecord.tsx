@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRackPlugin } from './rack'
+import { failureMessage } from './requestFailure'
 
 type SpanEntry = { id: string; text: string; kept: boolean }
 type DrawnFact = { label: string; body: string; source_message_ids: string[]; verdict: string }
@@ -19,7 +20,7 @@ export function CompactionRecord({ threadId, runId }: { threadId: string; runId:
         { compactions?: Record[] } | null
       setRecord(result?.compactions?.filter((item) => item.run_id === runId).at(-1) ?? null)
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'The record could not be read.')
+      setStatus(failureMessage(error, 'The compaction record could not be read. Reload the thread and try again.'))
     }
   }
   const sources = new Set(focus === null || !record ? [] : record.facts[focus]?.source_message_ids)
@@ -30,7 +31,7 @@ export function CompactionRecord({ threadId, runId }: { threadId: string; runId:
         Conversation compacted · full history kept in the journal
       </summary>
       {status && <small role="status">{status}</small>}
-      {record === null && <small>No record was kept for this compaction.</small>}
+      {record === null && <small>Open a newly compacted turn to see its source record.</small>}
       {record && <div className="compaction-record__columns">
         <section aria-label="Compacted conversation">
           <h4>Conversation · {record.span.length}</h4>

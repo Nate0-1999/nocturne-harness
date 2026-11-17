@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useRackPlugin } from './rack'
 import { ConfirmButton, Select } from './kit'
+import { failureMessage } from './requestFailure'
 import { rewindNotice, type RewindScope } from './runEventDisplay'
 
 export function RewindControl({ threadId, promptId, prompt, disabled, onRewound }: {
@@ -18,7 +19,7 @@ export function RewindControl({ threadId, promptId, prompt, disabled, onRewound 
       const kept = Array.isArray(result?.commits_kept) ? result.commits_kept.filter((line): line is string => typeof line === 'string') : []
       setStatus('')
       onRewound(rewindNotice(scope, prompt, kept), scope === 'files' ? null : prompt)
-    } catch (error) { setStatus(error instanceof Error ? error.message : 'Rewind failed') }
+    } catch (error) { setStatus(failureMessage(error, 'The thread was not rewound. Reload it and try again.')) }
     finally { setBusy(false) }
   }
   return <span className="rewind-control">
