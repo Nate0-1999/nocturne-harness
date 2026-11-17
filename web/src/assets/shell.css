@@ -691,8 +691,6 @@
   color: var(--muted);
   letter-spacing: 0.02em;
   text-transform: none;
-  white-space: normal;
-  overflow-wrap: anywhere;
 }
 
 .message--danger .message__status {

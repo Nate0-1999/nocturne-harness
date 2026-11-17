@@ -3777,9 +3777,10 @@ function MessageRow({
     <article className={`message message--assistant message--${tone}`} data-role="assistant">
       <header className="message__label">
         <span>Nocturne</span>
-        {status !== null && <span className="message__status">{status}</span>}
+        {status !== null && runState !== 'error' && <span className="message__status">{status}</span>}
       </header>
       <div className="message__content">
+      {status !== null && runState === 'error' && <p role="alert">{status}</p>}
       {message.events.filter((event) => event.event_kind === 'human_interjection').map((event, index) => (
         <p key={`steering-${index}`}><strong>You interjected:</strong> {String(event.instruction)}</p>
       ))}
