@@ -1,3 +1,4 @@
+import { failureMessage } from './requestFailure'
 import {
   createBrowserEnvelope,
   decodeServerEnvelope,
@@ -276,7 +277,7 @@ export class HarnessSocketClient {
       useHarnessStore
         .getState()
         .setTransportError(
-          error instanceof Error ? error.message : 'Unable to open Harness socket',
+          failureMessage(error, 'Nocturne could not connect. Check the connection while it retries.'),
         )
       this.scheduleReconnect()
       return
@@ -308,7 +309,7 @@ export class HarnessSocketClient {
       if (envelope === null) {
         useHarnessStore
           .getState()
-          .setTransportError('Nocturne received an invalid message')
+          .setTransportError('Nocturne received an invalid message. Reload to try again.')
         return
       }
 
@@ -359,7 +360,7 @@ export class HarnessSocketClient {
       if (generation === this.generation && socket === this.socket) {
         useHarnessStore
           .getState()
-          .setTransportError('Harness connection interrupted')
+          .setTransportError('Nocturne lost its connection. Wait while it reconnects.')
       }
     })
 
@@ -442,9 +443,7 @@ export class HarnessSocketClient {
       useHarnessStore
         .getState()
         .setTransportError(
-          error instanceof Error
-            ? error.message
-            : 'Memory panel could not be refreshed',
+          failureMessage(error, 'Memories could not be refreshed. Press Refresh to try again.'),
         )
     }
   }

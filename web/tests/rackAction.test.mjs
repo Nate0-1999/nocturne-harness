@@ -13,7 +13,7 @@ test('reports an asynchronous rack action failure before rethrowing it', async (
     failure,
   )
 
-  assert.deepEqual(reported, ['Rack action failed (503)'])
+  assert.deepEqual(reported, ['The action could not finish. Try again.'])
 })
 
 /** F022 requires successful reconciliation to stay quiet and continue to its review handoff. */

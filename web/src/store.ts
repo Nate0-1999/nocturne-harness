@@ -55,6 +55,7 @@ export interface ActiveRunState {
 export interface HarnessError {
   source?: string
   message: string
+  publicMessage?: string
   detail: JsonValue
 }
 
@@ -939,7 +940,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
 
       setTransportError: (message, source) => {
         set({
-          globalError: { message, detail: message, source },
+          globalError: { message, publicMessage: message, detail: message, source },
         })
       },
 
