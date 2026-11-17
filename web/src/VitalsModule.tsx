@@ -14,6 +14,7 @@ import {
 import './assets/honest-display.css'
 import { Button } from './kit'
 import { modelLabel, strategyName } from './modelBrowser'
+import { failureMessage } from './requestFailure'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
 
@@ -57,7 +58,7 @@ export function VitalsModule() {
       })
       .catch((error: unknown) => {
         if (active) {
-          setFailure(error instanceof Error ? error.message : 'Spend is unavailable. Try again.')
+          setFailure(failureMessage(error, 'Spend could not be loaded. Try again.'))
           setPhase('failed')
         }
       })
@@ -85,7 +86,7 @@ export function VitalsModule() {
   }
 
   if (attunedWithoutTarget) {
-    return <SpendNotice>No conversation or stack is attuned.</SpendNotice>
+    return <SpendNotice>Select a conversation or stack to see its spend.</SpendNotice>
   }
   if (snapshot === null) {
     return (
@@ -123,7 +124,7 @@ export function VitalsModule() {
       {scope === 'GLOBAL' && snapshot.can_record_invoice && <InfrastructureInvoiceForm onSaved={refresh} />}
       {rowCount === 0 ? (
         <p className="spend-table__empty">
-          {scope === 'ATTUNED' ? `No spend for ${rack.attunement?.name ?? 'this view'}.` : 'No spend recorded.'}
+          {scope === 'ATTUNED' ? `Run a prompt in ${rack.attunement?.name ?? 'this view'} to record spend.` : 'Run a prompt to record spend.'}
         </p>
       ) : (
         <div className="spend-table__scroll">

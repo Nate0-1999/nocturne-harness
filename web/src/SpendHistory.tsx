@@ -6,6 +6,7 @@ import { useRackPlugin } from './rack'
 import { dayDrift, formatDayUsd, type ReconciliationSnapshot } from './vitals'
 import './assets/spend-history.css'
 import { Button, Select, TextField } from './kit'
+import { failureMessage } from './requestFailure'
 
 export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) {
   const { events } = useRackPlugin()
@@ -21,7 +22,7 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
       setStatus(`Invoice ${invoice.trim()} recorded. Repeating the same invoice does not add another charge.`)
       onSaved()
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Invoice could not be recorded.')
+      setStatus(failureMessage(error, 'The invoice was not saved. Check its date and amount, then try again.'))
     } finally { setPending(false) }
   }
   return <details className="spend-history">
@@ -100,14 +101,14 @@ function DayReconciliation({ value, canCheck }: { value: ReconciliationSnapshot 
       setLatest(await events.dispatch({ type: 'spend.reconcile' }) as unknown as ReconciliationSnapshot)
       setStatus('')
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'The bill could not be checked.')
+      setStatus(failureMessage(error, 'The bill could not be checked. Press Check now to try again.'))
     } finally { setPending(false) }
   }
   return <div className={`spend-reconciliation${day?.drifting ? ' spend-reconciliation--drift' : ''}`} data-testid="spend-reconciliation">
     <dl className="spend-history__totals">
       <div><dt>Ledger today · UTC</dt><dd>{day === null ? 'Not checked' : formatDayUsd(day.ledger)}</dd></div>
       <div><dt>OpenRouter bill today</dt><dd>{day === null ? 'Not checked' : formatDayUsd(day.broker)}</dd></div>
-      <div><dt>Drift</dt><dd>{day === null ? '—' : day.percent === null ? (day.ledger > 0 ? 'No bill yet' : 'None') : `${day.percent > 0 ? '+' : ''}${formatHumanPercent(day.percent)}`}</dd></div>
+      <div><dt>Drift</dt><dd>{day === null ? '—' : day.percent === null ? 'Check now to compare spend.' : `${day.percent > 0 ? '+' : ''}${formatHumanPercent(day.percent)}`}</dd></div>
     </dl>
     <p>
       <small title="The key may also pay for other Palaces and apps, and its bill can trail the ledger by a few minutes.">
@@ -123,10 +124,10 @@ function DayReconciliation({ value, canCheck }: { value: ReconciliationSnapshot 
 export function SpendDaily({ snapshot }: { snapshot: SpendTableSnapshot }) {
   return <details className="spend-history">
     <summary>Daily spend · UTC</summary>
-    {snapshot.days.length === 0 ? <p>No daily spend recorded.</p> : <table><thead><tr><th>Day</th><th>Models</th><th>Infrastructure</th><th>Total</th></tr></thead>
+    {snapshot.days.length === 0 ? <p>Run a prompt to record daily spend.</p> : <table><thead><tr><th>Day</th><th>Models</th><th>Infrastructure</th><th>Total</th></tr></thead>
       <tbody>{snapshot.days.map((day) => <tr key={day.day}><th>{day.day.slice(0, 10)}</th><td>{money(day.model_usd)}</td><td>{money(day.infrastructure_usd)}</td><td>{money(day.total_usd)}{day.unpriced_lines > 0 && ' + unpriced receipts'}</td></tr>)}</tbody>
     </table>}
-    <small>Infrastructure appears on its ledger date. A missing bill is not zero spend.</small>
+    <small title="Infrastructure appears on its ledger date; a missing bill is not zero spend.">Check invoice dates when comparing totals.</small>
   </details>
 }
 
@@ -134,7 +135,7 @@ export function SpendReceipts({ snapshot }: { snapshot: SpendTableSnapshot }) {
   return <details className="spend-history">
     <summary>Spend receipts · {snapshot.receipts.length} lines</summary>
     <p>Oldest first. Each receipt keeps its original ID and amount.</p>
-    {snapshot.receipts.length === 0 ? <p>No receipt lines available.</p> : <div className="spend-table__scroll"><table className="spend-receipts" aria-label="Spend receipts">
+    {snapshot.receipts.length === 0 ? <p>Run a prompt to add spend receipts.</p> : <div className="spend-table__scroll"><table className="spend-receipts" aria-label="Spend receipts">
       <thead><tr><th>Receipt ID · ULID</th><th>Model / purpose</th><th>Quantity</th><th>USD · basis</th></tr></thead>
       <tbody>{snapshot.receipts.map((receipt) => <tr key={receipt.event_uid} data-receipt-id={receipt.event_uid}>
         <th>{receipt.event_uid}<small>{new Date(receipt.ts).toLocaleString()}</small></th>
@@ -155,7 +156,7 @@ export function CacheHistory({ snapshot, threadNames }: { snapshot: SpendTableSn
   const saved = priced.reduce((total, message) => total + Number(message.saved_usd), 0)
   return <section className="spend-history" aria-label="Cache efficiency">
     <h3>Cache efficiency by message</h3>
-    {threads.length === 0 ? <p>No message receipts recorded.</p> : <>
+    {threads.length === 0 ? <p>Send a prompt to record message receipts.</p> : <>
       <Select aria-label="Cache conversation" data-tooltip-detail="Pick the conversation whose cache reads and writes to show." value={thread} onChange={(event) => setSelected(event.target.value)}>
         {threads.map((id) => <option key={id} value={id}>{threadNames.get(id) ?? `Conversation ${id.slice(0, 8)}`}</option>)}
       </Select>
