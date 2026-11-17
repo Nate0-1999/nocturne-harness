@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createHostPluginApi, RACK_MANIFESTS, useOptionalRackPlugin } from './rack'
 import { Button, Select, TextArea } from './kit'
 import { modelLabel, policyName, shortName, type ModelBrowser } from './modelBrowser'
+import { failureMessage, serverMessage } from './requestFailure'
 
 const hostPolicies = createHostPluginApi(RACK_MANIFESTS.conversation)
 
@@ -17,14 +18,15 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
     events.dispatch({ type: 'policies.load' }).then((value) => {
       setPolicies((value as { policies: Record<string, string> }).policies)
       const errors = value as { curator_error?: string; policy_errors?: Record<string, string> }
-      setStatus([...Object.values(errors.policy_errors ?? {}), errors.curator_error].filter(Boolean).join(' '))
-    }).catch((error: Error) => setStatus(error.message))
+      setStatus([...Object.values(errors.policy_errors ?? {}), errors.curator_error].filter(Boolean)
+        .map((message) => serverMessage(message, 'A model policy could not be loaded. Reload to try again.')).join(' '))
+    }).catch((error: unknown) => setStatus(failureMessage(error, 'Model policies could not be loaded. Reload to try again.')))
   }, [events])
   async function save(role: string) {
     try {
       await events.dispatch({ type: 'policies.save', role, policy: policies[role]! })
-      setStatus(role === 'curator' ? 'Curator policy saved in the Palace. Applies to future passes.' : `${ROLES[role as keyof typeof ROLES]} policy saved. Existing thread choices stay fixed.`)
-    } catch (error) { setStatus(error instanceof Error ? error.message : 'Policy unavailable') }
+      setStatus(`${ROLES[role as keyof typeof ROLES]} policy saved.`)
+    } catch (error) { setStatus(failureMessage(error, 'The model policy was not saved. Check its value and try again.')) }
   }
   return <section className="agent-policy-settings">
     <h2>{level ? `${level} configuration` : 'Agent model policies'}</h2>
@@ -61,7 +63,7 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
       </fieldset>
     })}
     {level === 'Symphony'
-      ? <p>Attempts, rounds, spend and time limits are fixed in each signed deliberation.</p>
+      ? <p title="Attempts, rounds, spend and time limits are fixed in each signed deliberation.">Set limits in the deliberation before signing.</p>
       : null}
   </section>
 }
