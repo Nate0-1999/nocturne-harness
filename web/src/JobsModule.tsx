@@ -87,7 +87,7 @@ export function JobsModule() {
         })}
       </tr>)}</tbody>
     </table></div>}
-    {!snapshot ? <p role="status">Loading jobs…</p> : snapshot.jobs.length === 0 ? <p title="Save a recipe with nocturne jobs save recipe.json; include its prompt, folder, model policy, tools, memory scope, budget and exit check.">Import a recipe to add a job.</p> : <div className="jobs-scroll"><table>
+    {!snapshot ? !loadFailure && <p role="status">Loading jobs…</p> : snapshot.jobs.length === 0 ? <p title="Save a recipe with nocturne jobs save recipe.json; include its prompt, folder, model policy, tools, memory scope, budget and exit check.">Import a recipe to add a job.</p> : <div className="jobs-scroll"><table>
       <thead><tr><th>Workflow</th><th>Next run</th><th>Last run</th><th>State</th><th>Spend</th><th>Exit verdict</th><th>Run</th></tr></thead>
       <tbody>{snapshot.jobs.map(job => {
         const history = snapshot.runs.filter(run => run.job_id === job.job_id).sort((a, b) => b.started_at.localeCompare(a.started_at))

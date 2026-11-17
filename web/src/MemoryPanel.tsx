@@ -352,7 +352,7 @@ export function MemoryPanel({
             {clientError}
           </p>
         )}
-        {panelError !== null && (
+        {panelError !== null && editError === null && (
           <p className="memory-panel__alert" role="alert">
             {serverMessage(panelError.message, 'The memory change was not saved. Refresh and try again.')}
           </p>
