@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRackPlugin } from './rack'
 import { Button, Select } from './kit'
+import { failureMessage, responseFailure } from './requestFailure'
 
 interface InventoryEntry {
   name: string
@@ -24,9 +25,9 @@ export function ToolInventory({ threadId }: { threadId: string | null }) {
       const result = await query.query({ resource: 'tools', thread_id: threadId })
       const value = result.data as unknown as { entries: InventoryEntry[] }
       setEntries(value.entries)
-      setStatus('Installed sources · disabled entries are unavailable to the model')
+      setStatus('')
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Tools unavailable')
+      setStatus(failureMessage(error, 'Tools could not be loaded. Close this list and open it again.'))
     }
   }
   return <div className="tool-inventory">
@@ -50,11 +51,11 @@ export function ToolsetSettings() {
   const [status, setStatus] = useState('Reading toolset…')
   useEffect(() => {
     fetch('/v1/toolset').then(async (response) => {
-      if (!response.ok) throw new Error('Toolset unavailable')
+      if (!response.ok) throw await responseFailure(response)
       setSelection((await response.json()).toolset)
       setLoaded(true)
       setStatus('')
-    }).catch((error: Error) => setStatus(error.message))
+    }).catch((error: unknown) => setStatus(failureMessage(error, 'The toolset could not be loaded. Reload to try again.')))
   }, [])
   async function change(toolset: string) {
     try {
@@ -62,10 +63,10 @@ export function ToolsetSettings() {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toolset }),
       })
-      if (!response.ok) throw new Error('Toolset change failed')
+      if (!response.ok) throw await responseFailure(response)
       setSelection((await response.json()).toolset)
-      setStatus('Saved · applies at the next turn. Memory tools stay available.')
-    } catch (error) { setStatus(error instanceof Error ? error.message : 'Toolset unavailable') }
+      setStatus('Saved for the next turn.')
+    } catch (error) { setStatus(failureMessage(error, 'The toolset was not saved. Select it again to retry.')) }
   }
   return <section>
     <h2>Workspace tools</h2>
