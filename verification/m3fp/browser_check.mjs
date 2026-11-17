@@ -57,7 +57,7 @@ try {
     }
     await conversation.getByText(answer, { exact: true }).waitFor({ state: 'visible' })
     await conversation.getByText(
-      'Run error · The heartbeat model stopped unexpectedly. · partial kept', { exact: true },
+      'The answer could not finish. Try sending the prompt again. Partial answer kept.', { exact: true },
     ).waitFor({ state: 'visible' })
     await page.screenshot({ path: resolve(evidenceDir, '05-reinstall-restored.png') })
     const resultPath = resolve(evidenceDir, 'heartbeat.json')
@@ -159,7 +159,7 @@ try {
   await waitUntil(async () => conversation.getByTestId('composer').isEnabled())
   await conversation.getByTestId('composer').fill('Show the heartbeat failure reason.')
   await conversation.getByTestId('composer').press('Enter')
-  const failure = 'Run error · The heartbeat model stopped unexpectedly. · partial kept'
+  const failure = 'The answer could not finish. Try sending the prompt again. Partial answer kept.'
   await conversation.getByText(failure, { exact: true }).waitFor({ state: 'visible' })
   await page.reload({ waitUntil: 'domcontentloaded' })
   await conversation.getByText(failure, { exact: true }).waitFor({ state: 'visible' })
