@@ -21,6 +21,7 @@ import { useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { MemoryCard, Provenance } from './MemoryCard'
 import { formatHumanScore } from './humanNumbers.ts'
 import { Button, Confirm, TextArea } from './kit'
+import { failureMessage, serverMessage } from './requestFailure'
 import { useRackPlugin, useRackSnapshot } from './rack'
 
 const LONG_PRESS_MS = 550
@@ -46,13 +47,7 @@ function gateRejectionMessage(detail: JsonValue | null): string | null {
   ) {
     return null
   }
-  return typeof detail.message === 'string' && detail.message.trim()
-    ? detail.message
-    : 'That decision no longer matches the open gate. Review it and try again.'
-}
-
-function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback
+  return serverMessage(detail.message, 'That decision no longer matches the open gate. Review it and try again.')
 }
 
 export function MemoryGate({
@@ -307,7 +302,7 @@ export function MemoryGate({
       onCommit(decision)
     } catch (error) {
       setPendingCommit(null)
-      setLocalError(errorMessage(error, 'The memory decision could not be sent.'))
+      setLocalError(failureMessage(error, 'The memory decision could not be sent. Review it and try again.'))
     }
   }
 
@@ -319,7 +314,7 @@ export function MemoryGate({
     try {
       onStop()
     } catch (error) {
-      setLocalError(errorMessage(error, 'The run could not be stopped.'))
+      setLocalError(failureMessage(error, 'The run could not be stopped. Try Stop run again.'))
     }
   }
 
@@ -400,12 +395,12 @@ export function MemoryGate({
                 ? 'Review what Harness remembers'
                 : 'Correct or expire this memory'}
             </h2>
-            <p id="memory-gate-description">
+            <p id="memory-gate-description" title="The model stays stopped until the review is complete; deletions from the local copy wait for the Palace.">
               {gate.stage !== 'review'
-                ? 'The model is still stopped. Edit the current body or expire the memory before continuing.'
+                ? 'Edit or expire this memory before continuing.'
                 : localCopy === null
-                  ? 'The model has not started. Keep, remove, or add memories, then continue.'
-                  : 'The Palace is unreachable. Your choices shape this conversation; deletions wait until the Palace is back.'}
+                  ? 'Review the memories before the model starts.'
+                  : 'Review the local copy while the Palace is unreachable.'}
             </p>
             {gate.stage === 'review' && <GateAudition injectionId={gate.injection_id} />}
           </div>
@@ -437,7 +432,7 @@ export function MemoryGate({
                 </div>
                 {gate.injected.length === 0 ? (
                   <p className="memory-gate__empty">
-                    No memories met the injection threshold.
+                    Save matching memories to include them here.
                   </p>
                 ) : (
                   <div className="memory-grid">
@@ -456,7 +451,7 @@ export function MemoryGate({
                 </div>
                 {gate.near_misses.length === 0 ? (
                   <p className="memory-gate__empty">
-                    No near-miss memories were returned.
+                    Save more memories to see near-miss suggestions.
                   </p>
                 ) : (
                   <div className="memory-grid">
@@ -467,7 +462,7 @@ export function MemoryGate({
             </>
           ) : wrongUnit === null ? (
             <p className="memory-gate__empty" role="alert">
-              The correction stage did not include a current memory unit.
+              The current memory could not be loaded. Stop this run and refresh the thread.
             </p>
           ) : (
             <WrongResolutionEditor
@@ -622,8 +617,7 @@ function WrongResolutionEditor({
           <div className="wrong-resolution__expire">
             <strong>Expire this memory</strong>
             <p>
-              This tombstones the current unit so it will no longer be selected or
-              searched.
+              Expire to exclude this memory from search and context.
             </p>
             <blockquote>{unit.body}</blockquote>
           </div>
@@ -862,7 +856,7 @@ function GateAudition({ injectionId }: { injectionId: string }) {
     globalThis.dispatchEvent(new CustomEvent('nocturne:scorer-audition', { detail: {} }))
     void query.query({ resource: 'scorer_console', as_of: 'now', thread_id: rack.selectedThreadId ?? undefined })
       .then((result) => setProposals((result.data as unknown as { proposed_versions: { version: string }[] }).proposed_versions))
-      .catch(() => setStatus('Proposals are temporarily unavailable.'))
+      .catch(() => setStatus('Proposals could not be loaded. Reload to try again.'))
   }, [query, injectionId, rack.selectedThreadId])
   async function audition(version: string) {
     try {
