@@ -69,5 +69,5 @@ test('does not query ATTUNED memory until a thread identity exists', async () =>
   assert.equal(memoryGraphRequestIsQueryable('ATTUNED', 'thread-a'), true)
   assert.equal(memoryGraphRequestIsQueryable('ATTUNED', null), false)
   assert.match(source, /if \(!requestIsQueryable\) \{\s*return\s*\}\s*let active = true/u)
-  assert.match(source, /!requestIsQueryable \? <p role="status">\{rack\.attunement\?\.kind === 'stack'/u)
+  assert.match(source, /!requestIsQueryable \? <p role="status">Select a conversation to see its memory graph\./u)
 })

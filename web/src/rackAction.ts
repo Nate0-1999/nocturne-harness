@@ -1,3 +1,5 @@
+import { failureMessage } from './requestFailure.ts'
+
 export async function runRackAction<T>(
   action: () => T | Promise<T>,
   reportFailure: (message: string) => void,
@@ -8,7 +10,7 @@ export async function runRackAction<T>(
     reportRecovery()
     return result
   } catch (error) {
-    reportFailure(error instanceof Error ? error.message : 'Rack action failed')
+    reportFailure(failureMessage(error, 'The action could not finish. Try again.'))
     throw error
   }
 }

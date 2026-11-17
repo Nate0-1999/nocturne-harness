@@ -4,6 +4,7 @@ import type { JsonValue } from './protocol'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
+import { failureMessage, serverMessage } from './requestFailure'
 import {
   browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
   policyInForce, policyName, shortName, strategyMeaning, strategyName, takesParameter, type Configuration, type ModelBrowser, type SortKey,
@@ -104,7 +105,7 @@ export function ModelDevice() {
       }
       setStatus(asOf === null ? 'Live' : `Reviewing ${formatTime(parsed.as_of)}`)
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Model controls are unavailable')
+      setStatus(failureMessage(error, 'Model controls could not be loaded. Close this device and open it again.'))
     }
   }, [query, threadId])
 
@@ -118,7 +119,7 @@ export function ModelDevice() {
       setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId })))
       setBrowserError(null)
     } catch (error) {
-      setBrowserError(error instanceof Error ? error.message : 'The model list is unavailable.')
+      setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
     }
   }, [events, threadId])
 
@@ -150,7 +151,7 @@ export function ModelDevice() {
       return true
     } catch (error) {
       // ADR-023: a running turn keeps its model; until run.done (receipts included) a switch waits.
-      const message = error instanceof Error ? error.message : 'Control write was refused'
+      const message = failureMessage(error, 'The model control was not saved. Wait for the answer to finish and try again.')
       setStatus(message.includes('busy') ? 'Still finishing the last answer — try again in a moment.' : message)
       return false
     }
@@ -213,7 +214,7 @@ export function ModelDevice() {
       const result = await events.dispatch({ type: 'models.pin', model, pinned }) as { pins: string[] }
       setBrowser((current) => current === null ? current : { ...current, pins: result.pins })
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Pin was not saved')
+      setStatus(failureMessage(error, 'The model pin was not saved. Try pinning it again.'))
     }
   }
 
@@ -230,7 +231,7 @@ export function ModelDevice() {
       await loadBrowser()
       setStatus(`${policyName(configuration.policy)} · new conversations start here too`)
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Configuration was not saved')
+      setStatus(failureMessage(error, 'The model configuration was not saved. Check its values and try again.'))
     }
   }
 
@@ -321,7 +322,7 @@ export function ModelDevice() {
                   when_offline: !browser.local?.when_offline }
                 setBrowser((current) => current === null ? current : { ...current, local })
                 void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
-                  setBrowserError(String(error)); void loadBrowser()
+                  setBrowserError(failureMessage(error, 'The configuration was not deleted. Try again.')); void loadBrowser()
                 })
               }}
             >
@@ -355,7 +356,7 @@ export function ModelDevice() {
             <option value="price">Price</option>
             <option value="context">Context</option>
           </Select>
-          <span>{browserError ?? browser?.unavailable ?? `${listed.length} models`}</span>
+          <span>{browserError ?? (browser?.unavailable ? serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.') : `${listed.length} models`)}</span>
         </div>
         <div className="model-browser__tools">
           <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"
@@ -364,7 +365,7 @@ export function ModelDevice() {
           <Button type="button" onClick={() => { void events.dispatch({
             type: 'models.local', url: (localUrl ?? browser?.local?.url) || null, model: browser?.local?.model ?? null,
             when_offline: browser?.local?.when_offline ?? false,
-          }).then(loadBrowser).catch((error) => setBrowserError(String(error))) }}>Find local models</Button>
+          }).then(loadBrowser).catch((error: unknown) => setBrowserError(failureMessage(error, 'Local models could not be found. Start the local model service and try again.'))) }}>Find local models</Button>
         </div>
         <div className="model-row model-row--head" aria-hidden="true">
           <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />

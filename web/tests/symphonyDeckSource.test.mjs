@@ -11,7 +11,7 @@ test('The Deck exposes all three conductor interventions and an owner demand lin
     readFile(new URL('../../src/harness/daemon.py', import.meta.url), 'utf8'),
   ])
 
-  assert.match(deck, /You steer the conductor here\. Workers are never directly addressable\./u)
+  assert.match(deck, /Browse freely; steer the conductor here\. Workers are never directly addressable\./u)
   assert.match(deck, /kind: 'clarification'/u)
   assert.match(deck, /kind: 'cancel_attempt'/u)
   assert.match(deck, /kind: 'charter_change'/u)

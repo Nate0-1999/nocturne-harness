@@ -81,14 +81,14 @@ export function SecurityModule() {
           </dl>
         )}
       </header>
-      {failed && <p role="alert">Context shares unavailable</p>}
+      {failed && <p role="alert">Context shares could not be loaded. Reload to try again.</p>}
       {snapshot && (
         <div className="security-scroll">
           <table data-testid="security-cuts">
             <thead><tr><th>When</th><th>Kind</th><th>Source</th><th>Size</th><th>Share</th><th>Action</th></tr></thead>
             <tbody>
               {cuts.length === 0
-                ? <tr><td colSpan={6} className="security-empty">No cuts</td></tr>
+                ? <tr><td colSpan={6} className="security-empty">Run a tool or sub-agent to record any context cuts here.</td></tr>
                 : cuts.map((cut, index) => (
                   <tr key={index} data-action={cut.action}>
                     <td>{new Date(cut.at).toLocaleTimeString()}</td>

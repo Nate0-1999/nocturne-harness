@@ -3,6 +3,7 @@ import { useRackPlugin, type RackAction } from './rack'
 import type { JsonValue } from './protocol'
 import './assets/jobs.css'
 import { Button } from './kit'
+import { failureMessage, serverMessage } from './requestFailure'
 
 // A-084: a job saved from a bundle folder carries its digest, tools and key names; allow is what it may cross unattended.
 type Bundle = { digest: string; tools: { name: string; summary: string }[]; keys: string[] }
@@ -30,7 +31,7 @@ export function JobsModule() {
       if (!result.data || typeof result.data !== 'object' || !('jobs' in result.data) || !('runs' in result.data)) throw new Error('Jobs are unavailable.')
       setSnapshot(result.data as unknown as Snapshot)
       setLoadFailure(null)
-    } catch (error) { setLoadFailure(error instanceof Error ? error.message : 'Jobs are unavailable.') }
+    } catch (error) { setLoadFailure(failureMessage(error, 'Jobs could not be loaded. Wait for the next refresh or reload.')) }
   }, [query])
   useEffect(() => {
     const initial = setTimeout(() => void load(), 0)
@@ -54,7 +55,7 @@ export function JobsModule() {
       await events.dispatch(action)
       setFailure(null); await load(); await loadTiers()
     }
-    catch (error) { setFailure(error instanceof Error ? error.message : 'The job action failed.') }
+    catch (error) { setFailure(failureMessage(error, 'The job was not changed. Check its settings and try again.')) }
     finally { setBusy(false) }
   }
   const selectedJob = snapshot?.jobs.find(job => job.job_id === selected)
@@ -67,10 +68,10 @@ export function JobsModule() {
         event.target.value = ''
         if (!selectedFile) return
         try { await act({ type: 'jobs.save', definition: JSON.parse(await selectedFile.text()) as JsonValue, expected_revision: 0, enabled: true }) }
-        catch (error) { setFailure(error instanceof Error ? error.message : 'Cannot read this recipe.') }
+        catch (error) { setFailure(failureMessage(error, 'The recipe could not be read. Choose a valid recipe JSON file.')) }
       }} />
     </header>
-    {(failure || loadFailure || snapshot?.scheduler_error) && <p role="alert">{failure || loadFailure || snapshot?.scheduler_error}</p>}
+    {(failure || loadFailure || snapshot?.scheduler_error) && <p role="alert">{failure || loadFailure || serverMessage(snapshot?.scheduler_error, 'Scheduled jobs could not run. Check the Jobs log and reload.')}</p>}
     {Object.keys(tiers).length > 1 && <div className="jobs-scroll"><table aria-label="Workflow tiers">
       <thead><tr><th>Workflow</th>{Object.keys(tiers).map(tier => <th key={tier}>{tier}</th>)}</tr></thead>
       <tbody>{Array.from(new Set(Object.values(tiers).flatMap(tier => Object.keys(tier.workflows)))).filter(name => !selectedJob || name === selectedJob.definition.name).map(name => <tr key={name}>
@@ -78,7 +79,7 @@ export function JobsModule() {
           const release = state.workflows[name]
           const canPush = tier !== 'local' && !state.error && !!snapshot?.jobs.some(job => job.definition.name === name && job.definition.bundle)
           const canPromote = tier !== 'local' && tier !== 'stage' && !state.error && tiers.stage?.workflows[name]?.proven && tiers.stage.workflows[name].enabled
-          return <td key={tier}><code title={release?.digest ?? undefined}>{release?.digest?.slice(7, 19) ?? '—'}</code><small>{state.error ?? (release ? `${release.verdict} · ${release.enabled ? 'enabled' : 'paused'}` : 'No release')}</small>
+          return <td key={tier}><code title={release?.digest ?? undefined}>{release?.digest?.slice(7, 19) ?? '—'}</code><small>{state.error ? serverMessage(state.error, 'Delivery could not be read. Reload to try again.') : (release ? `${release.verdict} · ${release.enabled ? 'enabled' : 'paused'}` : 'Push a bundle to add a release.')}</small>
             {release?.attempted_digest && release.attempted_digest !== release.digest && <small>Last proof: {release.attempted_digest.slice(7, 19)}</small>}
             {canPush && <Button type="button" disabled={busy} data-tooltip-detail="Send this local bundle; enable only after its proof passes." onClick={() => void act({ type: 'jobs.deliver', workflow: name, target: tier, action: 'push' })}>Push to {tier}</Button>}
             {canPromote && <Button type="button" disabled={busy} data-tooltip-detail="Send the exact bundle proven on stage; prove it again here." onClick={() => void act({ type: 'jobs.deliver', workflow: name, target: tier, action: 'promote' })}>Promote to {tier}</Button>}
@@ -86,7 +87,7 @@ export function JobsModule() {
         })}
       </tr>)}</tbody>
     </table></div>}
-    {!snapshot ? <p role="status">Loading jobs…</p> : snapshot.jobs.length === 0 ? <p>Import a recipe JSON file, or save one with <code>nocturne jobs save recipe.json</code>. A recipe names its prompt, folder, model policy, tools, memory scope, budget and exit check.</p> : <div className="jobs-scroll"><table>
+    {!snapshot ? !loadFailure && <p role="status">Loading jobs…</p> : snapshot.jobs.length === 0 ? <p title="Save a recipe with nocturne jobs save recipe.json; include its prompt, folder, model policy, tools, memory scope, budget and exit check.">Import a recipe to add a job.</p> : <div className="jobs-scroll"><table>
       <thead><tr><th>Workflow</th><th>Next run</th><th>Last run</th><th>State</th><th>Spend</th><th>Exit verdict</th><th>Run</th></tr></thead>
       <tbody>{snapshot.jobs.map(job => {
         const history = snapshot.runs.filter(run => run.job_id === job.job_id).sort((a, b) => b.started_at.localeCompare(a.started_at))

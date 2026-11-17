@@ -77,7 +77,7 @@ export function MemoryGraph() {
         })
         .catch(() => {
           if (active) {
-            setFailure({ requestKey, message: 'The live memory graph is unavailable.' })
+            setFailure({ requestKey, message: 'The memory graph could not be loaded. Reload to try again.' })
           }
         }).finally(() => { pending = false })
     }
@@ -127,12 +127,12 @@ export function MemoryGraph() {
       <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Memory name" />
     </label>
     {search.trim() && <ul className="graph-search-results" aria-label="Matching memories">
-      {matches.length === 0 ? <li>No matching memories.</li> : matches.map((node) => <li key={node.memory.memory_id}>
+      {matches.length === 0 ? <li>Try another name to find a memory.</li> : matches.map((node) => <li key={node.memory.memory_id}>
         <Button type="button" aria-pressed={selected?.memory.memory_id === node.memory.memory_id} onClick={() => inspectNode(node)}>{node.memory.label}{node.memory.status === 'tombstoned' ? ' · deleted' : node.memory.status === 'active' ? '' : ` · ${node.memory.status}`}</Button>
       </li>)}
     </ul>}
-    {!requestIsQueryable ? <p role="status">{rack.attunement?.kind === 'stack' ? `${rack.attunement.name} graph is not available yet.` : 'No thread is attuned.'}</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
-      <div className="graph-canvas" ref={measure}><svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} role="img" aria-label={`${drawn.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
+    {!requestIsQueryable ? <p role="status">Select a conversation to see its memory graph.</p> : visibleFailure !== null ? <p role="alert">{visibleFailure}</p> : snapshot === null ? <p role="status">Loading memory graph…</p> : <div className="graph-stage">
+      <div className="graph-canvas" ref={measure}>{nodes.length === 0 && <p>Use /remember to add memories to this graph.</p>}<svg viewBox={`0 0 ${viewWidth} ${viewHeight}`} role="img" aria-label={`${drawn.length} memories and ${snapshot?.edges.length ?? 0} relationships`}>
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} data-edge-type={edge.edge_type ?? edge.kind}><title>{edge.edge_type ?? edge.kind}</title></line> : null })}
         {drawn.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id} opacity={node.memory.status === 'active' ? 1 : 0.42}>
           <g className="graph-node" data-status={node.memory.status} data-current={node.in_current_context || undefined} onClick={() => inspectNode(node)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') inspectNode(node) }}>
@@ -158,7 +158,7 @@ export function MemoryGraph() {
       </>}</aside>
     </div>}
     <details><summary>Scoring parameters</summary>
-      {parameters === null ? <p>Scoring parameters are unavailable.</p> : <dl>
+      {parameters === null ? <p>Scoring parameters could not be loaded. Reload to try again.</p> : <dl>
         {Object.entries(parameters).flatMap<[string, unknown]>(([name, value]) =>
           typeof value === 'object' && value !== null ? Object.entries(value) : [[name, value]],
         ).map(([name, value]) => <div key={name}><dt>{PARAMETER_LABELS[name] ?? name.replaceAll('_', ' ')}</dt><dd>{String(value)}</dd></div>)}

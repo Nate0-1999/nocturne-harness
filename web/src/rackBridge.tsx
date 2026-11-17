@@ -36,6 +36,7 @@ import type { SpatialSelectionContext } from './spatialSelection'
 import type { AttunementTarget } from './attunement'
 import type { ConversationMode } from './stageLayout'
 import { installedRackPlugins, rackPluginDocument } from './rackPlugins'
+import { failureMessage, RequestFailure } from './requestFailure'
 
 const BRIDGE_VERSION = 1
 const SNAPSHOT_INTERVAL_MS = 100
@@ -48,7 +49,7 @@ type HostMessage =
   | { type: 'resize'; event: RackResizeEvent }
   | { type: 'selection'; selection: RackSelection }
   | { type: 'response'; request_id: string; result: unknown }
-  | { type: 'error'; request_id: string; error: string }
+  | { type: 'error'; request_id: string; error: string; public_message: string | null }
 
 type RemoteMessage =
   | { type: 'dispatch'; request_id: string; action: RackAction }
@@ -227,7 +228,8 @@ export function RackPluginIframe({
       send({
         type: 'error',
         request_id: requestId,
-        error: error instanceof Error ? error.message : 'Rack bridge request failed',
+        error: failureMessage(error, 'The request could not finish. Try again.'),
+        public_message: error instanceof RequestFailure ? error.publicMessage : null,
       })
     }
 
@@ -434,7 +436,7 @@ function createRemoteApi(
       }
       pending.delete(message.request_id)
       if (message.type === 'error') {
-        waiting.reject(new Error(message.error))
+        waiting.reject(new RequestFailure(message.public_message))
       } else {
         waiting.resolve(message.result)
       }

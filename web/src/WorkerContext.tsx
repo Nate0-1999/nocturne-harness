@@ -3,6 +3,7 @@ import { ContextBars } from './ContextBars'
 import type { JsonValue, MemoryFeatures } from './protocol'
 import { useRackPlugin } from './rack'
 import { Button } from './kit'
+import { failureMessage } from './requestFailure'
 import { MemoryCard } from './MemoryCard'
 
 interface Card { memory_id: string; label: string; body: string; score?: number; pin?: boolean; features?: MemoryFeatures | null }
@@ -30,7 +31,7 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
         setWorkers(data.workers.filter((worker) => worker.attempt_id === attemptId))
         setStatus((current) => current === 'Waiting for worker context…'
           ? 'Memory changes apply at the next model request.' : current)
-      }).catch((error: Error) => { if (active) setStatus(error.message) })
+      }).catch((error: unknown) => { if (active) setStatus(failureMessage(error, 'Worker context could not be loaded. Wait for the next refresh or reload.')) })
     void refresh()
     const timer = globalThis.setInterval(() => void refresh(), 2000)
     return () => { active = false; globalThis.clearInterval(timer) }
@@ -41,7 +42,7 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
       await events.dispatch({ type: 'symphony.memory', symphony_id: symphonyId,
         worker_id: worker.worker_id, memory_id: card.memory_id, added })
       setStatus(`${card.label}: ${added ? 'add-back' : 'pop-off'} saved for the next model request.`)
-    } catch (error) { setStatus(error instanceof Error ? error.message : 'Selection was not saved.') }
+    } catch (error) { setStatus(failureMessage(error, 'The context selection was not saved. Try again.')) }
   }
 
   return <section aria-label="Agent context" className="symphony-card">

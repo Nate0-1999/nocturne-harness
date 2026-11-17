@@ -4527,3 +4527,14 @@ SPEC C.6; F240.
   (it is what the messages say to do; M8MG owns those), Refresh when nothing failed.
 - No behavior change beyond the yes/no above; the daemon and Memory are unchanged. Package
   0.1.97 with its Memory pin.
+
+## M8MG — failures give a next step; detail opens on demand (P4)
+
+PRECEDENT: PLAN M8MG; SD-096; nocturne-look (e)–(g); F219/M8LC; ADR-019.
+One request-failure type carries display copy across the rack bridge. Only the API's
+known authored messages cross unchanged; diagnostics use the module's recovery sentence.
+The explicit catalogue is necessary because HTTP detail also contains caught exceptions.
+Assistant text, including /remember guidance, is untouched. Empty states say what fills
+them; legends and longer instructions use existing disclosures or tips. Handlers and the
+kit's Confirm, word and icon tables are unchanged; Continue/Wrong/Never await F240.
+Pair 0.1.98 was unused in releases, PyPI, open PRs and the refreshed BOARD at selection.

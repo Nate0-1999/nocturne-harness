@@ -1,0 +1,800 @@
+{
+  "diffs": [
+    {
+      "repo": "harness",
+      "base": "95c72958579a55577a35f75f07fd8cdb2ec0bb35",
+      "head": "852de121efd4d1bea3e66888026bc810b94b4994"
+    }
+  ],
+  "affected": {
+    "FL-004": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-006": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-007": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-009": [
+      "harness/pyproject.toml"
+    ],
+    "FL-010": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-012": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-013": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-014": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-015": [
+      "harness/web/src/MemoryGraph.tsx"
+    ],
+    "FL-017": [
+      "harness/web/src/MemoryGate.tsx"
+    ],
+    "FL-018": [
+      "harness/web/src/MemoryGate.tsx"
+    ],
+    "FL-019": [
+      "harness/web/src/MemoryGate.tsx"
+    ],
+    "FL-020": [
+      "harness/web/src/MemoryGate.tsx"
+    ],
+    "FL-021": [
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-022": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-023": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-027": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-028": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-029": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-030": [
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-031": [
+      "harness/web/src/MemoryGate.tsx"
+    ],
+    "FL-032": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-033": [
+      "harness/web/src/MemoryGate.tsx"
+    ],
+    "FL-034": [
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-035": [
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-036": [
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-037": [
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-041": [
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-043": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-046": [
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-051": [
+      "harness/web/src/LearningTelemetry.tsx"
+    ],
+    "FL-052": [
+      "harness/web/src/LearningTelemetry.tsx"
+    ],
+    "FL-053": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-054": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-057": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-061": [
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/LearningTelemetry.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-062": [
+      "harness/web/src/InjectionConsole.tsx"
+    ],
+    "FL-069": [
+      "harness/pyproject.toml"
+    ],
+    "FL-070": [
+      "harness/web/src/App.tsx"
+    ],
+    "FL-075": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/store.ts"
+    ],
+    "FL-076": [
+      "harness/web/src/RewindControl.tsx"
+    ],
+    "FL-093": [
+      "harness/web/src/RecipeModule.tsx"
+    ],
+    "FL-098": [
+      "harness/web/src/SymphonyCards.tsx",
+      "harness/web/src/SymphonyDeck.tsx"
+    ],
+    "FL-100": [
+      "harness/web/src/SymphonyCards.tsx",
+      "harness/web/src/SymphonyDeck.tsx"
+    ],
+    "FL-101": [
+      "harness/web/src/App.tsx"
+    ],
+    "FL-102": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/store.ts"
+    ],
+    "FL-103": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-104": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/rackBridge.tsx",
+      "harness/web/src/socket.ts",
+      "harness/web/src/store.ts"
+    ],
+    "FL-105": [
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-106": [
+      "harness/web/src/ModelDevice.tsx"
+    ],
+    "FL-107": [
+      "harness/web/src/ModelDevice.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-108": [
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-109": [
+      "harness/web/src/SymphonyDeck.tsx"
+    ],
+    "FL-110": [
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-111": [
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-112": [
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-113": [
+      "harness/web/src/ModelDevice.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-114": [
+      "harness/web/src/SymphonyDeck.tsx"
+    ],
+    "FL-115": [
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-116": [
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-117": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/rackBridge.tsx",
+      "harness/web/src/socket.ts",
+      "harness/web/src/store.ts"
+    ],
+    "FL-118": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackBridge.tsx"
+    ],
+    "FL-119": [
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-120": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/rackBridge.tsx",
+      "harness/web/src/socket.ts",
+      "harness/web/src/store.ts"
+    ],
+    "FL-121": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-122": [
+      "harness/web/src/RecipeModule.tsx"
+    ],
+    "FL-123": [
+      "harness/web/src/PalaceNebula.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-124": [
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-126": [
+      "harness/web/src/WorkVisualization.tsx"
+    ],
+    "FL-127": [
+      "harness/web/src/MemoryGraph.tsx",
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-129": [
+      "harness/web/src/WorkVisualization.tsx"
+    ],
+    "FL-130": [
+      "harness/web/src/WorkVisualization.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-131": [
+      "harness/web/src/MemoryPanel.tsx"
+    ],
+    "FL-132": [
+      "harness/web/src/WorkVisualization.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-133": [
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-134": [
+      "harness/web/src/PalaceNebula.tsx",
+      "harness/web/src/WorkVisualization.tsx"
+    ],
+    "FL-137": [
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/LearningTelemetry.tsx"
+    ],
+    "FL-138": [
+      "harness/web/src/MemoryGraph.tsx",
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-139": [
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-141": [
+      "harness/web/src/MemoryGraph.tsx",
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-142": [
+      "harness/web/src/MemoryGraph.tsx",
+      "harness/web/src/PalaceNebula.tsx"
+    ],
+    "FL-152": [
+      "harness/web/src/AgentPolicies.tsx",
+      "harness/web/src/ModelDevice.tsx"
+    ],
+    "FL-153": [
+      "harness/web/src/AgentPolicies.tsx",
+      "harness/web/src/ModelDevice.tsx"
+    ],
+    "FL-156": [
+      "harness/web/src/SpendHistory.tsx",
+      "harness/web/src/SpendStrip.tsx"
+    ],
+    "FL-158": [
+      "harness/web/src/ModelDevice.tsx"
+    ],
+    "FL-159": [
+      "harness/web/src/VitalsModule.tsx"
+    ],
+    "FL-197": [
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/LearningTelemetry.tsx",
+      "harness/web/src/PalaceStateModule.tsx"
+    ],
+    "FL-160": [
+      "harness/web/src/SpendHistory.tsx"
+    ],
+    "FL-161": [
+      "harness/web/src/SpendHistory.tsx",
+      "harness/web/src/VitalsModule.tsx"
+    ],
+    "FL-168": [
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-170": [
+      "harness/pyproject.toml"
+    ],
+    "FL-171": [
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-173": [
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-175": [
+      "harness/web/src/SymphonyCards.tsx"
+    ],
+    "FL-180": [
+      "harness/web/src/JobsModule.tsx"
+    ],
+    "FL-184": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/JobsModule.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-185": [
+      "harness/web/src/JobsModule.tsx"
+    ],
+    "FL-186": [
+      "harness/pyproject.toml"
+    ],
+    "FL-187": [
+      "harness/pyproject.toml"
+    ],
+    "FL-190": [
+      "harness/pyproject.toml"
+    ],
+    "FL-191": [
+      "harness/pyproject.toml",
+      "harness/web/src/ToolControls.tsx"
+    ],
+    "FL-192": [
+      "harness/pyproject.toml",
+      "harness/web/src/ToolControls.tsx"
+    ],
+    "FL-193": [
+      "harness/pyproject.toml"
+    ],
+    "FL-194": [
+      "harness/pyproject.toml",
+      "harness/web/src/ToolControls.tsx"
+    ],
+    "FL-195": [
+      "harness/docs/feature-ledger.yaml"
+    ],
+    "FL-196": [
+      "harness/docs/frozen-law.json"
+    ],
+    "FL-198": [
+      "harness/web/src/SecurityModule.tsx"
+    ],
+    "FL-199": [
+      "harness/web/src/AgentPolicies.tsx",
+      "harness/web/src/App.tsx",
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/JobsModule.tsx",
+      "harness/web/src/MemoryGate.tsx",
+      "harness/web/src/MemoryPanel.tsx",
+      "harness/web/src/MemoryRestore.tsx",
+      "harness/web/src/PalaceNebula.tsx",
+      "harness/web/src/PalaceStateModule.tsx",
+      "harness/web/src/RackPluginUpload.tsx",
+      "harness/web/src/RewindControl.tsx",
+      "harness/web/src/SpendHistory.tsx",
+      "harness/web/src/SpendWallSettings.tsx",
+      "harness/web/src/SymphonyCards.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/VitalsModule.tsx",
+      "harness/web/src/WorkVisualization.tsx",
+      "harness/web/src/WorkerContext.tsx"
+    ],
+    "FL-201": [
+      "harness/web/src/AgentPolicies.tsx",
+      "harness/web/src/App.tsx",
+      "harness/web/src/CompactionRecord.tsx",
+      "harness/web/src/CuratorGrowth.tsx",
+      "harness/web/src/CuratorProposal.tsx",
+      "harness/web/src/InjectionConsole.tsx",
+      "harness/web/src/JobsModule.tsx",
+      "harness/web/src/LearningTelemetry.tsx",
+      "harness/web/src/MemoryGate.tsx",
+      "harness/web/src/MemoryGraph.tsx",
+      "harness/web/src/MemoryPanel.tsx",
+      "harness/web/src/MemoryRestore.tsx",
+      "harness/web/src/ModelDevice.tsx",
+      "harness/web/src/PalaceNebula.tsx",
+      "harness/web/src/PalaceStateModule.tsx",
+      "harness/web/src/RackPluginUpload.tsx",
+      "harness/web/src/RecipeModule.tsx",
+      "harness/web/src/RewindControl.tsx",
+      "harness/web/src/SecurityModule.tsx",
+      "harness/web/src/SpendHistory.tsx",
+      "harness/web/src/SpendStrip.tsx",
+      "harness/web/src/SpendWallSettings.tsx",
+      "harness/web/src/SymphonyCards.tsx",
+      "harness/web/src/SymphonyDeck.tsx",
+      "harness/web/src/ToolControls.tsx",
+      "harness/web/src/VitalsModule.tsx",
+      "harness/web/src/WorkVisualization.tsx",
+      "harness/web/src/WorkerContext.tsx",
+      "harness/web/src/rack.tsx",
+      "harness/web/src/rackAction.ts",
+      "harness/web/src/rackBridge.tsx",
+      "harness/web/src/requestFailure.ts",
+      "harness/web/src/socket.ts",
+      "harness/web/src/store.ts"
+    ],
+    "FL-202": [
+      "harness/web/src/ModelDevice.tsx"
+    ],
+    "FL-205": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/SymphonyDeck.tsx"
+    ],
+    "FL-206": [
+      "harness/web/src/AgentPolicies.tsx",
+      "harness/web/src/App.tsx",
+      "harness/web/src/ModelDevice.tsx",
+      "harness/web/src/VitalsModule.tsx",
+      "harness/web/src/store.ts"
+    ],
+    "FL-207": [
+      "harness/web/src/JobsModule.tsx"
+    ],
+    "FL-209": [
+      "harness/web/src/JobsModule.tsx"
+    ],
+    "FL-212": [
+      "harness/web/src/JobsModule.tsx"
+    ],
+    "FL-213": [
+      "harness/web/src/JobsModule.tsx",
+      "harness/web/src/rack.tsx"
+    ],
+    "FL-215": [
+      "harness/web/src/App.tsx",
+      "harness/web/src/MemoryGate.tsx",
+      "harness/web/src/WorkVisualization.tsx",
+      "harness/web/src/rack.tsx",
+      "harness/web/src/requestFailure.ts"
+    ]
+  },
+  "required": [
+    "FL-004",
+    "FL-014",
+    "FL-015",
+    "FL-017",
+    "FL-018",
+    "FL-019",
+    "FL-020",
+    "FL-022",
+    "FL-023",
+    "FL-027",
+    "FL-028",
+    "FL-030",
+    "FL-031",
+    "FL-033",
+    "FL-034",
+    "FL-035",
+    "FL-036",
+    "FL-037",
+    "FL-041",
+    "FL-043",
+    "FL-051",
+    "FL-052",
+    "FL-053",
+    "FL-057",
+    "FL-062",
+    "FL-069",
+    "FL-070",
+    "FL-075",
+    "FL-076",
+    "FL-093",
+    "FL-098",
+    "FL-100",
+    "FL-102",
+    "FL-104",
+    "FL-105",
+    "FL-106",
+    "FL-107",
+    "FL-109",
+    "FL-110",
+    "FL-111",
+    "FL-112",
+    "FL-113",
+    "FL-114",
+    "FL-115",
+    "FL-116",
+    "FL-117",
+    "FL-119",
+    "FL-120",
+    "FL-122",
+    "FL-124",
+    "FL-127",
+    "FL-130",
+    "FL-131",
+    "FL-132",
+    "FL-134",
+    "FL-138",
+    "FL-141",
+    "FL-158",
+    "FL-159",
+    "FL-197",
+    "FL-171",
+    "FL-173",
+    "FL-175",
+    "FL-184",
+    "FL-187",
+    "FL-190",
+    "FL-191",
+    "FL-194",
+    "FL-195",
+    "FL-196",
+    "FL-198",
+    "FL-199",
+    "FL-201",
+    "FL-202",
+    "FL-205",
+    "FL-006",
+    "FL-007",
+    "FL-009",
+    "FL-010",
+    "FL-012",
+    "FL-013",
+    "FL-021",
+    "FL-029",
+    "FL-032",
+    "FL-046",
+    "FL-054",
+    "FL-061",
+    "FL-103",
+    "FL-108",
+    "FL-118",
+    "FL-121",
+    "FL-123",
+    "FL-126",
+    "FL-129",
+    "FL-133",
+    "FL-137",
+    "FL-139",
+    "FL-142",
+    "FL-152",
+    "FL-153",
+    "FL-156",
+    "FL-160",
+    "FL-161",
+    "FL-168",
+    "FL-170",
+    "FL-180",
+    "FL-185",
+    "FL-186",
+    "FL-192",
+    "FL-193",
+    "FL-206",
+    "FL-207",
+    "FL-209",
+    "FL-212",
+    "FL-213",
+    "FL-215"
+  ],
+  "protected": [
+    "FL-004",
+    "FL-014",
+    "FL-015",
+    "FL-017",
+    "FL-018",
+    "FL-019",
+    "FL-020",
+    "FL-022",
+    "FL-023",
+    "FL-027",
+    "FL-028",
+    "FL-030",
+    "FL-031",
+    "FL-033",
+    "FL-034",
+    "FL-035",
+    "FL-036",
+    "FL-037",
+    "FL-041",
+    "FL-043",
+    "FL-051",
+    "FL-052",
+    "FL-053",
+    "FL-057",
+    "FL-062",
+    "FL-069",
+    "FL-070",
+    "FL-075",
+    "FL-076",
+    "FL-093",
+    "FL-098",
+    "FL-100",
+    "FL-102",
+    "FL-104",
+    "FL-105",
+    "FL-106",
+    "FL-107",
+    "FL-109",
+    "FL-110",
+    "FL-111",
+    "FL-112",
+    "FL-113",
+    "FL-114",
+    "FL-115",
+    "FL-116",
+    "FL-117",
+    "FL-119",
+    "FL-120",
+    "FL-122",
+    "FL-124",
+    "FL-127",
+    "FL-130",
+    "FL-131",
+    "FL-132",
+    "FL-134",
+    "FL-138",
+    "FL-141",
+    "FL-158",
+    "FL-159",
+    "FL-197",
+    "FL-171",
+    "FL-173",
+    "FL-175",
+    "FL-184",
+    "FL-187",
+    "FL-190",
+    "FL-191",
+    "FL-194",
+    "FL-195",
+    "FL-196",
+    "FL-198",
+    "FL-199",
+    "FL-201",
+    "FL-202",
+    "FL-205"
+  ],
+  "unmapped": [
+    "harness/DECISIONS.md",
+    "harness/src/harness/__init__.py",
+    "harness/verification/m3fp/browser_check.mjs",
+    "harness/web/dist/assets/index-DVL9QtQ9.js",
+    "harness/web/dist/assets/index-VxxdsjzU.js",
+    "harness/web/dist/index.html",
+    "harness/web/tests/memoryGraphSelection.test.mjs",
+    "harness/web/tests/providerErrorVoice.test.mjs",
+    "harness/web/tests/rackAction.test.mjs",
+    "harness/web/tests/requestFailure.test.mjs",
+    "harness/web/tests/symphonyDeckSource.test.mjs"
+  ],
+  "labels": {
+    "FL-004": "Update history is one of the memory's indexes.",
+    "FL-014": "Every memory records the folder the agent stood in when it was made.",
+    "FL-015": "Constitution: Typed edges between memories (merged from, supersedes, contradicts, and richer kinds at creation and curation) with a depth-limited traversal for the graph and the scorer (SD-057).",
+    "FL-017": "Every prompt is intercepted and relevant memories are added to the context before the model runs.",
+    "FL-018": "A hard pause on a thread's first prompt where the user scans and removes injected memories before the model starts; afterwards removal is ad hoc with no pause.",
+    "FL-019": "One-tap removal of an injected memory, with near-miss memories just below the cutoff shown so they can be added back.",
+    "FL-020": "A one-tap removal at the gate means 'not relevant' by default.",
+    "FL-022": "After the first prompt the user can still see and remove injected memories mid-thread, ad hoc, without being prompted.",
+    "FL-023": "One view of every axis feeding the injection algorithm for an active memory.",
+    "FL-027": "Every scoring axis (such as time since creation and directory distance from where the memory was made) is turned into a number and normalized into the memory score, and there is a thread similarity axis.",
+    "FL-028": "A memory share of the context window, shown and editable, with unused allotment returned to chat history.",
+    "FL-030": "Force controls for the line, the share and pins, all in the same module as the hyperparameters, each with the algorithm resuming afterward.",
+    "FL-031": "The gate as a visualization-plus-input module showing each memory's injection score.",
+    "FL-033": "Constitution: A near-miss 'never show this' veto (Aug 21 leak-fix packet).",
+    "FL-034": "The curators deconflict, dedupe and remove slop, triggered by every n memory writes rather than by the clock, and run at the Palace's own location.",
+    "FL-035": "Constitution: A scripted pre-pass that writes a versioned Palace Health Report the curator must read before acting (v2.8–2.9 curator law).",
+    "FL-036": "The curators have the right tools and standard procedures for their work, and act as surgeons: minimally invasive, targeting the root problem and letting the system sort out the symptoms.",
+    "FL-037": "Constitution: Typed consolidation decisions: merge, new, contradict, supersede (curator spec).",
+    "FL-041": "Constitution: Curator autonomy earned per verdict class from your own approval record, with contradiction never graduating (gate-day).",
+    "FL-043": "Constitution: A marker on a memory superseded after injection instead of yanking it mid-thread (gate-day).",
+    "FL-051": "A performance score for the memory system, back-tested on the history of manual adds and removes plus successful injections; a new set of weights is accepted only if it scores better than the previous generation.",
+    "FL-052": "The scoreboard counts right and wrong injection decisions, injected or not, with no arbitrary scoring.",
+    "FL-053": "Every feature's weight labeled and shown normalized to a decimal.",
+    "FL-057": "Deleting a memory from the Palace feeds a training loop that tunes memory creation.",
+    "FL-062": "Constitution: The audition: a proposed scorer runs as a visible shadow beside the incumbent before acceptance (gate-day).",
+    "FL-069": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
+    "FL-070": "Image input: paste an image and the agent reviews it.",
+    "FL-075": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
+    "FL-076": "Commit every turn; one-click rewind of chat and code together to any earlier turn.",
+    "FL-093": "The recipe card: a recipe-style implementation plan whose parts build in parallel or in sequence, parallel wherever it keeps build quality and sequential where there is doubt.",
+    "FL-098": "The symphony lifecycle shows its human touchpoints, the human prompt and any interjection or steering, so they can be seen.",
+    "FL-100": "Constitution: \"Take this to a symphony\" from chat, returning as a card. (chat 2026-08-17 17:02:48)",
+    "FL-102": "The Deck: a flashcard stack of terminals, cards colored to match their agents, only one card on top at a time (that project's agent's last response) to interact with, the next card popping up once you respond, ordered purely by which finished first.",
+    "FL-104": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
+    "FL-105": "An Ableton-like rack: the shipped layout is only version one of the default opinion, and people can easily roll and add their own plugins and visualizers to the views from the ground up.",
+    "FL-106": "Switching the model on command in a thread; markdown rendering in chat.",
+    "FL-107": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
+    "FL-109": "Memory candidates appear under the agent's post on the Deck after a compaction or a thread close; scrolling past without denying approves them; corpus-born proposals live in Memory Ingest.",
+    "FL-110": "Global or current on every module; current modules switch together with the work.",
+    "FL-111": "One standard module template that can be dragged and grown or shrunk as much as you want, with a dialogue box for its internal settings, on a very large canvas you can pan and zoom while modules stay the same size.",
+    "FL-112": "Tabs as layers of the same stage; Injection and Graph as ordinary modules; a gear beside the title for rarely changed options.",
+    "FL-113": "A finer, near-continuous background grid, more descriptive well-formatted hover tips, an easy way to create tabs, a much smaller archive button, a model device that is obviously clickable.",
+    "FL-114": "Memory Ingest as its own module: put in current AGENTS.md or CLAUDE.md files to jump-start the Palace.",
+    "FL-115": "Attunement to a specific stack beyond global and current.",
+    "FL-116": "A module not set to global attunes by proximity, measured across tabs (a tab counting one unit) and grid position, ties picked at random, and it shows which thread or stack it is attuned to.",
+    "FL-117": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
+    "FL-119": "A Palace State module holding the general state stats.",
+    "FL-120": "One conversation module with stack and focused modes.",
+    "FL-122": "A recipe module showing the plan graph with completed parts dimmed.",
+    "FL-124": "Threads removable or archivable; a back-to-the-stage control on every view.",
+    "FL-127": "Memories visualized in a cool tesseract-graph style.",
+    "FL-130": "A tree-search view reached by rotating the farm.",
+    "FL-131": "Memory trace from any selection in the ant farm: the injected memories, which can be popped off, and near-miss suggestions to add.",
+    "FL-132": "A time-order control that highlights new roots and moves the panels to the longest-waiting response.",
+    "FL-134": "A way to see things being added or removed over time, as SolidWorks does, the project growing like an organic object.",
+    "FL-138": "The palace nebula (the memory palace visualization module) looks super liquid and smooth, with the upper end amazing and lesser hardware considered, and its colors and shapes change quickly when the user changes the axis connecting the memories.",
+    "FL-141": "The visualization looks cool but is functional: it changes only when the underlying data or actual running processes change.",
+    "FL-158": "Switch models on command through the same path automatic routing uses; an off-switch to run on a single token or credit.",
+    "FL-159": "The spend module: a row per thread expanding to models, columns input / KV cache / reasoning / output / total / spend per hour, other costs as their own rows, scopable to a thread or stack.",
+    "FL-197": "Spend and Palace state reads use the calling principal; only the configured owner can request the whole Palace.",
+    "FL-171": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
+    "FL-173": "Constitution: a warming retry when the Palace is asleep, a \"busy, retrying\" banner on rate limits, and the banner clears on recovery (gate-day).",
+    "FL-175": "Constitution: a sandbox whose boundary crossings are surfaced as cards on the Deck (Invariant 14).",
+    "FL-184": "A distinct module for scheduled jobs that makes them easy to monitor; the best visualization is still to be worked out.",
+    "FL-187": "Two repos, the spine (memory) and the Harness, not a mono repo.",
+    "FL-190": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
+    "FL-191": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
+    "FL-194": "The Pydantic toolset and skills as the tool layer.",
+    "FL-195": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
+    "FL-196": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
+    "FL-198": "Context overwhelm protections: a query or a sub-agent return may take up at most n% of the compaction limit, the share chosen by the sending agent within bounds that are system parameters; a security module shows it.",
+    "FL-199": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
+    "FL-201": "One scale across modules: an icon reused anywhere is one size, text of one role is one size and one font, and a box belongs only to an icon that is a button.",
+    "FL-202": "The model browser: every model the token source offers, ranked, pinnable, with price and context window; the thinking level beside it; the standard configurations one click away.",
+    "FL-205": "The thread list tells you where and how: each thread shows its project by name and the model and thinking level in force, and the list reads cleaner.",
+    "FL-006": "Every memory carries a location column and a project column.",
+    "FL-007": "Every memory links to the full conversation it came from, so an agent can reach more than just the memory when needed.",
+    "FL-009": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
+    "FL-010": "Every thread has a thread id, and every memory records the thread it was born in.",
+    "FL-012": "No memory exists without a score.",
+    "FL-013": "Delete a memory from the palace, with an are-you-sure popup.",
+    "FL-021": "The memory visualizer shows the hyperparameters and lets the user go in and tweak memories.",
+    "FL-029": "Pinned memories go into the context window even beyond the memory share.",
+    "FL-032": "The Injection Console: see the weights, simulate a change to them and test the result, and force a new set of values.",
+    "FL-046": "A curation animation of its own, blended into the 3D palace.",
+    "FL-054": "Simulate: change weights and back-test the result before forcing them.",
+    "FL-061": "Compaction instructions tuned by back-test; memory size as a tunable beside the threshold and allotments.",
+    "FL-101": "A Chromium browser-based interface, with a mobile front end wanted long term.",
+    "FL-103": "Click an agent to open its context visualizer and its injected memories with pop-off and add-back suggestions.",
+    "FL-108": "Resizable modules and a plugin-contributor skill shipped with the repo.",
+    "FL-118": "Out Loud mode: responses are read aloud and listen-triggered dictation is a primary way in, equal to typing, not an add-on.",
+    "FL-121": "In the memory module, the edit-body and pin buttons become icons and a delete-memory button is added with an are-you-sure pop-up.",
+    "FL-123": "Each main cube view as its own module with its own 3D asset.",
+    "FL-126": "The ant farm: the whole directory tree as chambered burrows with files as cells, zoomable, floating on black with a faint grid, showing worktrees.",
+    "FL-129": "Roots: every parallel agent across projects gets a root-like, naturally meandering flow growing horizontally from roughly its agent's location, with dead roots for active loops, tips seen end-on as grids of starts in the next rotation, clustered by project on the view opposite the ant farm.",
+    "FL-133": "A corner palace view with curators as ghosts moving through the database.",
+    "FL-137": "A line graph of the injection system's historical performance; a 3D terrain of the score surface across parameters; the optimization shown while it runs (the landscape module is this terrain, placed beside the curators).",
+    "FL-139": "The 3D memory palace shows curation as it happens: curators combining and separating memories in real time, tied to live feeds.",
+    "FL-142": "Constitution: A sheet mode: an annotated layout of the same views. (chat 2026-08-31 21:38:35)",
+    "FL-152": "Cost routing: lowest cost above an intelligence threshold, or a spend rate per hour buying the most intelligence that burn allows.",
+    "FL-153": "The elbow: a standard point on the cost-to-intelligence Pareto curve.",
+    "FL-156": "Constitution: daily reconciliation of the spend ledger against the cloud invoice with drift alerts, and a memory id on the ledger for cost-versus-earned (cost-attribution packet).",
+    "FL-160": "Ableton-style line graphs at the bottom showing spend per unit of time for agents, sub-agents, model, memory curation and total.",
+    "FL-161": "Constitution: a cache-efficiency view showing that cache-sticky routing pays off (gate-day).",
+    "FL-168": "A restore popup that asks whether to roll back these memories and lists them.",
+    "FL-170": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
+    "FL-180": "Managed workflows move as bundles from local to SSH stage and production, with proof before their schedules enable.",
+    "FL-185": "Managed agents, local or in the cloud, with the best way to do this still to be thought through.",
+    "FL-186": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
+    "FL-192": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
+    "FL-193": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
+    "FL-206": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
+    "FL-207": "A workflow is a folder — the bundle: its recipe, its skills, its tools and the names of its keys — that checks, packs to one archive with a digest, and saves as a job carrying that digest.",
+    "FL-209": "A tool runs with its keys and the agent never sees them: `nocturne tool run <name>` executes the bundle's own code with the vault's variables; in a saved job that is not a boundary crossing, and the walls a recipe declares are crossed unattended once the owner confirmed them at save.",
+    "FL-212": "Push proves a disabled candidate before enabling its trigger; failure keeps the previous proven digest enabled and key values never enter the bundle or transcript.",
+    "FL-213": "Promote sends only stage's enabled digest whose last proof for that digest passed; production proves the same bytes before enabling.",
+    "FL-215": "A button says what it does and one symbol means one thing: one word per action and one icon per meaning, held in two tables in the kit; a confirmation names the action, the thing and what is lost and answers Yes or No. Errors name the failure and a next step while preserving authored guidance; an empty state says what fills it; long instructions and legends open on demand."
+  }
+}

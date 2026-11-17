@@ -16,6 +16,7 @@ import {
   type VitalsSnapshot,
 } from './vitals'
 import { Button } from './kit'
+import { serverMessage } from './requestFailure'
 
 const METRIC_LABELS: Record<string, string> = {
   created: 'Created',
@@ -184,7 +185,7 @@ export function PalaceStateModule() {
         </p>}
       </div>
 
-      {curatorActivity?.latest_run?.error && <p>{curatorActivity.latest_run.error}</p>}
+      {curatorActivity?.latest_run?.error && <p>{serverMessage(curatorActivity.latest_run.error, 'The curator pass did not finish. Wait for the next pass or reload its status.')}</p>}
       {curatorActivity?.latest_run?.report && <HealthReport report={curatorActivity.latest_run.report} />}
 
       {telemetry !== null && (

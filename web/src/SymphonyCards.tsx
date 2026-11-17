@@ -177,7 +177,7 @@ export function SymphonyDeliberationCard({ event, launched }: { event: JsonObjec
   const [authority, setAuthority] = useState<DraftAuthority | null>(
     signedLaunch === undefined ? draft?.authority ?? null : { ...signedLaunch.authority, signed: false },
   )
-  const [status, setStatus] = useState('Nothing launches until you sign.')
+  const [status, setStatus] = useState('Sign the deliberation to launch.')
   // Launching lasts until a newer stack for this draft arrives; a block reopens signing.
   const [sentFrom, setSentFrom] = useState<string | null | undefined>(undefined)
   const busy = sentFrom !== undefined && sentFrom === (launched?.symphony_id ?? null)
@@ -329,7 +329,7 @@ export function SymphonyStatusCard({ stack }: { stack: DeckStack }) {
       </header>
       <p role={blocked ? 'alert' : 'status'}>{blocked
         ? stack.blocked_reason ?? 'The run stopped.'
-        : 'Attempts and judges are working in their own worktrees. The judges release the result here.'}</p>
+        : 'Watch progress on the Deck.'}</p>
       <SymphonyFeedback stack={stack} />
     </section>
   )

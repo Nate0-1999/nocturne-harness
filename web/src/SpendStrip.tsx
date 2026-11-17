@@ -44,7 +44,7 @@ export function SpendStrip() {
   const summary = <>
     <strong>Spend</strong>
     {snapshot === null
-      ? <span>{failed ? 'Spend is unavailable.' : 'Reading spend…'}</span>
+      ? <span>{failed ? 'Spend could not be loaded. Reload to try again.' : 'Reading spend…'}</span>
       : <>
         <span title="Recorded spend since local midnight.">Today {formatDayUsd(today?.sum ?? 0)}</span>
         <span title="The last full minute's recorded spend.">Last minute {latest?.cost == null ? '—' : formatDayUsd(latest.cost)}</span>

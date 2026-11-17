@@ -34,6 +34,7 @@ import {
 } from './rackLayout'
 import { assertRackModuleTemplate, stageGridBounds } from './rackModuleTemplate'
 import { runRackAction } from './rackAction'
+import { RequestFailure, responseFailure } from './requestFailure'
 import {
   spatialSelectionIsVisible,
   type SpatialAddress,
@@ -884,17 +885,9 @@ async function fetchJson(path: string, init?: RequestInit): Promise<JsonValue> {
     ...init,
   })
   if (!response.ok) {
-    throw await rackResponseError(response)
+    throw await responseFailure(response)
   }
   return await response.json() as JsonValue
-}
-
-async function rackResponseError(response: Response): Promise<Error> {
-  if (response.status === 429) return new Error('The Palace is busy. Try again.')
-  const body = await response.json().catch(() => null) as { detail?: unknown } | null
-  return new Error(typeof body?.detail === 'string'
-    ? body.detail
-    : `Rack action failed (${response.status})`)
 }
 
 async function fetchRackResponse(path: string | URL, init?: RequestInit): Promise<Response> {
@@ -935,7 +928,7 @@ export const rackQuerySurface: RackQuerySurface = {
       if (asOf !== null) url.searchParams.set('as_of', asOf)
       if (request.known?.length) url.searchParams.set('known', request.known.join(','))
       const response = await fetchRackResponse(url, { cache: 'no-store' })
-      if (!response.ok) throw await rackResponseError(response)
+      if (!response.ok) throw await responseFailure(response)
       return { status: 'live', as_of: asOf, data: await response.json() as JsonValue }
     }
     if (request.resource === 'vitals' || request.resource === 'spend_table' || request.resource === 'context_window' || request.resource === 'overwhelm' || request.resource === 'memory_graph' || request.resource === 'scorer_console' || request.resource === 'recipe_graph' || request.resource === 'tools') {
@@ -952,7 +945,7 @@ export const rackQuerySurface: RackQuerySurface = {
         headers: { Accept: 'application/json' },
       })
       if (!response.ok) {
-        throw await rackResponseError(response)
+        throw await responseFailure(response)
       }
       return parseRackQueryResult(await response.json())
     }
@@ -968,7 +961,7 @@ export const rackQuerySurface: RackQuerySurface = {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
       })
-      if (!response.ok) throw new Error(`Model controls are unavailable (${response.status})`)
+      if (!response.ok) throw await responseFailure(response)
       return parseRackQueryResult(await response.json())
     }
     if (asOf !== null && asOf !== 'now') {
@@ -1257,17 +1250,17 @@ export function useRackHostSelection(): RackSelection {
 const heldPrompts = new Set<string>()
 
 async function threadOpened(threadId: string | null): Promise<void> {
-  if (threadId !== null && heldPrompts.has(threadId)) throw new Error('a prompt is already waiting for it')
+  if (threadId !== null && heldPrompts.has(threadId)) throw new RequestFailure('A prompt is already waiting in this thread. Keep your draft and wait for it to finish.')
   try {
     for (let waited = 0; ; waited += 250) {
       const state = useHarnessStore.getState()
-      if (threadId === null || state.selectedThreadId !== threadId) throw new Error('another thread was opened')
+      if (threadId === null || state.selectedThreadId !== threadId) throw new RequestFailure('The selected thread changed. Open the intended thread and send again.')
       const thread = state.threads[threadId]
       if (thread !== undefined && !thread.awaitingSnapshot) {
-        if (thread.openGate !== null) throw new Error('a memory review is open')
+        if (thread.openGate !== null) throw new RequestFailure('A memory review is open. Finish it before sending this prompt.')
         return
       }
-      if (waited >= 120_000) throw new Error('the thread did not finish opening')
+      if (waited >= 120_000) throw new RequestFailure('The thread did not finish opening. Reload it and send again.')
       heldPrompts.add(threadId)
       await new Promise((resolve) => globalThis.setTimeout(resolve, 250))
     }

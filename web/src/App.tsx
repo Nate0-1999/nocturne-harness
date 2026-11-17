@@ -16,6 +16,7 @@ import {
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
+import { failureMessage, RequestFailure, serverMessage } from './requestFailure'
 import { OutLoud } from './OutLoud'
 import { browserScreenshotDataUrl, elideBinaryPayload, toolCallLines } from './runEventDisplay'
 import { SymphonyDeliberationCard, SymphonyResultCard, SymphonyStatusCard } from './SymphonyCards'
@@ -217,7 +218,7 @@ function terminalCopy(reason: UserMessageState): string | null {
     case 'budget_exceeded':
       return 'Turn limit reached · partial kept'
     case 'error':
-      return 'Run error · partial kept'
+      return 'The answer could not finish. Try sending the prompt again; the partial answer is kept.'
     default:
       return null
   }
@@ -251,14 +252,14 @@ function messageStatus(
   if (state === 'error') {
     const providerRefusal = message.events.find((event) => event.event_kind === 'provider_refusal')
     if (providerRefusal?.classification === 'context_length') {
-      return 'Context limit reached'
+      return 'The model ran out of context. Shorten the prompt or choose a larger model.'
     }
     if (providerRefusal?.classification === 'provider_refusal') {
-      return 'Provider refused'
+      return 'The model provider refused this turn. Revise the prompt or choose another model.'
     }
     const failure = message.events.find((event) => event.event_kind === 'run_error')
     if (typeof failure?.message === 'string') {
-      return `Run error · ${failure.message} · partial kept`
+      return `${serverMessage(failure.message, 'The answer could not finish. Try sending the prompt again.')} Partial answer kept.`
     }
   }
   if (state === 'budget_exceeded') {
@@ -530,7 +531,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         state: 'unavailable',
         record_count: null,
         latest_received_at: null,
-        error: 'Transcript backup status is unavailable.',
+        error: 'Transcript backup status could not be loaded. Reload to try again.',
       }))
   }, [appSettingsOpen, transcriptBackup])
 
@@ -957,7 +958,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <p data-testid="transcript-backup-status">
               {transcriptBackup === null
                 ? 'Checking Palace backup…'
-                : transcriptBackup.error ?? (
+                : transcriptBackup.error ? serverMessage(transcriptBackup.error, 'Transcript backup status could not be loaded. Reload to try again.') : (
                   transcriptBackup.enabled
                     ? `${transcriptBackup.state} · ${transcriptBackup.record_count ?? 0} records`
                     : 'Off · transcripts stay on this machine'
@@ -1633,12 +1634,6 @@ function RackModuleFrame({
           )}
         </div>
       )}
-      {sheetMode && (
-        <p className="rack-sheet-annotation">
-          {scope === 'GLOBAL' ? 'Shows all accessible data' : `Follows ${attunementBadge(scope, attunement)}`}
-          {' · '}{manifest.class === 'control' ? 'Controls remain live' : 'Live recorded view'}
-        </p>
-      )}
       {!sheetMode && resizeDirections.map((direction) => {
         return (
           <Button variant="bare"
@@ -2095,7 +2090,7 @@ function ThreadsModule() {
       workspace_root: workspaceRoot,
     }).then(() => setCreating(false)).catch((error: unknown) => {
       setCreateFailure(
-        error instanceof Error ? error.message : 'This folder could not be opened.',
+        failureMessage(error, 'The folder could not be opened. Choose an existing project folder.'),
       )
     })
   }
@@ -2579,9 +2574,7 @@ function ChatModule() {
         if (imageInputRef.current !== null) imageInputRef.current.value = ''
       })
       .catch((error: unknown) => {
-        setImageStatus(error instanceof Error && ['another thread was opened', 'a memory review is open', 'the thread did not finish opening', 'a prompt is already waiting for it'].includes(error.message)
-          ? `The prompt was not sent: ${error.message}. It is still in the message box.`
-          : 'The prompt was not sent. Check the link and try again.')
+        setImageStatus(failureMessage(error, 'The prompt was not sent. Check the connection and try again; your draft is kept.'))
       })
       .finally(() => setPromptBusy(false))
     followOutputRef.current = true
@@ -2609,7 +2602,7 @@ function ChatModule() {
       setImageStatus('')
       setSteeredRunId(activeRun.run_id)
     } catch (error) {
-      setImageStatus(error instanceof Error ? error.message : 'Steering was not sent.')
+      setImageStatus(failureMessage(error, 'Steering was not sent. Keep your draft and try again.'))
     } finally { setPromptBusy(false) }
   }
 
@@ -2791,9 +2784,11 @@ function ChatModule() {
 
       {(snapshot.globalError !== null || selectedThread?.lastError !== null) && (
         <div className="error-line" role="status" data-testid="error-line">
-          <span aria-hidden="true">!</span>
           <span className="error-line__message">
-            {selectedThread?.lastError?.message ?? snapshot.globalError?.message}
+            {(() => {
+              const error = selectedThread?.lastError ?? snapshot.globalError
+              return error?.publicMessage ?? serverMessage(error?.message, 'The request could not finish. Check the connection and try again.')
+            })()}
           </span>
         </div>
       )}
@@ -2807,13 +2802,11 @@ function ChatModule() {
         <div className="transcript__inner">
           {awaitingSnapshot ? (
             <div className="thread-empty thread-empty--loading" data-testid="thread-loading">
-              <h2>Restoring thread</h2>
               <p>Loading its latest messages before accepting input.</p>
             </div>
           ) : messages.length === 0 ? (
             <div className="thread-empty" data-testid="thread-empty">
-              <h2>New thread</h2>
-              <p>Send a prompt when you’re ready. Nothing here demands a response.</p>
+              <p>Send a prompt to start this thread.</p>
             </div>
           ) : (
             <>
@@ -3082,7 +3075,7 @@ function ThreadEndModule({ inline = false }: { inline?: boolean }) {
     <div className="thread-end-module">
       {cards.length === 0 ? (inline ? null : (
         <section className="thread-end-card thread-end-card--empty">
-          <h2 title="Duplicate lessons were folded out, or this thread produced no durable candidates.">Nothing pending</h2>
+          <p title="Duplicate lessons are folded out; only durable candidates need review.">Archive a thread to review the memories it suggests.</p>
         </section>
       )) : (
         <ThreadEndCard
@@ -3136,7 +3129,7 @@ function ThreadEndCard({
     setBusy((current) => new Set(current).add(itemUid))
     setDecisionError(null)
     void onDecide(itemUid, decision, mode).then(() => onChanged(itemUid)).catch((error: unknown) => {
-      setDecisionError(error instanceof Error ? error.message : 'This queue decision could not be completed.')
+      setDecisionError(failureMessage(error, 'The review decision was not saved. Reload the queue and try again.'))
     }).finally(() => {
       setBusy((current) => {
         const next = new Set(current)
@@ -3389,7 +3382,7 @@ function PalaceQueueModule() {
       for (const file of files) {
         const lower = file.name.toLowerCase()
         if ((!lower.endsWith('.md') && !lower.endsWith('.markdown')) || file.size > 24 * 1024) {
-          throw new Error(`${file.name} must be Markdown and no larger than 24 KiB.`)
+          throw new RequestFailure('Choose a Markdown file no larger than 24 KiB.')
         }
         setStatusText(`Splitting ${file.name} without losing its claims…`)
         const result = await events.dispatch({
@@ -3410,7 +3403,7 @@ function PalaceQueueModule() {
           ? `No memories to review: ${duplicates} ${duplicates === 1 ? 'fact was' : 'facts were'} already known or previously rejected. Nothing new was saved.`
           : 'No memories to review: the document yielded no durable facts. Nothing new was saved.')
     } catch (error) {
-      setStatusText(error instanceof Error ? error.message : 'Seed ingestion failed.')
+      setStatusText(failureMessage(error, 'The document could not be read. Keep the file and upload it again.'))
     } finally {
       setBusy(false)
     }
@@ -3432,7 +3425,7 @@ function PalaceQueueModule() {
         setStatusText(`${file.relative_path} is ready for review. Nothing entered your Palace.`)
       })
       .catch((error) => {
-        setStatusText(error instanceof Error ? error.message : 'The agent file could not be queued.')
+        setStatusText(failureMessage(error, 'The agent file was not queued. Reload the list and try again.'))
       })
       .finally(() => setBusy(false))
   }
@@ -3470,7 +3463,7 @@ function PalaceQueueModule() {
         setStatusText((decision === 'approve' ? 'Pending memories approved.' : 'Pending memories rejected.')
           + (alreadyDecided ? ` ${alreadyDecided} already decided; earlier decisions kept.` : ''))
       })
-      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
+      .catch((error: unknown) => setStatusText(failureMessage(error, 'The document was not decided. Reload the queue and try again.')))
       .finally(() => setBusy(false))
   }
 
@@ -3481,7 +3474,7 @@ function PalaceQueueModule() {
     void events.dispatch({ type: 'queue.decide', item_uid: itemUid, decision, approval_mode: 'explicit', actor_class: 'human' })
       .then(load)
       .then(() => setStatusText(decision === 'approve' ? 'Memory admitted.' : 'Memory discarded.'))
-      .catch((error: unknown) => setStatusText(error instanceof Error ? error.message : 'The document changed before it could be decided.'))
+      .catch((error: unknown) => setStatusText(failureMessage(error, 'The document was not decided. Reload the queue and try again.')))
       .finally(() => setBusy(false))
   }
 
@@ -3497,7 +3490,7 @@ function PalaceQueueModule() {
             <strong>{curatorCards.length} waiting</strong>
           </header>
           {curatorCards.length === 0 ? (
-            <small title="Curators never change memories without this queue.">None waiting</small>
+            <small title="Curators never change memories without this queue.">Curator passes add proposed repairs here.</small>
           ) : (
             <div className="curator-proposals">
               {curatorCards.map((card) => (
@@ -3514,7 +3507,7 @@ function PalaceQueueModule() {
             {agentFilesTruncated ? <span>Showing the first 64 files</span> : null}
           </header>
           {agentFiles.length === 0 ? (
-            <p className="agent-file-jump-start__empty">No AGENTS.md or CLAUDE.md files were found here.</p>
+            <p className="agent-file-jump-start__empty">Add an AGENTS.md or CLAUDE.md file to this project to review its facts.</p>
           ) : (
             <ul className="agent-file-offers">
               {agentFiles.map((file) => {
@@ -3569,7 +3562,7 @@ function PalaceQueueModule() {
         <p className="seed-status" aria-live="polite">{statusText}</p>
         {batches.length === 0 ? (
           <div className="palace-queue-empty">
-            <h3>Queue clear</h3>
+            <p>Upload a document to review its suggested memories.</p>
           </div>
         ) : (
           <div className="seed-batch-list">
@@ -3771,7 +3764,10 @@ function MessageRow({
   )
   const symphonyStack = latestDeckStacks([message]).at(0)
   const diagnosticEvents = message.events.filter((event) =>
-    typeof event.event_kind !== 'string' || !event.event_kind.startsWith('symphony_')
+    typeof event.event_kind !== 'string' || (
+      !event.event_kind.startsWith('symphony_') &&
+      event.event_kind !== 'run_error' && event.event_kind !== 'provider_refusal'
+    )
   )
   const toolCalls = toolCallLines(diagnosticEvents)
   const latestBrowserScreenshot = diagnosticEvents
@@ -3840,7 +3836,7 @@ function MessageRow({
       {diagnosticEvents.length > 0 && (
         <details className="run-detail">
           <summary>Tools · {toolCalls.length} call{toolCalls.length === 1 ? '' : 's'}</summary>
-          {toolCalls.length === 0 ? <p className="tool-calls__none">No tool calls in this answer.</p> : (
+          {toolCalls.length === 0 ? <p className="tool-calls__none">Ask Nocturne to use a tool to record its calls here.</p> : (
             <ol className="tool-calls">
               {toolCalls.map((call) => (
                 <li key={call.id}><strong>{call.tool}</strong> <span>{call.detail}</span> <small>{call.outcome}</small></li>

@@ -1,7 +1,7 @@
 import type { CuratorActivityView } from './curation'
 
 export function CuratorGrowth({ points }: { points: CuratorActivityView['growth'] }) {
-  if (!points.length) return <p>Growth history is unavailable.</p>
+  if (!points.length) return <p>A curator pass records memory growth here.</p>
   const latest = points[points.length - 1]
   const start = Date.parse(points[0].at)
   const span = Math.max(1, Date.parse(latest.at) - start)
@@ -15,8 +15,8 @@ export function CuratorGrowth({ points }: { points: CuratorActivityView['growth'
       <polyline points={line('active_units')} fill="none" stroke="var(--accent)" strokeWidth="2" />
       <polyline points={line('curator_removals')} fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="5 4" />
     </svg> : null}
-    <small>Solid: active memories. Dashed: cumulative removals. Snapshots at curator passes and now.</small>
     <details><summary>Growth measurements</summary>
+      <p>Solid: active memories. Dashed: cumulative removals. Snapshots at curator passes and now.</p>
       <table><thead><tr><th>Time</th><th>Active</th><th>Curator removals</th></tr></thead>
         <tbody>{points.map((point, index) => <tr key={index}>
           <td>{new Date(point.at).toLocaleString()}</td><td>{point.active_units}</td><td>{point.curator_removals}</td>

@@ -32,7 +32,7 @@ export function useVisualization() {
         if (active) setResponse((current) => current?.asOf === asOf && current.data.as_of === filled.snapshot.as_of
           && JSON.stringify(current.data.errors) === JSON.stringify(filled.snapshot.errors) ? current : { data: filled.snapshot, asOf })
         if (active) setError(null)
-      } catch { if (active) setError('The recorded visualization feed is unavailable.') }
+      } catch { if (active) setError('The recorded view could not be loaded. Return to Live or reload to try again.') }
       finally { pending = false }
     }
     void refresh()
@@ -140,7 +140,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
   }
   return <section className="work-viz" data-testid={`${initialView}-module`} data-tier={tier} data-view={view}
     data-sheet={new URLSearchParams(globalThis.location.search).has('sheet') || undefined}>
-    <header className="work-viz__header"><div><small>Work, made visible · {scope === 'GLOBAL' ? 'All projects' : rack.attunement?.name ?? 'Unattuned'}</small>
+    <header className="work-viz__header"><div><small>{scope === 'GLOBAL' ? 'All projects' : rack.attunement?.name ?? 'Unattuned'}</small>
       <h1>{view === 'farm' ? 'The Farm' : 'The Roots'}</h1></div>
       <nav aria-label="Work visualization"><Button variant="bare" aria-pressed={view === 'farm'} onClick={() => setView('farm')}>Farm</Button><Button variant="bare" aria-pressed={view === 'roots'} onClick={() => setView('roots')}>Roots</Button></nav>
     </header>
@@ -171,19 +171,20 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
       <aside className="work-viz__readout"><strong>{view === 'farm' ? `${chambers.length} chambers` : `${agents.length - forked} roots · ${forked} forked limbs`}</strong>
         <span>{view === 'farm' ? `${layout?.files ?? 0} files · ${chambers.reduce((sum, chamber) => sum + chamber.hiddenFiles, 0)} in counted chambers`
           : `${agents.reduce((count, agent) => count + (agent.touched_files?.length ?? 0), 0)} touched-file capillaries`} · {agents.length} agents</span>
-        {view === 'farm' ? <span>Drag or Ctrl+arrows to orbit · scroll or +/− to zoom · pick an ant</span> : <>
+        {view === 'farm' ? <span title="Drag or Ctrl+arrows to orbit; scroll or +/− to zoom.">Pick an ant to follow its agent.</span> : <>
           <span title={`radius = hair + ${WIDTH}·√$ (a fork divides its cross-section by dollars; unpriced = hair; a parent whose trail rolled up less than a fork's price is drawn at its own spend plus its forks' prices) · across = ln(1 + gap / 0.5 s)^1.2 (a longer gap is always a longer bare stretch) · leaf = ${LEAF}·(compressed wait)^0.75 (or its own spend window, if longer), so a longer wait is always a longer reach`}>
-            width = dollars · across = time between events · blue = live · pink = a branch leaving · matte = stopped</span></>}
+            Read the root’s measures in Legend.</span></>}
         {focused && <span style={{ color: agentColor(focused.id) }}>{focused.label} · {focused.location}</span>}
         {closedNote && <span role="status">{closedNote}</span>}
       </aside>
       {(!data || error) && <p className="work-viz__notice" role="status">{error ?? 'Recording the first real state…'}</p>}
     </div>
-    <footer className="work-viz__foot">{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
+    <footer className="work-viz__foot"><details><summary>Legend</summary>{data && <>Recorded since {new Date(data.recorded_since).toLocaleString()} · {data.timeline.length} states · {data.live ? 'Live observation' : 'Recorded history'}</>}
       {view === 'roots' && <span>Trunk = project, its agents' roots fused · ringed source = a top-level agent, entering at the left edge in its own lane (the finest hair until it started, then it swells and converges at a shallow angle, fusing into the trunk once their bodies come within one diameter; its dollars move into the trunk as it fuses, so each is drawn once) · branch = turn · twig = tool call · capillary = recorded file touch · limb = forked agent, leaving where it started · a turn (a call, within its turn) leaves the latest earlier one that followed a longer wait than its own, so a burst sub-forks · spacing along every root and branch = time between its events (bare chrome = waiting); finer branches run on a finer time scale (×0.82 per level, a forked limb ×0.6) · a leaf reaches as long as the compressed wait for the agent's next event (a bare leaf: or its own spend window, if longer) · side, angle, curl and meander come from each branch's seed; forked limbs fan on the side away from their parent, and a heavy turn leaves away from the other roots · width = the dollars still to flow through it, on one fixed scale (radius = hair + {WIDTH}·√$; a branch carries the spend recorded in its window, a forked limb its own price), so at a junction the branches' cross-sections above the hair width add up to what the parent loses; four stretches are shaped, not priced: a junction's flare, a root's swell from its hair, a leaf too short for its dollars (never thicker than a twelfth of its length), and every tip, which closes to a point past its last recorded moment (a live tip too: still growing) · blue = live work (full while running, dimmer while waiting) · red-pink = a fine branch leaving: always marked, stronger and reaching further the larger its share of its parent's dollars, and carried into the fine branches that leave within that reach; a thicker branch's fork shows as a coral glow one diameter long on its parent's side; a stopped agent carries none but its fork on a live parent · depth = time · matte = stopped (pale on the sheet, deep blue on the stage; a stopped limb keeps its chrome for one diameter where it leaves a live parent)</span>}
       {view === 'farm' && <span>Chamber = folder · counts = collapsed contents, click to open · size = files it holds · dim = empty · link = parent folder, width = files beneath · cell = file, size = bytes · lit = touched by an agent · ant = agent in its current folder or its counted ancestor · walk = location changed</span>}
-      {project?.errors.map((item) => <span key={item.path}>Cannot read {item.path}: {item.error}</span>)}
-      {data?.errors.map((item) => <span key={item.feed}>{item.feed} feed unavailable</span>)}
+      </details>
+      {project?.errors.map((item) => <span key={item.path}>Could not read {item.path}. Check the folder’s access and reload.</span>)}
+      {data?.errors.map((item) => <span key={item.feed}>The {item.feed} view could not be loaded. Reload to try again.</span>)}
     </footer>
     <details className="work-viz__data" open><summary>Agents and measured work</summary>
       <table><thead><tr><th>Agent</th><th>Where</th><th>State</th><th>Spend</th></tr></thead><tbody>

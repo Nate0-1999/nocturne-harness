@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button, TextArea } from './kit'
 import { useRackPlugin } from './rack'
+import { failureMessage } from './requestFailure'
 
 export function CuratorProposal({ card, onChanged }: {
   card: { item_uid: string; verdict: string; candidate: { label: string; body: string }; proposal_payload?: Record<string, unknown> | null }
@@ -23,7 +24,7 @@ export function CuratorProposal({ card, onChanged }: {
       })
       await onChanged()
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'The proposal could not be decided.')
+      setStatus(failureMessage(error, 'The proposal was not decided. Review it and try again.'))
     } finally { setBusy(false) }
   }
 
@@ -34,7 +35,7 @@ export function CuratorProposal({ card, onChanged }: {
       setFeedback('')
       setStatus('Feedback recorded for future curator decisions. The proposal is still waiting.')
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : 'Feedback could not be recorded.')
+      setStatus(failureMessage(error, 'Feedback was not saved. Keep your text and try again.'))
     } finally { setBusy(false) }
   }
 
