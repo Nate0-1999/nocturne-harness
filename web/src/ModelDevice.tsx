@@ -4,7 +4,7 @@ import type { JsonValue } from './protocol'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
-import { failureMessage } from './requestFailure'
+import { failureMessage, serverMessage } from './requestFailure'
 import {
   browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
   policyInForce, policyName, shortName, strategyMeaning, strategyName, takesParameter, type Configuration, type ModelBrowser, type SortKey,
@@ -356,7 +356,7 @@ export function ModelDevice() {
             <option value="price">Price</option>
             <option value="context">Context</option>
           </Select>
-          <span>{browserError ?? browser?.unavailable ?? `${listed.length} models`}</span>
+          <span>{browserError ?? (browser?.unavailable ? serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.') : `${listed.length} models`)}</span>
         </div>
         <div className="model-browser__tools">
           <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"

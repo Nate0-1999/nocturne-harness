@@ -958,7 +958,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <p data-testid="transcript-backup-status">
               {transcriptBackup === null
                 ? 'Checking Palace backup…'
-                : transcriptBackup.error ?? (
+                : transcriptBackup.error ? serverMessage(transcriptBackup.error, 'Transcript backup status could not be loaded. Reload to try again.') : (
                   transcriptBackup.enabled
                     ? `${transcriptBackup.state} · ${transcriptBackup.record_count ?? 0} records`
                     : 'Off · transcripts stay on this machine'
