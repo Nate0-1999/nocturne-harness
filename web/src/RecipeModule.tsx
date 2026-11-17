@@ -36,7 +36,7 @@ export function RecipeModule() {
       ))
       setFailure(null)
     } catch {
-      setFailure('The live recipe is unavailable.')
+      setFailure('The live recipe could not be loaded. Reload to try again.')
     }
   }, [query, rack.selectedThreadId])
 
@@ -78,19 +78,19 @@ export function RecipeModule() {
           </div>
         )}
       </header>
-      <aside className="recipe-sheet-key" aria-label="Annotated sheet data bindings">
+      <details><summary>Legend</summary><aside className="recipe-sheet-key" aria-label="Annotated sheet data bindings">
         {/* TASTE-05: the legend law keeps every binding labeled, in plain words. */}
         <span><b>Row</b> one packet</span>
         <span><b>Column</b> run order</span>
         <span><b>Color</b> state now</span>
         <span><b>Line</b> blocks or judges</span>
-      </aside>
+      </aside></details>
       {failure !== null ? (
         <p className="recipe-instrument__message" role="alert">{failure}</p>
       ) : snapshot === null ? (
         <p className="recipe-instrument__message" role="status">Finding the live frontier…</p>
       ) : snapshot.nodes.length === 0 || completion === null ? (
-        <p className="recipe-instrument__message" role="status">No recipe is running.</p>
+        <p className="recipe-instrument__message" role="status">Launch a Symphony to see its recipe.</p>
       ) : (
         <div className="recipe-instrument__body">
           <div
