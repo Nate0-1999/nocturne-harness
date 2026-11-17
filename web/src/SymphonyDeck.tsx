@@ -11,6 +11,7 @@ import type {
   UserTranscriptMessage,
 } from './protocol'
 import { useRackPlugin, useRackSnapshot } from './rack'
+import { failureMessage, RequestFailure } from './requestFailure'
 import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
 import { OutLoud } from './OutLoud'
@@ -241,7 +242,7 @@ export function SymphonyDeck() {
   const decide = (card: (typeof boundaries)[number], decision: 'allowed_once' | 'allowed_thread' | 'denied') => {
     setDeciding(true)
     void events.dispatch({ type: 'boundary.decide', run_id: String(card.run_id), decision })
-      .catch((error: unknown) => setStatus(`Not answered: ${error instanceof Error ? error.message : 'the answer failed'}.`))
+      .catch((error: unknown) => setStatus(failureMessage(error, 'The card was not answered. Keep your reply and try again.')))
       .finally(() => setDeciding(false))
   }
   const [drafts, setDrafts] = useState<Record<string, string>>({})
@@ -278,10 +279,10 @@ export function SymphonyDeck() {
     for (let waited = 0; ; waited += 100) {
       const current = events.getSnapshot()
       if (current.connection !== 'connected') {
-        throw new Error('Nocturne is not connected; it reconnects on its own')
+        throw new RequestFailure('Nocturne is reconnecting. Wait for the connection and send again.')
       }
       if (current.selectedThreadId === threadId && current.threads[threadId]?.awaitingSnapshot === false) return
-      if (waited >= 15_000) throw new Error('its conversation did not finish opening')
+      if (waited >= 15_000) throw new RequestFailure('The conversation did not finish opening. Open it and send again.')
       await new Promise((resolve) => globalThis.setTimeout(resolve, 100))
     }
   }
@@ -289,7 +290,7 @@ export function SymphonyDeck() {
   async function fire(card: ProposedResponseCard) {
     const text = (drafts[card.proposal_run_id] ?? card.primary).trim()
     if (!text || undo !== null || opening) return
-    const why = (error: unknown) => error instanceof Error && error.message ? error.message : 'the send failed'
+    const why = (error: unknown) => failureMessage(error, 'The reply was not sent. Keep your draft and try again.')
     setOpening(true)
     setStatus(`Opening ${card.thread_title}…`)
     try {
@@ -332,7 +333,7 @@ export function SymphonyDeck() {
         <div><p>Conductor channel</p><h1>The Deck</h1></div>
         <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
       </header>
-      <p className="symphony-deck__rule">The longest-waiting reply stays first. Browse freely. You steer the conductor here. Workers are never directly addressable.</p>
+      <p className="symphony-deck__rule" title="The longest-waiting reply stays first. Browse freely; steer the conductor here. Workers are never directly addressable.">Reply to steer the conductor.</p>
       {boundaries.map((card) => (
         <article className="deck-proposal-card" data-testid="boundary-card" key={String(card.run_id)}>
           <h2>{card.wall === 'spend' ? 'Spend boundary · paused' : `Workspace boundary · ${String(card.wall)}`}</h2>
@@ -359,7 +360,7 @@ export function SymphonyDeck() {
         </article>
       ))}
       {visibleCards.length === 0 ? (
-        <p className="symphony-deck__empty" data-testid="deck-empty">No reply needs you right now.</p>
+        <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
       ) : (
         <div className="deck-proposal-queue" data-testid="deck-proposal-queue">
           {visibleCards.map((card, index) => (
