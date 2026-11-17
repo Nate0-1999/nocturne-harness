@@ -136,7 +136,7 @@ export function MemoryGraph() {
         {(snapshot?.edges ?? []).map((edge, index) => { const a = positions.get(edge.from_memory_id); const b = positions.get(edge.to_memory_id); return a && b ? <line key={`${edge.kind}-${index}`} x1={a.x} y1={a.y} x2={b.x + (a === b ? 2 : 0)} y2={b.y + (a === b ? 2 : 0)} data-kind={edge.kind} data-edge-type={edge.edge_type ?? edge.kind}><title>{edge.edge_type ?? edge.kind}</title></line> : null })}
         {drawn.map((node) => { const p = positions.get(node.memory.memory_id)!; const r = 3 + Math.min(Number(node.memory.stats.injections ?? 0), 12) / 8; const label = labels.get(node.memory.memory_id); return <g key={node.memory.memory_id} opacity={node.memory.status === 'active' ? 1 : 0.42}>
           <g className="graph-node" data-status={node.memory.status} data-current={node.in_current_context || undefined} onClick={() => inspectNode(node)} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter') inspectNode(node) }}>
-            <title>{node.memory.label}</title>
+            <title>{[node.memory.label, node.memory.kind.replace('_', ' '), node.memory.status !== 'active' && (node.memory.status === 'tombstoned' ? 'deleted' : node.memory.status), node.in_current_context && 'in context', node.memory.pin && 'pinned'].filter(Boolean).join(' · ')}</title>
             {node.memory.pin && <circle className="graph-pin" cx={p.x} cy={p.y} r={r + 2} />}
             <circle cx={p.x} cy={p.y} r={r} data-kind={node.memory.kind} />
           </g>

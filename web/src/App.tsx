@@ -159,7 +159,7 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
-import { ActionIcon, Button, Select, TextField, Toggle } from './kit'
+import { ActionIcon, Button, Confirm, ConfirmButton, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
@@ -882,15 +882,13 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           data-tooltip-detail="Choose the app theme, manage conversation backup, or save and restore your Stage layout."
           aria-expanded={appSettingsOpen}
           onClick={() => setAppSettingsOpen((open) => !open)}
-        >
-          <span aria-hidden="true">⚙</span>
-        </Button>
+        />
       </div>
       {appSettingsOpen && (
         <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings">
           <header>
             <strong>Settings</strong>
-            <Button action="close" iconOnly type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)}>×</Button>
+            <Button action="close" iconOnly type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)} />
           </header>
           <section>
             <h2>Appearance</h2>
@@ -930,14 +928,16 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {platePressBusy ? 'Pressing…' : 'Press image'}
               </Button>
               {selectedColorway !== null ? (
-                <Button action="remove" variant="bare"
+                <ConfirmButton action="delete" variant="bare"
                   className="plate-remove-button"
                   type="button"
                   data-testid="plate-remove-button"
-                  onClick={removeSelectedColorway}
+                  question={`Delete the colorway “${selectedColorway.label}”?`}
+                  lost="Its colors are gone until you press the image again."
+                  onConfirm={removeSelectedColorway}
                 >
-                  Remove colorway
-                </Button>
+                  Delete colorway
+                </ConfirmButton>
               ) : null}
             </div>
           </section>
@@ -970,17 +970,18 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             <p data-testid="layout-status">{layoutStatus}</p>
             <div className="app-settings-actions">
               <Button action="save" type="button" data-testid="layout-save" data-tooltip="Save layout" data-tooltip-detail="Keep the current stage layout as your saved set." onClick={saveCurrentSet}>Save</Button>
-              <Button action="restore"
+              <ConfirmButton action="restore"
                 type="button"
                 data-testid="layout-restore"
                 data-tooltip="Restore layout"
-                data-tooltip-detail="Return the stage to your saved set."
+                data-tooltip-detail="Return the stage to your saved set. Asks first."
                 disabled={savedSet === null}
-                onClick={restoreSavedSet}
-              >
-                Restore
-              </Button>
-              <Button action="refresh" type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout." onClick={resetFactorySet}>Reset</Button>
+                question="Restore the saved layout?"
+                lost="The layout on screen now is replaced."
+                onConfirm={restoreSavedSet}
+              />
+              <ConfirmButton type="button" data-testid="layout-reset" data-tooltip="Reset layout" data-tooltip-detail="Return the stage to the factory layout. Asks first."
+                question="Reset the layout to factory?" lost="The layout on screen now is replaced; your saved set stays." onConfirm={resetFactorySet}>Reset</ConfirmButton>
             </div>
           </section>
           <MemoryRestore />
@@ -1010,9 +1011,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 data-tooltip="Remove layer"
                 data-tooltip-detail="Shelve this layer; the library can bring it back."
                 onClick={() => setLayout((current) => removeStageLayer(current, candidate.layer_id))}
-              >
-                ×
-              </Button>
+              />
             </div>
           ))}
         </div>
@@ -1023,18 +1022,15 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           data-tooltip="Create a layer"
           data-tooltip-detail="Open a new empty layer on this Stage."
           onClick={() => setLayout(createStageLayer)}
-        >
-          <span aria-hidden="true">＋</span>
-          Layer
-        </Button>
+        />
         <div className="stage-camera-controls" role="group" aria-label="View layout">
           <Button variant="bare" type="button" data-tooltip-detail="Free placement: drag, resize and zoom the modules." aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</Button>
           <Button variant="bare" type="button" data-tooltip-detail="The same modules laid out full size in one scrolling sheet." aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</Button>
         </div>
         <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
-          <Button action="zoomOut" iconOnly variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)}>−</Button>
+          <Button action="zoomOut" iconOnly variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)} />
           <output data-testid="stage-zoom">{Math.round(layer.camera.zoom * 100)}%</output>
-          <Button action="zoomIn" iconOnly variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)}>+</Button>
+          <Button action="zoomIn" iconOnly variant="bare" type="button" aria-label="Zoom in" data-tooltip-detail="Enlarge this layer on screen without changing its layout." onClick={() => zoomAt(layer.camera.zoom + 0.1)} />
           <Button action="fit" iconOnly variant="bare"
             type="button"
             data-testid="stage-fit"
@@ -1044,7 +1040,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             Whole stage
           </Button>
         </div>
-        <Button action="open" iconOnly variant="bare"
+        <Button variant="bare"
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
@@ -1169,7 +1165,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         <aside className="stage-library" data-testid="stage-library" aria-label="Stage library">
           <header>
             <strong>Stage library</strong>
-            <Button action="close" iconOnly variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)}>×</Button>
+            <Button action="close" iconOnly variant="bare" type="button" aria-label="Close stage library" onClick={() => setLibraryOpen(false)} />
           </header>
           <RackPluginUpload onInstalled={(id) => setLayout((current) => restoreStageModule(current, id))} />
           <ul>
@@ -1621,9 +1617,7 @@ function RackModuleFrame({
               data-tooltip="Remove module"
               data-tooltip-detail="Take it off this layer; the Library brings it back."
               onClick={() => onRemove(instanceId)}
-            >
-              ×
-            </Button>
+            />
           )}
           {onCollapseToggle !== undefined && (
             <Button action={collapsed ? "expand" : "collapse"} iconOnly variant="bare"
@@ -1634,7 +1628,6 @@ function RackModuleFrame({
               aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${manifest.name}`}
               onClick={onCollapseToggle}
             >
-              <span aria-hidden="true">{collapsed ? '⌃' : '⌄'}</span>
               {collapsed ? 'Expand' : 'Collapse'}
             </Button>
           )}
@@ -1762,9 +1755,7 @@ function RackSettingsControl({
         data-tooltip={`${manifest.name} settings`}
         data-tooltip-detail="Open its view and module options."
         onClick={toggle}
-      >
-        <span aria-hidden="true">⚙</span>
-      </Button>
+      />
       {open && (
         <dialog open className="rack-module__settings-dialog" aria-label={`${manifest.name} settings`}>
           {scopeAdjustable ? (
@@ -1775,9 +1766,7 @@ function RackSettingsControl({
                   type="button"
                   aria-label={`Close ${manifest.name} settings`}
                   onClick={toggle}
-                >
-                  ×
-                </Button>
+                />
               </header>
               <p>Choose what this module {spatial ? 'watches' : 'follows'}.</p>
               <div className="rack-module__scope" aria-label={`${manifest.name} view`}>
@@ -2131,9 +2120,7 @@ function ThreadsModule() {
           aria-label="Close threads"
           data-tooltip-detail="Return to the conversation."
           onClick={() => selection.select(null)}
-        >
-          Back
-        </Button>
+        />
       </div>
 
       <div className="thread-rail__actions">
@@ -2257,7 +2244,7 @@ function ThreadsModule() {
                     event.preventDefault()
                     bindDraftFolder(selectedEntry.thread_id)
                   }}
-                >Bind</Button>
+                >Bind folder</Button>
               </div>
             </form>
           )}
@@ -2317,14 +2304,16 @@ function ThreadsModule() {
                   {threadModelMark(browser, entry, isSelected ? { model: selectedModel } : null)}
                 </span>
               </Button>
-              <Button action="archive" iconOnly
+              <ConfirmButton action="archive" iconOnly={archiveBusyThreadId !== entry.thread_id}
                 className="thread-item__archive"
                 type="button"
                 aria-label={`Archive ${title}`}
                 data-tooltip={`Archive ${title}`}
-                data-tooltip-detail="Extract its memories for review, then close the thread."
+                data-tooltip-detail="Extract its memories for review, then close the thread. Asks first."
                 disabled={archiveDisabled}
-                onClick={() => {
+                question={`Archive “${title}”?`}
+                lost="The thread closes and leaves this list; its memories go to your review."
+                onConfirm={() => {
                   setArchiveBusyThreadId(entry.thread_id)
                   setArchiveFailure(null)
                   void events.dispatch({ type: 'thread.archive', thread_id: entry.thread_id })
@@ -2332,8 +2321,8 @@ function ThreadsModule() {
                     .finally(() => setArchiveBusyThreadId(null))
                 }}
               >
-                <span aria-hidden="true">{archiveBusyThreadId === entry.thread_id ? '…' : '⤓'}</span>
-              </Button>
+                {archiveBusyThreadId === entry.thread_id ? 'Archiving…' : undefined}
+              </ConfirmButton>
             </div>
           )
         })}
@@ -2423,6 +2412,7 @@ function ChatModule() {
   const [promptBusy, setPromptBusy] = useState(false)
   const [hasUnread, setHasUnread] = useState(false)
   const [archiveBusy, setArchiveBusy] = useState(false)
+  const [archiveAsking, setArchiveAsking] = useState<string | null>(null) // the thread the question is about
   const [orchestrationChoice, setOrchestration] = useState<'Duet' | 'Symphony' | null>(null)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
@@ -2780,7 +2770,7 @@ function ChatModule() {
               })}
             />
           )}
-          <Button variant="bare" action="open"
+          <Button variant="bare"
             type="button"
             className="chat-header__model"
             data-testid="active-model"
@@ -2856,11 +2846,14 @@ function ChatModule() {
 
       {hasUnread && (
         <Button variant="bare" action="latest" iconOnly className="new-response" type="button" data-testid="new-response" onClick={scrollToLatest}>
-          New response ↓
+          New response
         </Button>
       )}
 
       <form className="composer" onSubmit={submitPrompt} aria-label="Prompt composer">
+        {/* SD-096 (d): the question takes the composer's full width; the action column is too narrow for it. */}
+        {archiveAsking !== null && archiveAsking === selectedThreadId && <Confirm question="Archive this thread?" lost="The thread closes and leaves the list; its memories go to your review."
+          onYes={() => { setArchiveAsking(null); archiveThread() }} onNo={() => setArchiveAsking(null)} />}
         <div className="composer__body">
           {pendingImage !== null && (
             <div className="composer-attachment" role="group" aria-label="Attached image">
@@ -2901,7 +2894,7 @@ function ChatModule() {
             rows={1}
             placeholder={selectedThread?.workspaceMissing === true
               ? "This thread's folder moved; choose its new folder in Threads"
-              : snapshot.connection === 'connected' ? 'Transmit to Nocturne' : 'Waiting for Nocturne'}
+              : snapshot.connection === 'connected' ? 'Send to Nocturne' : 'Waiting for Nocturne'}
             disabled={promptBusy /* WALL money / C.6: preserve the accepted turn while sending. */}
             onChange={(event) => {
               const value = event.target.value
@@ -2968,24 +2961,26 @@ function ChatModule() {
             {openGate !== null
               ? 'Review memory before the model starts'
               : activeRun === null
-                ? 'Enter to transmit'
+                ? 'Enter to send'
                 : 'New prompts queue at the turn boundary'}
             <span>Shift+Enter for newline</span>
           </p>
         </div>
         <div className="composer__actions">
           {activeRun === null && messages.length > 0 && (
-            <Button variant="bare" action="archive" iconOnly
+            <Button variant="bare" action="archive" iconOnly={!archiveBusy}
               className="archive-button"
               type="button"
               data-testid="archive-thread"
               aria-label="Archive this thread"
               data-tooltip="Archive this thread"
-              data-tooltip-detail="Extract its memories for review, then close the thread."
+              data-tooltip-detail="Extract its memories for review, then close the thread. Asks first."
+              aria-haspopup="dialog"
+              aria-expanded={archiveAsking === selectedThreadId}
               disabled={archiveBusy || openGate !== null /* WALL Palace writes / ADR-022: finish the reviewed gate before extraction. */}
-              onClick={archiveThread}
+              onClick={() => setArchiveAsking(selectedThreadId)}
             >
-              <span aria-hidden="true">{archiveBusy ? '…' : '⤓'}</span>
+              {archiveBusy ? 'Archiving…' : undefined}
             </Button>
           )}
           {activeRun !== null && (
@@ -3014,7 +3009,7 @@ function ChatModule() {
             disabled={!canSend /* WALL attention / C.6, H7: respect the current gate and snapshot. */}
             onClick={transmitPrompt}
           >
-            {activeRun === null ? 'Transmit' : 'Queue'}
+            {activeRun === null ? 'Send' : 'Queue'}
           </Button>
         </div>
       </form>
@@ -3205,8 +3200,8 @@ function ThreadEndCard({
         </div>
       )}
       <footer>
-        <Button type="button" onClick={resolveVisible} disabled={collapsed}>
-          Resolve visible · keep unseen pending
+        <Button action="approve" type="button" data-tooltip-detail="Approve every candidate you have seen; the unseen stay pending." onClick={resolveVisible} disabled={collapsed}>
+          Approve seen
         </Button>
         <span>Contradictions always need a tap.</span>
       </footer>
@@ -3260,8 +3255,8 @@ function VisibleQueueRow({
         <small>Neighbors: {card.neighbors.map((item) => item.label).join(', ')}</small>
       )}
       <div className="thread-end-row__actions">
-        <Button action="close" variant="danger" type="button" disabled={disabled} data-tooltip-detail="Leave it out of your Palace." onClick={onDeny}>Deny</Button>
-        <Button action="confirm" variant="primary" type="button" disabled={disabled} data-tooltip-detail="Save it to your Palace as a memory." onClick={onApprove}>Approve</Button>
+        <Button action="deny" variant="danger" type="button" disabled={disabled} data-tooltip-detail="Leave it out of your Palace." onClick={onDeny} />
+        <Button action="approve" variant="primary" type="button" disabled={disabled} data-tooltip-detail="Save it to your Palace as a memory." onClick={onApprove} />
       </div>
     </article>
   )
@@ -3594,16 +3589,17 @@ function PalaceQueueModule() {
                     ) : null}
                   </div>
                   <div className="seed-batch__actions">
-                    <Button action="close" variant="danger" type="button" data-tooltip-detail="Discard every memory from this document." disabled={busy} onClick={() => decideBatch(batchUid, 'deny')}>Reject batch</Button>
-                    <Button action="confirm" variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
+                    <ConfirmButton action="deny" variant="danger" type="button" data-tooltip-detail="Discard every memory from this document. Asks first." disabled={busy}
+                      question={`Deny all ${batchCards.length} memories from this document?`} lost="None of them enters your Palace." onConfirm={() => decideBatch(batchUid, 'deny')}>Deny batch</ConfirmButton>
+                    <Button action="approve" variant="primary" type="button" data-tooltip-detail="Admit every memory from this document to your Palace." disabled={busy} onClick={() => decideBatch(batchUid, 'approve')}>Approve batch</Button>
                   </div>
                 </header>
                 <div className="seed-batch__memories">
                   {batchCards.map((card) => (
                     <div key={card.item_uid} className="seed-memory" data-verdict={card.verdict}>
                       <div className="seed-memory__actions">
-                        <Button action="remove" iconOnly type="button" data-testid="seed-memory-reject" data-tooltip-detail="Discard just this memory." aria-label={`Reject ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'deny')}>Reject</Button>
-                        <Button action="confirm" iconOnly type="button" data-testid="seed-memory-approve" data-tooltip-detail="Admit just this memory." aria-label={`Approve ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'approve')}>Approve</Button>
+                        <Button action="deny" iconOnly type="button" data-testid="seed-memory-reject" data-tooltip-detail="Discard just this memory." aria-label={`Deny ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'deny')} />
+                        <Button action="approve" iconOnly type="button" data-testid="seed-memory-approve" data-tooltip-detail="Admit just this memory." aria-label={`Approve ${card.candidate.label}`} disabled={busy} onClick={() => decideCandidate(card.item_uid, 'approve')} />
                       </div>
                       <span>{card.verdict} · {card.candidate.keywords.join(' · ')}</span>
                       <strong>{card.candidate.label}</strong>

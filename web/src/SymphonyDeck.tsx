@@ -14,7 +14,7 @@ import { useRackPlugin, useRackSnapshot } from './rack'
 import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
 import { OutLoud } from './OutLoud'
-import { Button, Select, TextArea, TextField, Toggle } from './kit'
+import { Button, ConfirmButton, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
 import { agentColor } from './visualization'
@@ -345,13 +345,13 @@ export function SymphonyDeck() {
           ) : (
             <footer>
               <small>{String(card.judge)} · {String(card.policy)}</small>
-              <Button action="confirm" type="button" disabled={deciding} data-testid="boundary-allow-once"
+              <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-once"
                 data-tooltip-detail="Let this request cross this wall; the next one asks again."
                 onClick={() => decide(card, 'allowed_once')}>Allow once</Button>
-              <Button action="confirm" type="button" disabled={deciding} data-testid="boundary-allow-thread"
+              <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-thread"
                 data-tooltip-detail="Let every request in this thread cross this wall."
                 onClick={() => decide(card, 'allowed_thread')}>Allow for this thread</Button>
-              <Button action="close" type="button" disabled={deciding} data-testid="boundary-deny"
+              <Button action="deny" type="button" disabled={deciding} data-testid="boundary-deny"
                 data-tooltip-detail="Stop this request; nothing crosses the wall."
                 onClick={() => decide(card, 'denied')}>Deny</Button>
             </footer>
@@ -466,7 +466,7 @@ function ProposedResponseCardView({
           replaceDraft={draft === card.primary} onDraft={onDraft} />}
         <small>Enter fires · Shift+Enter adds a line</small>
         <Button action="send" variant="primary" type="button" disabled={fireDisabled || !draft.trim()} onClick={onFire}>
-          Fire reply
+          Send reply
         </Button>
       </footer>
     </article>
@@ -559,10 +559,12 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
-              <Button action="stop" iconOnly variant="danger" type="button" disabled={busy} onClick={() => void intervene({
-                kind: 'cancel_attempt', symphony_id: stack.symphony_id,
-                attempt_id: attempt.attempt_id,
-              }, `${attempt.attempt_id} cancelled after draining.`)}>Cancel attempt</Button>
+              <ConfirmButton action="stop" iconOnly variant="danger" type="button" disabled={busy}
+                question={`Stop attempt ${attempt.attempt_id}?`} lost="It cannot be started again; what it gathered so far is kept."
+                onConfirm={() => void intervene({
+                  kind: 'cancel_attempt', symphony_id: stack.symphony_id,
+                  attempt_id: attempt.attempt_id,
+                }, `${attempt.attempt_id} cancelled after draining.`)}>Stop attempt</ConfirmButton>
             )}
           </div>
         ))}

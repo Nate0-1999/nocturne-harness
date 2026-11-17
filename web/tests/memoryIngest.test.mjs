@@ -56,7 +56,7 @@ test('curator proposals expose Palace activity and use only explicit queue decis
   assert.match(proposal, /card\.proposal_payload\?\.rationale/u)
   assert.match(proposal, /approval_mode: 'explicit'/u)
   assert.match(proposal, /actor_class: 'human'/u)
-  assert.match(proposal, /Keep as is/u)
+  assert.match(proposal, /Deny repair/u)
   assert.match(proposal, /Approve repair/u)
 })
 

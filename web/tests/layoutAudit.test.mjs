@@ -76,7 +76,7 @@ test('stage source keeps rare controls in settings and lets thread titles wrap i
   assert.match(rackCss, /\.palace-queue-module\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%/s)
   assert.match(rackCss, /@media \(max-width: 48\.9rem\)[\s\S]*\.rack-drawer-scrim\s*\{\s*display:\s*none/)
   assert.match(rackCss, /\.learning-summary__metric > small\s*\{[^}]*overflow-wrap:\s*anywhere/s)
-  assert.match(graph, /<g className="graph-node"[\s\S]*<title>\{node\.memory\.label\}<\/title>[\s\S]*<\/g>\s*<text className="graph-node-label"/)
+  assert.match(graph, /<g className="graph-node"[\s\S]*<title>\{\[node\.memory\.label,[^\n]*<\/title>[\s\S]*<\/g>\s*<text className="graph-node-label"/)
   assert.match(shellCss, /\.thread-item__title\s*\{[^}]*overflow-wrap:\s*anywhere/s)
   assert.match(shellCss, /\.thread-item__meta\s*\{[^}]*flex-wrap:\s*wrap/s)
   assert.match(shellCss, /\.chat-header h1\s*\{[^}]*overflow-wrap:\s*anywhere/s)

@@ -11,7 +11,7 @@ test('keeps the memory editor mounted for its authoritative save result', async 
   assert.match(source, /const editing =\s*editor\?\.memoryId === memory\.memory_id/u)
   assert.doesNotMatch(source, /editor\?\.memoryId === memory\.memory_id && !editSaved/u)
   assert.match(source, /Saved\. Per-message scoring refreshes this thread/u)
-  assert.match(source, /\{editSaved \? 'Done' : 'Cancel'\}/u)
+  assert.match(source, /\{editSaved \? 'Close' : 'Cancel'\}/u)
   assert.match(source, /async function saveEdit\(\)/u)
   assert.match(source, /onClick=\{\(\) => \{ void saveEdit\(\) \}\}/u)
   assert.match(source, /function submitEdit[\s\S]*?void saveEdit\(\)/u)
@@ -48,7 +48,7 @@ test('the memory card keeps history behind the hover and the link as a row actio
   const source = await readFile(new URL('../src/MemoryPanel.tsx', import.meta.url), 'utf8')
 
   assert.match(source, /<Provenance term="History">\s*<ol className="memory-card__history">/u)
-  assert.match(source, /<Button action="open" iconOnly className="memory-card__remove"[\s\S]*?Open the conversation<\/Button>\s*\)\}\s*<Button action="delete" iconOnly variant="danger"/u)
+  assert.match(source, /<Button action="thread" iconOnly className="memory-card__remove"[\s\S]*?\/>\s*\)\}\s*<Button action="delete" iconOnly variant="danger"/u)
   assert.doesNotMatch(source, /Revision history · r/u)
   assert.doesNotMatch(source, /Open the conversation ↗/u)
 })

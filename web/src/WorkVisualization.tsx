@@ -188,7 +188,7 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     <details className="work-viz__data" open><summary>Agents and measured work</summary>
       <table><thead><tr><th>Agent</th><th>Where</th><th>State</th><th>Spend</th></tr></thead><tbody>
         {agents.map((agent) => <tr key={agent.id} data-selected={agent.id === selectedId || undefined}>
-          <td><Button variant="bare" action="open" onClick={() => pick(agent)} title={agent.label} style={{ color: agentColor(agent.id) }}>{agent.label}</Button></td><td title={agent.location}>{agent.location.startsWith(agent.root) ? `.${agent.location.slice(agent.root.length)}` : agent.location}</td><td>{agent.state}</td>
+          <td><Button variant="bare" onClick={() => pick(agent)} title={agent.label} style={{ color: agentColor(agent.id) }}>{agent.label}</Button></td><td title={agent.location}>{agent.location.startsWith(agent.root) ? `.${agent.location.slice(agent.root.length)}` : agent.location}</td><td>{agent.state}</td>
           <td>{agent.cost_usd === null ? 'Not yet priced' : `$${Number(agent.cost_usd).toFixed(5)}`}</td>
         </tr>)}
       </tbody></table>

@@ -179,6 +179,7 @@ export function RecipeModule() {
                             type="button"
                             data-state={judge.state}
                             data-progress={progressOf(judge.state)}
+                            data-tooltip-detail={judge.state.replace('_', ' ')}
                             data-selected={selectedNodeId === judge.node_id || undefined}
                             onClick={() => inspect(judge)}
                           >
@@ -249,6 +250,7 @@ function RecipeCell({
       data-kind={node.kind}
       data-state={node.state}
       data-progress={progressOf(node.state)}
+      data-tooltip-detail={node.state.replace('_', ' ')}
       data-selected={selected || undefined}
       style={style}
       onClick={() => onInspect(node)}

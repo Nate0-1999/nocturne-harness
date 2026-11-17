@@ -20,7 +20,7 @@ import type {
 import { useContributionMap, useScorerAuditionMap } from './ContributionBars'
 import { MemoryCard, Provenance } from './MemoryCard'
 import { formatHumanScore } from './humanNumbers.ts'
-import { Button, TextArea } from './kit'
+import { Button, Confirm, TextArea } from './kit'
 import { useRackPlugin, useRackSnapshot } from './rack'
 
 const LONG_PRESS_MS = 550
@@ -706,7 +706,7 @@ function GateCard({
       action={
         <>
           {onAdd !== undefined && (
-            <Button action={added ? 'confirm' : 'add'} iconOnly variant="primary"
+            <Button action={added ? undefined : 'add'} iconOnly variant="primary"
               className="memory-card__add"
               type="button"
               data-testid="near-miss-toggle"
@@ -717,11 +717,9 @@ function GateCard({
               aria-label={added ? `Added ${card.label}` : `Add ${card.label}`}
               disabled={disabled}
               onClick={() => onAdd(card.memory_id)}
-            >
-              <span aria-hidden="true">{added ? '✓' : '+'}</span>
-            </Button>
+            />
           )}
-          <Button action="remove" iconOnly
+          <Button action={removed ? 'restore' : 'remove'} iconOnly
             ref={removeButtonRef}
             className="memory-card__remove"
             type="button"
@@ -748,46 +746,35 @@ function GateCard({
             onPointerLeave={onLongPressEnd}
             onContextMenu={(event) => event.preventDefault()}
             onClick={(event) => onRemove(event, card.memory_id)}
-          >
-            <span aria-hidden="true">×</span>
-          </Button>
-          <Button action="delete" iconOnly variant="danger"
+          />
+          <Button action={deleted ? 'restore' : 'delete'} iconOnly variant="danger"
             className="memory-card__delete"
             type="button"
             data-testid="memory-delete"
             data-memory-id={card.memory_id}
-            data-tooltip="Delete permanently"
+            data-tooltip={deleted ? `Restore ${card.label}` : 'Delete permanently'}
             data-tooltip-detail="Delete this memory from the Palace when you continue, as the Memory panel does. Asks first."
             aria-haspopup="dialog"
             aria-expanded={confirmOpen}
             aria-pressed={deleted}
-            aria-label={deleted ? `Keep ${card.label}` : `Permanently delete ${card.label}`}
+            aria-label={deleted ? `Restore ${card.label}` : `Permanently delete ${card.label}`}
             disabled={disabled}
             onClick={() => deleted ? onWithdrawDelete(card.memory_id) : onConfirmDelete(card.memory_id)}
-          >
-            <span aria-hidden="true">×!</span>
-          </Button>
+          />
         </>
       }
       prompt={
         <>
           {confirmOpen && (
-            <div
+            <Confirm
               className="memory-card__modifier"
-              role="dialog"
-              aria-label={`Permanently delete ${card.label}?`}
               data-testid="memory-delete-confirm"
-            >
-              <span>Permanently delete?</span>
-              <Button action="confirm" variant="danger" type="button" autoFocus disabled={disabled}
-                data-tooltip-detail="Yes: delete it from the Palace when you continue."
-                onClick={() => onDelete(card.memory_id)}>
-                Yes
-              </Button>
-              <Button action="close" type="button" disabled={disabled} data-tooltip-detail="Keep the memory as it is." onClick={onCloseConfirm}>
-                No
-              </Button>
-            </div>
+              question={`Delete “${card.label}” permanently?`}
+              lost="It goes when you continue; the Memory Graph can restore it."
+              disabled={disabled}
+              onYes={() => onDelete(card.memory_id)}
+              onNo={onCloseConfirm}
+            />
           )}
           {modifierOpen && (
             <div
@@ -816,7 +803,7 @@ function GateCard({
               >
                 Never
               </Button>
-              <Button action="close" type="button" disabled={disabled} onClick={onCloseModifier}>
+              <Button type="button" disabled={disabled} onClick={onCloseModifier}>
                 Cancel
               </Button>
             </div>

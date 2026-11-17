@@ -424,7 +424,7 @@ export function ModelDevice() {
           return (
             <div className="model-knob" key={descriptor.id} data-parameter-id={descriptor.id}>
               <label htmlFor={`control-${descriptor.id}`}>{descriptor.label}</label>
-              <output>{typeof current === 'number' ? current : 'Inherit'}</output>
+              <output>{typeof current === 'number' ? current : 'Default'}</output>
               <input
                 id={`control-${descriptor.id}`}
                 type="range"
@@ -440,8 +440,8 @@ export function ModelDevice() {
                   void write(descriptor.id, next)
                 }}
               />
-              <Button type="button" data-tooltip={`Inherit ${descriptor.label}`} data-tooltip-detail="Clear this value and use the provider's default." disabled={!editable || current === null} onClick={() => { void write(descriptor.id, null) }}>
-                Inherit
+              <Button type="button" data-tooltip={`Use the default ${descriptor.label}`} data-tooltip-detail="Clear this value and use the provider's default." disabled={!editable || current === null} onClick={() => { void write(descriptor.id, null) }}>
+                Use default
               </Button>
             </div>
           )

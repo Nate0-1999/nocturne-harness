@@ -32,7 +32,7 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
       <label>Invoice ID<TextField aria-label="Invoice ID" data-tooltip-detail="The invoice number from your cloud bill." required value={invoice} onChange={(event) => setInvoice(event.target.value)} /></label>
       <Button action="save" variant="primary" type="button" disabled={pending} data-tooltip-detail="Add this invoice to the spend ledger." onClick={(event) => {
         if (event.currentTarget.form?.reportValidity()) void save()
-      }}>{pending ? 'Recording…' : 'Record invoice'}</Button>
+      }}>{pending ? 'Saving…' : 'Save invoice'}</Button>
     </form>
     <p role="status">{status}</p>
   </details>
