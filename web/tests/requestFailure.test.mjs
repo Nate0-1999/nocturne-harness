@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { failureMessage, responseFailure, serverMessage } from '../src/requestFailure.ts'
 
-/** SD-096 rule (e): a broken network or unexpected server response cannot expose diagnostics. */
+/** P4 / SD-096 rule (e): a broken network response cannot expose diagnostics. */
 test('request failures hide exceptions, status text and structured diagnostics', async () => {
   const next = 'The document could not be read. Keep the file and upload it again.'
   for (const detail of ['Rack action failed (503)', { code: 'internal_error' },
@@ -23,7 +23,7 @@ test('an authored refusal and its next step stay as written', async () => {
     'The Palace is still busy. Try again shortly.')
 })
 
-/** FL-018: a later spend warning must not erase the memory-degraded notice. */
+/** SPEC C.6 / FL-018: a spend warning must not erase the memory-degraded notice. */
 test('the local-copy clock and a joined authored notice retain their wording', () => {
   const sentence = 'The Palace is unreachable; memory is from the local copy, as of 18:30. The Palace is still busy. Try again shortly.'
   assert.equal(serverMessage(sentence, 'The request failed. Try again.'), sentence)
