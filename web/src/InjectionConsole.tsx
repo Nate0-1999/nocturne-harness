@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { serverMessage } from './requestFailure'
 
 import { ContributionBars } from './ContributionBars'
 import { formatHumanPercent, formatHumanScore } from './humanNumbers.ts'
@@ -226,7 +227,7 @@ export function InjectionConsole() {
       applySnapshot(result.data as unknown as Snapshot, explicitReset)
     } catch {
       if (generation === undefined || generation === loadGeneration.current) {
-        setFailure('Memory tuning is temporarily unavailable.')
+        setFailure('Memory tuning could not be loaded. Reload to try again.')
       }
     }
   }, [applySnapshot, query, consoleThreadId, scope])
@@ -356,7 +357,7 @@ export function InjectionConsole() {
         }
         if (job.status === 'failed') {
           setRetrainNotice(null)
-          setFailure(job.error ?? 'Retraining failed.')
+          setFailure(serverMessage(job.error, 'Retraining did not finish. Try Force retrain again.'))
           setRetrainJob(null)
           return
         }
@@ -473,7 +474,7 @@ export function InjectionConsole() {
                   <tr><th>Injected tokens</th><td>{latestRetrain.incumbent.injected_tokens}</td><td>{latestRetrain.challenger.injected_tokens}</td></tr>
                 </tbody>
               </table>
-              <p className="console-note">Both sets use the same held-out decisions. Weighted errors include memory-share errors; fewer is better.</p>
+              <p className="console-note" title="Both sets use the same held-out decisions. Weighted errors include memory-share errors.">Compare errors; fewer is better.</p>
             </>}
           </div>
           {data.metrics_scope !== 'principal' && (
@@ -496,7 +497,7 @@ export function InjectionConsole() {
           <details><summary>Axes and project offsets</summary>
             {(data?.configurations ?? []).filter((config) => config.status !== 'inactive').map((config) => <article key={config.version}>
               <h3>{config.version} · {config.status}</h3>
-              {Object.values(config.axes ?? {}).length === 0 && <p>No curator-grown axes in this generation.</p>}
+              {Object.values(config.axes ?? {}).length === 0 && <p>A curator pass can add scoring axes here.</p>}
               {Object.entries(config.axes ?? {}).map(([name, axis]) => <div key={name}><strong>{axis.label}</strong><p>{axis.inputs.join(' × ')} · weight {axis.weight.toFixed(4)} · {axis.action.replaceAll('_', ' ')}</p><p>{axis.rationale}</p><details><summary>Provenance</summary><pre>{JSON.stringify(axis.provenance, null, 2)}</pre></details></div>)}
               <p>Projects start at global weights. Offsets fit after global weights, from zero, with at least {data?.learning.minimum_dispositions ?? 25} training signals per project.</p>
               <table aria-label={`Effective project weights for ${config.version}`}>
@@ -505,7 +506,7 @@ export function InjectionConsole() {
                   {Object.entries(config.project_weights ?? {}).map(([project, weights]) => <tr key={project}><th title={project}>{projectName({ project_key: project, project_label: null })}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key} title={String(weights[key])}>{formatHumanScore(weights[key])}</td>)}</tr>)}
                 </tbody>
               </table>
-              {Object.keys(config.project_offsets ?? {}).length === 0 ? <p>No project offsets learned yet.</p> :
+              {Object.keys(config.project_offsets ?? {}).length === 0 ? <p>Review memories across projects to learn project offsets.</p> :
                 <table aria-label={`Project offsets for ${config.version}`}><thead><tr><th>Project</th>{Object.values(WEIGHT_LABELS).map((label) => <th key={label}>{label}</th>)}</tr></thead>
                   <tbody>{Object.entries(config.project_offsets ?? {}).map(([project, offsets]) => <tr key={project}><th title={project}>{projectName({ project_key: project, project_label: null })}</th>{Object.keys(WEIGHT_LABELS).map((key) => <td key={key}>{(offsets[key] ?? 0).toPrecision(4)}</td>)}</tr>)}</tbody>
                 </table>}
@@ -564,7 +565,7 @@ export function InjectionConsole() {
                   </ConfirmButton>
                 </div>
                 {injectionId === undefined && (
-                  <small>Select a thread with a frozen gate to audition. Activation remains available.</small>
+                  <small title="Activation remains available without an audition.">Select a thread with a memory gate to audition.</small>
                 )}
               </article>
             )
@@ -705,7 +706,7 @@ export function InjectionConsole() {
               </article>
             )
           })}
-          {data?.candidates.length === 0 && <p>Nothing measured yet.</p>}
+          {data?.candidates.length === 0 && <p>Send a prompt to measure why memories surfaced.</p>}
         </section>
       </div>
       <section aria-label="Injection back-test history">
@@ -732,7 +733,7 @@ function AccuracyCurve({ slice }: { slice: Slice }) {
       point.accuracy_percent !== null,
   )
   if (measured.length === 0) {
-    return <p className="console-note">No held-out accuracy is available yet.</p>
+    return <p className="console-note">Review memory gates to measure held-out accuracy.</p>
   }
   const values = measured.map((point) => point.value)
   const scores = measured.map((point) => Number(point.accuracy_percent))

@@ -35,7 +35,7 @@ export function FitProgress({ points, pending }: { points: FitPoint[]; pending: 
       </svg>
       <figcaption>Training loss {measured.at(-1)!.objective!.toPrecision(5)} · lower is better · sampled every 100 iterations</figcaption>
     </figure>}
-    <p>Observed worker steps; a last observation alone does not prove the worker is still running.</p>
+    <small title="A last observation alone does not prove the worker is still running.">Observed worker steps</small>
   </section>
 }
 export type CreationSummary = {
@@ -71,20 +71,22 @@ export function CreationScoreboard({ data, onBacktest }: {
     setBusy(true)
     setFailure(null)
     try { setResult(await onBacktest(size, verification)) }
-    catch { setFailure('The compaction back-test did not complete. Current values remain active.') }
+    catch { setFailure('The compaction back-test did not complete. Try again; current values remain active.') }
     finally { setBusy(false) }
   }
   return <section aria-label="Memory creation outcomes">
     <h2>Memory creation</h2>
-    <p>Compaction instructions replay recent source spans. Used facts earn one, removed facts cost one, new facts stay neutral; fewer or smaller facts win an equal score.</p>
-    <p>Retraining evaluates instructions and size with minimum match and memory share. The winning proposal uses the existing scorer activation.</p>
+    <details><summary>Scoring legend</summary>
+      <p>Compaction instructions replay recent source spans. Used facts earn one, removed facts cost one, new facts stay neutral; fewer or smaller facts win an equal score.</p>
+      <p>Retraining evaluates instructions and size with minimum match and memory share. The winning proposal uses the existing scorer activation.</p>
+    </details>
     <p>Active memory size: {data?.compaction?.active?.memory_size ?? 128} tokens.</p>
     <div className="control-bank"><label>Memory size to back-test<TextField type="number" min={1} max={128} step={1} value={size}
       onChange={(event) => setSize(Number(event.target.value))} /></label>
     <Button disabled={!onBacktest || busy || !Number.isInteger(size) || size < 1 || size > 128}
       onClick={() => void backtest()}>{busy ? 'Back-testing…' : 'Back-test size'}</Button></div>
     <label><input type="checkbox" checked={verification} onChange={(event) => setVerification(event.target.checked)} />Include verification history in this preview</label>
-    <p>Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.</p>
+    <p title="Back-tests save a receipt and leave active values unchanged. Size tuning needs 100 graded signals.">Choose a size to preview its effect.</p>
     {failure && <p role="status">{failure}</p>}
     {result && <div role="status">
       <p>Preview only · {result.id
@@ -94,7 +96,7 @@ export function CreationScoreboard({ data, onBacktest }: {
     </div>}
     {data?.compaction?.last_backtest === 'failed' && <p role="status">The last instruction back-test did not complete. Current instructions remain active.</p>}
     <details><summary>Compaction instruction generations</summary>
-      {!data?.compaction?.generations.length ? <p>No compaction generation recorded yet.</p> :
+      {!data?.compaction?.generations.length ? <p>Run a compaction back-test to record a generation.</p> :
         data.compaction.generations.map((generation) => <article key={generation.id}>
           <h3>{generation.id} · {generation.adopted ? 'adopted' : generation.verdict?.replaceAll('_', ' ')}</h3>
           <p>Parent {generation.parent ?? 'none'} · {generation.date} · {generation.memory_size} tokens</p>
@@ -104,7 +106,7 @@ export function CreationScoreboard({ data, onBacktest }: {
     </details>
     {!data ? <p>Creation history needs the current Palace release.</p> : <>
       <p>{data.hygiene_excluded_events} verification or fixture events excluded.</p>
-      {data.sources.length === 0 ? <p>No authentic creation outcomes yet.</p> :
+      {data.sources.length === 0 ? <p>Save and use memories to record creation outcomes.</p> :
         <table><thead><tr><th>Source</th><th>Created</th><th>Surviving</th><th>Used</th><th>Survival</th></tr></thead>
           <tbody>{data.sources.map((row) => <tr key={row.source}><th>{row.source}</th><td>{row.created}</td><td>{row.surviving}</td><td>{row.used}</td><td>{row.survival_rate === null ? '—' : `${(100 * row.survival_rate).toFixed(1)}%`}</td></tr>)}</tbody>
         </table>}
@@ -137,8 +139,8 @@ export function ScoreTerrain({ points, labels = ['Minimum match', 'Memory share'
   }, [points])
   return <section aria-label="Replay score terrain">
     <h3>Score terrain</h3>
-    <p>Held-out decision agreement across {labels.join(' × ')}. Height is agreement; the surface interpolates measured grid points.</p>
-    {points.length === 0 ? <p>No replayable held-out gates yet.</p> : <>
+    <p title={`Held-out decision agreement across ${labels.join(' × ')}. Height is agreement; the surface interpolates measured grid points.`}>Rotate the terrain to compare measured scores.</p>
+    {points.length === 0 ? <p>Review memory gates to supply decisions for replay.</p> : <>
       <div className="score-terrain">
         <Canvas camera={{ position: [1.8, 1.5, 1.8], fov: 42 }} frameloop="demand">
           <group rotation={[0, angle * Math.PI / 180, 0]} position={[0, -0.4, 0]}>
@@ -203,7 +205,7 @@ export function LearningSummary({
   }
 
   return (
-    <section className="learning-summary" aria-label="Authentic learning status">
+    <section className="learning-summary" aria-label="Authentic learning status" title={`${learningCadenceCopy(learning)} ${learningHygieneCopy(learning)}`}>
       <div className="learning-summary__metric">
         <span>Authentic signals</span>
         <strong>{learning.eligible_dispositions} / {learning.minimum_dispositions}</strong>
@@ -228,8 +230,6 @@ export function LearningSummary({
         </strong>
         <small>Active {learning.active_scorer_version}</small>
       </div>
-      <p className="learning-summary__cadence">{learningCadenceCopy(learning)}</p>
-      <p className="learning-summary__hygiene">{learningHygieneCopy(learning)}</p>
     </section>
   )
 }
@@ -265,7 +265,7 @@ export function LearningTimeline({
         : 'Held-out accuracy by scorer generation'}
     >
       {!hasPoints ? (
-        <p className="learning-timeline__empty">No measured learning scores yet.</p>
+        <p className="learning-timeline__empty">Review memory gates to record learning scores.</p>
       ) : (
         <svg viewBox={`0 0 ${width} 100`} role="img" aria-label="Learning score timeline">
           <line className="learning-timeline__grid" x1={width * 0.08} y1="12" x2={width * 0.92} y2="12" />
