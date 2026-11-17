@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Button, Select } from './kit'
+import { failureMessage, responseFailure } from './requestFailure'
 
 type MemoryChange = { memory_id: string; label: string; current_revision: number; candidate_revision: number | null }
 type Backup = { backup_id: string; created_at: string; reason: 'manual' | 'pre_migration' }
@@ -30,12 +31,12 @@ export function MemoryRestore() {
     setError('')
     try {
       const response = await fetch('/v1/restore/backups')
+      if (!response.ok) throw await responseFailure(response)
       const body = await response.json()
-      if (!response.ok) throw new Error(body.detail ?? 'Backups unavailable')
       setBackups(body.backups)
       setBackup(body.backups[0]?.backup_id ?? '')
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Backups unavailable')
+      setError(failureMessage(failure, 'Backups could not be loaded. Close this preview and try again.'))
     }
   }
   async function inspect() {
@@ -44,11 +45,11 @@ export function MemoryRestore() {
     setError('')
     try {
       const response = await fetch(`/v1/restore/${encodeURIComponent(backup.trim())}/preview`, { method: 'POST' })
+      if (!response.ok) throw await responseFailure(response)
       const body = await response.json()
-      if (!response.ok) throw new Error(body.detail ?? 'Restore preview unavailable')
       setPreview(body)
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Restore preview unavailable')
+      setError(failureMessage(failure, 'The backup could not be previewed. Select it and try again.'))
     } finally {
       setBusy(false)
     }
@@ -58,7 +59,7 @@ export function MemoryRestore() {
     <div className="app-settings-actions"><Button action="restore" type="button" data-tooltip-detail="Preview a local Palace backup before restoring anything." onClick={() => void open()}>Restore memories</Button></div>
     <dialog ref={dialog} className="memory-restore-dialog" aria-labelledby="memory-restore-title">
       <h2 id="memory-restore-title">Roll back these memories?</h2>
-      {backups?.length === 0 && <p>No backups yet. Run <code>nocturne backup</code> to make one.</p>}
+      {backups?.length === 0 && <p>Run <code>nocturne backup</code> to add a backup.</p>}
       {backups !== null && backups.length > 0 && <label>Backup <Select data-tooltip-detail="The backup to roll back to, newest first." value={backup} disabled={busy} onChange={(event) => {
         setBackup(event.target.value); setPreview(null)
       }}>{backups.map((item) => <option key={item.backup_id} value={item.backup_id}>
@@ -74,14 +75,14 @@ export function MemoryRestore() {
           ['Pins undone', preview.manifest.pins_undone],
         ] as const).map(([heading, memories]) => <section key={heading}>
           <h3>{heading} · {memories.length}</h3>
-          {memories.length === 0 ? <p>None</p> : <ul>{memories.map((memory) => <li key={memory.memory_id}>
+          {memories.length === 0 ? <p>Choose a backup with changes to fill this list.</p> : <ul>{memories.map((memory) => <li key={memory.memory_id}>
             <strong>{memory.label}</strong> · {memory.memory_id}
             {memory.candidate_revision !== null && ` · r${memory.current_revision} → r${memory.candidate_revision}`}
           </li>)}</ul>}
         </section>)}
         <h3>Event counts · current → restored</h3>
         <ul>{preview.manifest.event_counts.map((count) => <li key={count.table}>{count.table}: {count.current} → {count.candidate}</li>)}</ul>
-        <p>To restore, stop Nocturne and run <code>nocturne restore {preview.backup_id}</code>. The command rechecks this list and asks for confirmation before switching.</p>
+        <p title="The command rechecks this list and asks for confirmation before switching.">Stop Nocturne and run <code>nocturne restore {preview.backup_id}</code> to restore.</p>
       </>}
       <Button action="close" type="button" data-tooltip-detail="Close without restoring anything." onClick={() => dialog.current?.close()} />
     </dialog>
