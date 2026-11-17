@@ -169,7 +169,6 @@ export function PalaceNebula() {
       <div className="palace-nebula__title">
         <small>Palace current · {contextName}</small>
         <h1>Living Memory</h1>
-        <p>Every point is a recorded memory event. The graph is the instrument.</p>
       </div>
       <div className="palace-nebula__controls">
         <label>Axis<Select aria-label="Nebula axis" data-tooltip-detail="What connects the memories: families, colours and links re-form at once." value={axis} onChange={(event) => setAxis(event.target.value as NebulaAxis)}>
@@ -197,9 +196,9 @@ export function PalaceNebula() {
       />}
       <div className="palace-nebula__readouts" aria-label="Attuned Palace readouts">
         <article><span>Constellation</span><strong>{bodies.length} bodies</strong><small>{filaments.length} real filaments</small></article>
-        <article><span>Memory current</span><strong>{memoryEvents.length} events</strong><small>{latestEvent === undefined ? 'No recorded current' : `${latestEvent.event_class} · ${latestEvent.memory_label}`}</small></article>
+        <article><span>Memory current</span><strong>{memoryEvents.length} events</strong><small>{latestEvent === undefined ? 'Save or edit a memory to record an event.' : `${latestEvent.event_class} · ${latestEvent.memory_label}`}</small></article>
         <article><span>Creature</span><strong>{families.length} families</strong><small>{splitCount} splits · {mergeCount} merges</small></article>
-        <article aria-label="Curator progress"><span>Curator progress</span><strong>{ghosts.length} targets</strong><small>{curatorProgress ? `${curatorProgress.phase} · ${new Date(curatorProgress.ts).toLocaleTimeString()}` : 'No recorded curator progress'}</small></article>
+        <article aria-label="Curator progress"><span>Curator progress</span><strong>{ghosts.length} targets</strong><small>{curatorProgress ? `${curatorProgress.phase} · ${new Date(curatorProgress.ts).toLocaleTimeString()}` : 'A curator pass records its progress here.'}</small></article>
         {!selected?.as_of && <article><span>Optimization</span><strong>{load.kind === 'ready' ? load.scorer?.active_version ?? 'Unavailable' : 'Waiting'}</strong><small>{learning === undefined ? 'Learning surface unavailable' : `${learning.eligible_dispositions ?? 0} signals · ${(learning.retrain_runs ?? []).length} runs`}</small></article>}
       </div>
       <div className="palace-nebula__event-key" aria-label="Memory event hues">
@@ -215,16 +214,16 @@ export function PalaceNebula() {
       </div>
       {/* The live reading's notices belong to the present; a scrubbed moment draws its recording. */}
       {!selected?.as_of && load.kind === 'loading' && <p role="status" className="palace-nebula__notice">Reading Palace reality…</p>}
-      {!selected?.as_of && load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The live Palace current is unavailable.</p>}
+      {!selected?.as_of && load.kind === 'error' && <p role="alert" className="palace-nebula__notice">The Palace view could not be loaded. Reload to try again.</p>}
       {selected?.as_of && !sceneSnapshot && <p role="status" className="palace-nebula__notice">{visualization.loading ? 'Loading the recorded Palace state…' : 'No Palace reading was recorded at this moment.'}</p>}
-      {sceneSnapshot && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">No memories or memory events exist in this Palace snapshot.</p>}
+      {sceneSnapshot && bodies.length === 0 && memoryEvents.length === 0 && <p role="status" className="palace-nebula__notice">Use /remember to add memories to this view.</p>}
     </div>
-    <aside className="palace-nebula__legend" aria-label="Living Memory data bindings">
+    <details><summary>Legend</summary><aside className="palace-nebula__legend" aria-label="Living Memory data bindings">
       <section><h2>Radial Palace</h2>{NEBULA_BINDINGS.radial.map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Memory current</h2>{NEBULA_BINDINGS.current.map((binding) => <p key={binding}>{binding}</p>)}</section>
       <section><h2>Creature + constellation</h2>{NEBULA_BINDINGS.shared.map((binding) => <p key={binding}>{binding}</p>)}</section>
-      <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'None' : kinds.join(' · ')}</p><p>Camera moves freely around the same recorded snapshot.</p></section>
-    </aside>
+      <section><h2>Kinds in view</h2><p>{kinds.length === 0 ? 'Add a memory to see its kind here.' : kinds.join(' · ')}</p></section>
+    </aside></details>
     <details><summary>Memories in view</summary>
       {bodies.map((body) => <Button variant="bare" key={body.id} type="button" aria-pressed={body.in_current_context} onClick={() => selection.select({ kind: 'memory', id: body.id, as_of: selected?.as_of ?? null })}>{body.label}</Button>)}
     </details>
