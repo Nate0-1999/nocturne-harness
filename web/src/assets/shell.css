@@ -26,6 +26,8 @@
 .tool-inventory__panel ul { list-style: none; padding: 0; margin: 0; }
 .tool-inventory__panel li { padding: .75rem 0; border-bottom: 1px solid var(--line-strong); }
 .tool-inventory__panel p { margin: .4rem 0; }
+.tool-inventory__panel a { color: var(--accent); }
+.tool-inventory__panel a:hover { color: var(--ink); }
 .rewind-control { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: .3rem; align-items: center; }
 .topbar {
   position: relative;
@@ -689,6 +691,8 @@
   color: var(--muted);
   letter-spacing: 0.02em;
   text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .message--danger .message__status {

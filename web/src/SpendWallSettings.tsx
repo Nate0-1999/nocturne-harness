@@ -18,6 +18,7 @@ export function SpendWallSettings() {
     }).catch((error: unknown) => setStatus(failureMessage(error, 'Spend walls could not be loaded. Reload to try again.')))
   }, [])
   async function save() {
+    setStatus('')
     try {
       const response = await fetch('/v1/spend-walls', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },

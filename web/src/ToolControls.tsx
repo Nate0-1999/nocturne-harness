@@ -19,6 +19,7 @@ export function ToolInventory({ threadId }: { threadId: string | null }) {
   const [status, setStatus] = useState('')
   async function toggle() {
     setOpen(!open)
+    setStatus('')
     if (open || threadId === null) return
     setStatus('Reading installed tools…')
     try {
@@ -31,7 +32,7 @@ export function ToolInventory({ threadId }: { threadId: string | null }) {
     }
   }
   return <div className="tool-inventory">
-    <Button action={open ? 'collapse' : 'expand'} type="button" data-tooltip-detail="List the tools and skills this conversation can use." disabled={threadId === null} aria-expanded={open} onClick={() => void toggle()}>Tools & skills</Button>
+    <Button action={open ? 'collapse' : 'expand'} type="button" data-tooltip-detail={threadId === null ? 'Start a thread to see its tools and skills.' : 'List the tools and skills this conversation can use.'} disabled={threadId === null} aria-expanded={open} onClick={() => void toggle()}>Tools & skills</Button>
     {open && <section aria-label="Tools and skills" className="tool-inventory__panel">
       <p role="status">{status}</p>
       <ul>{entries.map((entry) => <li key={`${entry.kind}:${entry.name}`}>
@@ -58,6 +59,7 @@ export function ToolsetSettings() {
     }).catch((error: unknown) => setStatus(failureMessage(error, 'The toolset could not be loaded. Reload to try again.')))
   }, [])
   async function change(toolset: string) {
+    setStatus('')
     try {
       const response = await fetch('/v1/toolset', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
