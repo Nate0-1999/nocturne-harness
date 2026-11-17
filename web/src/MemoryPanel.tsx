@@ -14,6 +14,7 @@ import { formatHumanScore } from './humanNumbers.ts'
 import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
 import { ContextBars } from './ContextBars'
 import { Button, EmptyState, Select, TextArea } from './kit'
+import { failureMessage, serverMessage } from './requestFailure'
 
 interface MemoryPanelProps {
   panel: MemoryPanelState
@@ -176,7 +177,7 @@ export function MemoryPanel({
   }, [mobileOpen, onClose])
 
   function reportClientError(error: unknown, fallback: string) {
-    setClientError(error instanceof Error ? error.message : fallback)
+    setClientError(failureMessage(error, `${fallback}. Try again.`))
   }
 
   async function refresh() {
@@ -353,7 +354,7 @@ export function MemoryPanel({
         )}
         {panelError !== null && (
           <p className="memory-panel__alert" role="alert">
-            {panelError.message}
+            {serverMessage(panelError.message, 'The memory change was not saved. Refresh and try again.')}
           </p>
         )}
         {pinConflict !== null && (
@@ -385,7 +386,7 @@ export function MemoryPanel({
             <p>Loading memories from your Palace.</p>
           </div>
         ) : panel.items.length === 0 ? (
-          <EmptyState data-testid="memory-empty" title="No active memories" />
+          <EmptyState data-testid="memory-empty" title="Use /remember to add a memory." />
         ) : (
           <div className="memory-panel__list" data-testid="memory-list">
             {panel.items.map(({ memory, score, revisions, near_miss: nearMiss, in_context: inContext, thread_excluded: threadExcluded }) => {
@@ -540,7 +541,7 @@ export function MemoryPanel({
                       )}
                       {editError !== null && (
                         <p className="memory-panel__alert" role="alert">
-                          {editError.message}
+                          {serverMessage(editError.message, 'The memory edit was not saved. Keep your draft, refresh and try again.')}
                         </p>
                       )}
                       {editSaved && (
@@ -619,8 +620,8 @@ export function MemoryTrace() {
     <h2>Memory trace</h2>
     <ContextBars />
     {error && <p role="alert">{error}</p>}
-    {panel.lastResponse?.action === 'error' && <p role="alert">{panel.lastResponse.message}</p>}
-    {items.length === 0 && <p>This conversation has no injected memories or near-miss suggestions.</p>}
+    {panel.lastResponse?.action === 'error' && <p role="alert">{serverMessage(panel.lastResponse.message, 'The memory change was not saved. Refresh and try again.')}</p>}
+    {items.length === 0 && <p>Send a prompt to see the memories considered for it.</p>}
     {items.map((item) => <MemoryCard key={item.memory.memory_id} memoryId={item.memory.memory_id} label={item.memory.label}
       body={item.memory.body} score={item.score} pin={item.memory.pin} testId="principal-memory"
       tone={item.in_context ? 'context' : item.near_miss ? 'near-miss' : 'removed'}
@@ -640,7 +641,7 @@ export function SelectedMemoryPanel({ memoryId }: { memoryId: string }) {
   const thread = rack.selectedThreadId === null ? null : rack.threads[rack.selectedThreadId]
   if (thread === null || thread === undefined) return <p>Select a conversation to inspect its memories.</p>
   const items = thread.memoryPanel.items.filter((item) => item.memory.memory_id === memoryId)
-  if (items.length === 0) return <p>This memory is not active in the Palace.</p>
+  if (items.length === 0) return <p>Select an active memory to inspect it.</p>
   return <MemoryPanel panel={{ ...thread.memoryPanel, items, total: items.length }}
     connected={rack.connection === 'connected' && !thread.awaitingSnapshot}
     removeEnabled={thread.activeRun === null} mobileOpen={false} inert={false} onClose={() => {}}
