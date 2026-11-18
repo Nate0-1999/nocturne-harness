@@ -7,12 +7,13 @@
     {
       "repo": "harness",
       "base": "835c62e10319cb4a61d2bc63cfe7fed77cf08be9",
-      "head": "1b1de603b923458f0de6ec7104d56ad691e93e5e"
+      "head": "2bf913318535433d55b9474da84b3619ccdddca5"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "M8WR decision journal; no product behavior.",
     "harness/src/harness/__init__.py": "Lockstep package metadata and expected version 0.1.99; API contract remains 0.1.92.",
+    "harness/verification/m2ux1/browser_check.mjs": "No feature impact: the Linux check reloaded between resize auto-framing and layout persistence, keeping the automatic-frame marker without its layout. Wait two animation frames and for the saved camera to match the displayed camera before reload; product code and assertions are unchanged.",
     "harness/web/dist/assets/index-BPr6Tqxq.css": "Built web assets, including intermediate bundles; FL-215 carries the display walk.",
     "harness/web/dist/assets/index-C4zOBr6e.js": "Built web assets, including intermediate bundles; FL-215 carries the display walk.",
     "harness/web/dist/assets/index-CiH-BXDh.css": "Built web assets, including intermediate bundles; FL-215 carries the display walk.",
