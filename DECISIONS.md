@@ -4538,3 +4538,14 @@ Assistant text, including /remember guidance, is untouched. Empty states say wha
 them; legends and longer instructions use existing disclosures or tips. Handlers and the
 kit's Confirm, word and icon tables are unchanged; Continue/Wrong/Never await F240.
 Pair 0.1.98 was unused in releases, PyPI, open PRs and the refreshed BOARD at selection.
+
+## M8WR — Reasons beside their actions (P3, P4)
+
+PRECEDENT: PLAN M8WR; SD-096; nocturne-look (a)–(h); D.2 092; ADR-019.
+Extend the existing public-message list for the authored refusals; F241's protocol/test
+choice stays open. Policy controls handle their own failures beside their save buttons;
+Settings owns colorway notices. A disabled Symphony sign control names its first unmet
+requirement without changing validation. The restore preview names memories and records;
+copying its exact command keeps backup IDs out of the visible copy and leaves the stopped-app
+restore ritual intact. The archive check did not reproduce; its handler is unchanged.
+Pair 0.1.99 was unused in live releases, PyPI, open PRs and the refreshed BOARD at selection.

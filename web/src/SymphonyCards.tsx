@@ -193,6 +193,11 @@ export function SymphonyDeliberationCard({ event, launched }: { event: JsonObjec
       charter.evidence_requirements.every((item) => item.trim() !== '') &&
       (charter.seat !== 'performance' || charter.metrics.every((item) => item.trim() !== ''))
     ) && authority.signed
+  const waitingFor = objective.trim() === '' ? 'Enter the desired outcome.'
+    : motivation.trim() === '' ? 'Say why this needs a Symphony.'
+    : recipe.some((step) => !step.title.trim() || !step.done_when.trim()) ? 'Fill in each recipe step and its done condition.'
+    : charters.some((charter) => charter.rubric.some((item) => !item.trim()) || charter.evidence_requirements.some((item) => !item.trim()) || (charter.seat === 'performance' && charter.metrics.some((item) => !item.trim()))) ? 'Fill in every judge rubric, evidence requirement and performance metric.'
+    : !authority.signed ? 'Authorize the limits before signing.' : null
 
   function updateStep(index: number, update: Partial<SymphonyRecipeStep>) {
     setRecipe((current) => replaceAt(current, index, { ...current[index]!, ...update }))
@@ -263,7 +268,7 @@ export function SymphonyDeliberationCard({ event, launched }: { event: JsonObjec
             onChange={(event) => updateStep(index, { stratagems: event.target.value.split('\n') })}
           /></label>}
         </div>)}
-        <Button action="add" variant="bare" type="button" className="symphony-card__minor" disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</Button>
+        <Button action="add" variant="bare" type="button" className="symphony-card__minor" data-tooltip-detail={recipe.length >= 12 ? 'A recipe can have up to twelve steps.' : 'Add another step to this recipe.'} disabled={recipe.length >= 12} onClick={() => setRecipe((current) => [...current, { step_id: `step-${current.length + 1}`, title: '', done_when: '', search: false }])}>Add recipe step</Button>
       </fieldset>
       <fieldset><legend>Fixed judge charters</legend>
         {charters.map((charter, index) => <div className="symphony-judge" key={charter.seat}>
@@ -285,7 +290,7 @@ export function SymphonyDeliberationCard({ event, launched }: { event: JsonObjec
         <label className="symphony-check symphony-sign"><Toggle checked={locked || authority.signed} onChange={(event) => setAuthority({ ...authority, signed: event.target.checked })} /> I authorize up to {counted(authority.attempts, 'attempt')}, ${authority.spend_wall_usd}, {counted(authority.max_rounds, 'round')}, depth {authority.depth_cap}, {counted(authority.children_per_attempt, 'child', 'children')} per attempt, and {counted(authority.duration_minutes, 'minute')}.</label>
       </fieldset>
       </fieldset>
-      <footer className="symphony-card__footer"><span role="status">{launched === undefined || busy ? status : locked ? 'Signed and running. Type in this chat to steer it.' : 'Blocked · the reason is on the Symphony card below. Sign again to relaunch.'}</span><Button action="run" variant="primary" type="button" disabled={!complete || busy || locked} onClick={() => void launch()}>{locked ? 'Signed · running' : busy ? 'Launching…' : launched === undefined ? 'Sign & run Symphony' : 'Sign & run again'}</Button></footer>
+      <footer className="symphony-card__footer"><span role="status">{locked ? 'Signed and running. Type in this chat to steer it.' : busy ? status : waitingFor ?? (launched === undefined ? status : 'Blocked · the reason is on the Symphony card below. Sign again to relaunch.')}</span><Button action="run" variant="primary" type="button" data-tooltip-detail={locked ? 'This Symphony is already running.' : busy ? 'Wait for this launch to finish.' : waitingFor ?? 'Launch this Symphony within the authorized limits.'} disabled={!complete || busy || locked} onClick={() => void launch()}>{locked ? 'Signed · running' : busy ? 'Launching…' : launched === undefined ? 'Sign & run Symphony' : 'Sign & run again'}</Button></footer>
     </section>
   )
 }

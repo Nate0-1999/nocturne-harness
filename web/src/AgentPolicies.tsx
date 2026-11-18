@@ -14,6 +14,7 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
   const events = plugin?.events ?? hostPolicies.events
   const [policies, setPolicies] = useState<Record<string, string>>({})
   const [status, setStatus] = useState('Loading policies…')
+  const [statusRole, setStatusRole] = useState<string | null>(null)
   useEffect(() => {
     events.dispatch({ type: 'policies.load' }).then((value) => {
       setPolicies((value as { policies: Record<string, string> }).policies)
@@ -23,14 +24,16 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
     }).catch((error: unknown) => setStatus(failureMessage(error, 'Model policies could not be loaded. Reload to try again.')))
   }, [events])
   async function save(role: string) {
+    setStatus('')
+    setStatusRole(role)
     try {
       await events.dispatch({ type: 'policies.save', role, policy: policies[role]! })
       setStatus(`${ROLES[role as keyof typeof ROLES]} policy saved.`)
     } catch (error) { setStatus(failureMessage(error, 'The model policy was not saved. Check its value and try again.')) }
   }
-  return <section className="agent-policy-settings">
+  return <section className="agent-policy-settings" onChangeCapture={() => setStatus('')}>
     <h2>{level ? `${level} configuration` : 'Agent model policies'}</h2>
-    <p role="status">{status}</p>
+    {statusRole === null && <p role="status">{status}</p>}
     {Object.entries(ROLES).map(([role, label]) => {
       if (level === 'Duet' && role !== 'chat') return null
       if (level === 'Symphony' && (role === 'chat' || role === 'curator')) return null
@@ -60,6 +63,7 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
           <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor, dollars per hour or price slope this policy uses. Floor: the cheapest model at or above that score. Budget: the most intelligent model the agents' measured hourly token burn can buy for that much." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
         </label>}
         <div className="app-settings-actions"><Button action="save" variant="primary" type="button" data-tooltip-detail={role === 'curator' ? 'Save the curator policy in the Palace for future passes.' : 'Save this role\'s policy for new threads.'} onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
+        {statusRole === role && <p role="status">{status}</p>}
       </fieldset>
     })}
     {level === 'Symphony'

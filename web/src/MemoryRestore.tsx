@@ -14,6 +14,14 @@ type RestorePreview = {
     event_counts: { table: string; current: number; candidate: number }[]
   }
 }
+const EVENT_NAMES: Record<string, string> = {
+  memory_revision: 'Memory edits',
+  injection_event: 'Memory selections',
+  spend_event: 'Spend records',
+  approval_decision: 'Review decisions',
+  scorer_activation: 'Scoring changes',
+  spend_reconciliation: 'Bill checks',
+}
 
 /** D.2 092: preview the real restore manifest before the existing stopped-app ritual. */
 export function MemoryRestore() {
@@ -23,12 +31,14 @@ export function MemoryRestore() {
   const [preview, setPreview] = useState<RestorePreview | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [copyStatus, setCopyStatus] = useState('')
   // FL-168: the pop-up lists this home's backups, newest first; nobody types an ID.
   async function open() {
     dialog.current?.showModal()
     setBackups(null)
     setPreview(null)
     setError('')
+    setCopyStatus('')
     try {
       const response = await fetch('/v1/restore/backups')
       if (!response.ok) throw await responseFailure(response)
@@ -43,6 +53,7 @@ export function MemoryRestore() {
     setBusy(true)
     setPreview(null)
     setError('')
+    setCopyStatus('')
     try {
       const response = await fetch(`/v1/restore/${encodeURIComponent(backup.trim())}/preview`, { method: 'POST' })
       if (!response.ok) throw await responseFailure(response)
@@ -61,7 +72,7 @@ export function MemoryRestore() {
       <h2 id="memory-restore-title">Roll back these memories?</h2>
       {backups?.length === 0 && <p>Run <code>nocturne backup</code> to add a backup.</p>}
       {backups !== null && backups.length > 0 && <label>Backup <Select data-tooltip-detail="The backup to roll back to, newest first." value={backup} disabled={busy} onChange={(event) => {
-        setBackup(event.target.value); setPreview(null)
+        setBackup(event.target.value); setPreview(null); setError(''); setCopyStatus('')
       }}>{backups.map((item) => <option key={item.backup_id} value={item.backup_id}>
         {new Date(item.created_at).toLocaleString()} · {item.reason === 'manual' ? 'manual' : 'before an update'}
       </option>)}</Select></label>}
@@ -76,13 +87,20 @@ export function MemoryRestore() {
         ] as const).map(([heading, memories]) => <section key={heading}>
           <h3>{heading} · {memories.length}</h3>
           {memories.length === 0 ? <p>Choose a backup with changes to fill this list.</p> : <ul>{memories.map((memory) => <li key={memory.memory_id}>
-            <strong>{memory.label}</strong> · {memory.memory_id}
-            {memory.candidate_revision !== null && ` · r${memory.current_revision} → r${memory.candidate_revision}`}
+            <strong>{memory.label}</strong>
           </li>)}</ul>}
         </section>)}
-        <h3>Event counts · current → restored</h3>
-        <ul>{preview.manifest.event_counts.map((count) => <li key={count.table}>{count.table}: {count.current} → {count.candidate}</li>)}</ul>
-        <p title="The command rechecks this list and asks for confirmation before switching.">Stop Nocturne and run <code>nocturne restore {preview.backup_id}</code> to restore.</p>
+        <h3>Records · now → after restore</h3>
+        <ul>{preview.manifest.event_counts.map((count) => <li key={count.table}>{EVENT_NAMES[count.table] ?? 'Other records'}: {count.current} → {count.candidate}</li>)}</ul>
+        <p>Stop Nocturne, then run the copied restore command.</p>
+        <Button type="button" data-tooltip-detail="Copy the command for this backup; it rechecks the list and asks before restoring." onClick={() => {
+          setCopyStatus('')
+          void navigator.clipboard.writeText(`nocturne restore ${preview.backup_id}`)
+            .then(() => setCopyStatus('Restore command copied.'))
+            .catch(() => setCopyStatus('The command could not be copied. Allow clipboard access and try again.'))
+        }}>Copy restore command</Button>
+        {copyStatus && <p role="status">{copyStatus}</p>}
+        <p>Restoring uses a command so Nocturne stays stopped while the Palace is replaced.</p>
       </>}
       <Button action="close" type="button" data-tooltip-detail="Close without restoring anything." onClick={() => dialog.current?.close()} />
     </dialog>

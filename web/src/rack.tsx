@@ -1128,6 +1128,10 @@ export function createHostPluginApi(
         if (action.type === 'rack.scope.get' && spatialContext !== null) {
           return spatialContext.scope as RackActionResult<Action>
         }
+        // Policy controls show their own result beside the action, including in Settings.
+        if (action.type === 'policies.load' || action.type === 'policies.save') {
+          return dispatchRackAction(action)
+        }
         return runRackAction(
           () => dispatchRackAction(contextualRackAction(action, instanceId, attunement)),
           (message) => useHarnessStore.getState().setTransportError(message, `${instanceId}:${action.type}`),

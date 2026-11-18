@@ -259,7 +259,7 @@ function messageStatus(
     }
     const failure = message.events.find((event) => event.event_kind === 'run_error')
     if (typeof failure?.message === 'string') {
-      return `${serverMessage(failure.message, 'The answer could not finish. Try sending the prompt again.')} Partial answer kept.`
+      return `${serverMessage(failure.message, 'The answer could not finish. Try sending the prompt again.')}${message.content.trim() ? ' Partial answer kept.' : ''}`
     }
   }
   if (state === 'budget_exceeded') {
@@ -646,6 +646,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       if (event.key !== 'Escape') return
       setAppSettingsOpen(false)
       setLibraryOpen(false)
+      setPlatePressStatus(null)
     }
     document.addEventListener('keydown', escape)
     return () => document.removeEventListener('keydown', escape)
@@ -882,11 +883,11 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           aria-label="App settings"
           data-tooltip-detail="Choose the app theme, manage conversation backup, or save and restore your Stage layout."
           aria-expanded={appSettingsOpen}
-          onClick={() => setAppSettingsOpen((open) => !open)}
+          onClick={() => { setPlatePressStatus(null); setAppSettingsOpen((open) => !open) }}
         />
       </div>
       {appSettingsOpen && (
-        <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings">
+        <aside className="app-settings-panel" data-testid="app-settings-panel" aria-label="App settings" onClickCapture={() => setPlatePressStatus(null)} onChangeCapture={() => setPlatePressStatus(null)}>
           <header>
             <strong>Settings</strong>
             <Button action="close" iconOnly type="button" aria-label="Close app settings" data-tooltip-detail="Hide the settings panel." onClick={() => setAppSettingsOpen(false)} />
@@ -929,7 +930,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 {platePressBusy ? 'Pressing…' : 'Press image'}
               </Button>
               {selectedColorway !== null ? (
-                <ConfirmButton action="delete" variant="bare"
+                <ConfirmButton action="delete" variant="danger"
                   className="plate-remove-button"
                   type="button"
                   data-testid="plate-remove-button"
@@ -941,6 +942,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 </ConfirmButton>
               ) : null}
             </div>
+            <output className="plate-press-status" role="status" data-testid="plate-press-status">{platePressStatus}</output>
           </section>
           <section>
             <h2>Conversation backup</h2>
@@ -975,7 +977,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
                 type="button"
                 data-testid="layout-restore"
                 data-tooltip="Restore layout"
-                data-tooltip-detail="Return the stage to your saved set. Asks first."
+                data-tooltip-detail={savedSet === null ? 'Save a layout before restoring it.' : 'Return the stage to your saved set. Asks first.'}
                 disabled={savedSet === null}
                 question="Restore the saved layout?"
                 lost="The layout on screen now is replaced."
@@ -1052,9 +1054,6 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           Library
         </Button>
       </div>
-      <output className="plate-press-status" role="status" data-testid="plate-press-status">
-        {platePressStatus}
-      </output>
 
       <div
         ref={viewportRef}
@@ -3778,9 +3777,10 @@ function MessageRow({
     <article className={`message message--assistant message--${tone}`} data-role="assistant">
       <header className="message__label">
         <span>Nocturne</span>
-        {status !== null && <span className="message__status">{status}</span>}
+        {status !== null && runState !== 'error' && <span className="message__status">{status}</span>}
       </header>
       <div className="message__content">
+      {status !== null && runState === 'error' && <p role="alert">{status}</p>}
       {message.events.filter((event) => event.event_kind === 'human_interjection').map((event, index) => (
         <p key={`steering-${index}`}><strong>You interjected:</strong> {String(event.instruction)}</p>
       ))}
