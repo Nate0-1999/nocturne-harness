@@ -68,6 +68,7 @@ const PUBLIC_MESSAGES = new Set([
   'This memory changed while you were editing it. Review the latest version and try again.',
   'This memory is not deleted. Refresh and try again.',
   'This active memory is no longer available. Refresh and try again.',
+  'This attempt has already returned; the judges are reviewing it.',
   'This occurrence was already started.',
   'This schedule is not due.',
   'This schedule is paused.',
@@ -86,9 +87,11 @@ export function publicMessage(value: unknown): string | null {
   if (typeof value !== 'string') return null
   if (PUBLIC_MESSAGES.has(value)) return value
   if (/^This thread already belongs to (?:project [^\n]+|unscoped history)\. Start a new thread in project [^\n]+\.$/.test(value)) return value
+  // F230: with the Palace down this notice follows the local-copy one in the same run.
+  if (/^Answer delivered; \d+ spend receipt line\(s\) are waiting for the ledger \((?:durably on disk|in degraded memory)\)\.$/.test(value)) return value
   // The local-copy notice has a human clock time; keepMemoryNotice can join it to a
   // second authored notice. Neither path is an arbitrary exception-message escape.
-  const localCopy = /^The Palace is unreachable; memory is from the local copy, as of (?:\d{2}:\d{2}|[A-Z][a-z]{2} \d{1,2}, \d{2}:\d{2}|an unknown time)\./.exec(value)?.[0]
+  const localCopy = /^(?:The Palace is unreachable; memory|The Palace did not answer in time; memory|Memory) is from the local copy, as of (?:\d{2}:\d{2}|[A-Z][a-z]{2} \d{1,2}, \d{2}:\d{2}|an unknown time)\./.exec(value)?.[0]
   for (const message of localCopy ? [...PUBLIC_MESSAGES, localCopy] : PUBLIC_MESSAGES) {
     if (value === message || (value.startsWith(`${message} `) && publicMessage(value.slice(message.length + 1)))) return value
   }

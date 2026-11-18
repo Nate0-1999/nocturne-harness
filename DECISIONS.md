@@ -4549,3 +4549,18 @@ requirement without changing validation. The restore preview names memories and 
 copying its exact command keeps backup IDs out of the visible copy and leaves the stopped-app
 restore ritual intact. The archive check did not reproduce; its handler is unchanged.
 Pair 0.1.99 was unused in live releases, PyPI, open PRs and the refreshed BOARD at selection.
+
+## M8TO — A slow Palace is not called unreachable (P1.2, P4)
+
+PRECEDENT: PLAN M8TO; F230; A-079; A-087; FL-173 (owner 2026-10-07); FL-165; F241; reports 282, 308.
+A first-turn check that gets no answer is sent once more after 1 s, in the Palace client: once,
+not the two repeats a read gets, because the person waits with only "Working…" on the page and
+the worst case is already 61 s. The repeat is safe because the Palace keeps one first check per
+thread; a repeat refused 409 reads the held check back. A rescore counts on every call and is
+not repeated. The fallback's words follow the failure: unreachable (no connection), did not
+answer in time (the wait ran out), neither (the Palace answered with a refusal, which is every
+later turn of a copy-born thread, F244). The gate carries the same reason, and a local-copy
+notice makes the header ask the Palace again at once. The spend-receipt notice that follows the
+local-copy one, and the last Symphony refusal, join the client's list (F241's choice stays
+open). /remember, tau and A-079's no-training rule are unchanged; Memory is a version twin.
+Pair 0.1.100 was unused in releases, PyPI, open PRs and the BOARD at selection.

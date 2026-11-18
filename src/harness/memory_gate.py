@@ -39,6 +39,8 @@ from harness.spine_client import (
     PatchMemoryResponse,
     RevisionConflict,
     SpineClientError,
+    SpineTimeoutError,
+    SpineTransportError,
 )
 from harness.tools_memory import MemoryToolContext, render_spine_error
 
@@ -56,6 +58,14 @@ def _human_time(value: datetime | None) -> str:
     if local.date() == datetime.now().astimezone().date():
         return local.strftime("%H:%M")
     return local.strftime("%b %-d, %H:%M")
+
+
+def _palace_was(failure: SpineClientError) -> str | None:
+    """F230: unreachable only when no answer could come; a late answer is slow, and a
+    Palace that answered (a refusal, or a copy-born thread's rescore) is neither."""
+    if isinstance(failure, SpineTimeoutError):
+        return "slow"
+    return "unreachable" if isinstance(failure, SpineTransportError) else None
 
 
 def _live_location_path(context: MemoryToolContext) -> str | None:
@@ -348,7 +358,7 @@ class MemoryGateTurnRunner:
                 if restored
                 else await self._spine.prepare_injection(prepare_request)
             )
-        except SpineClientError:
+        except SpineClientError as failure:
             local = (
                 self._mirror.prepare(prepare_request, excluded=self._outbox.pending_delete_ids())
                 if self._mirror is not None and self._outbox is not None
@@ -359,6 +369,7 @@ class MemoryGateTurnRunner:
                     thread_id=thread_id,
                     prompt=prompt,
                     prepared=local,
+                    failure=failure,
                     message_history=message_history,
                     emit=emit,
                     model_resolution=model_resolution,
@@ -463,12 +474,13 @@ class MemoryGateTurnRunner:
         thread_id: str,
         prompt: str,
         prepared: InjectPrepareResponse,
+        failure: SpineClientError,
         message_history: Sequence[object],
         emit: RunEmitter,
         model_resolution: ThreadModelResolution | None,
         image: BinaryContent | None,
     ) -> TurnOutcome:
-        """M4BW: the Palace is unreachable, so the memory check runs from the local copy.
+        """M4BW: the Palace did not give the memory check, so it runs from the local copy.
 
         Nothing is committed to the Palace: SPEC's offline mode trains nothing on degraded
         scores, so the choices shape this conversation only, and ×! deletes wait in the outbox.
@@ -486,6 +498,7 @@ class MemoryGateTurnRunner:
                     "injected": prepared.injected,
                     "near_misses": prepared.near_misses,
                     "local_copy_as_of": prepared.snapshot_ts.isoformat(),
+                    "local_copy_reason": _palace_was(failure),
                 }
             )
             removed, added_back, deleted = decision.removed, decision.added_back, decision.deleted
@@ -503,7 +516,7 @@ class MemoryGateTurnRunner:
         }
         for memory_id in deleted:
             self._outbox.enqueue("delete", labels[memory_id], {"memory_id": str(memory_id)})
-        await self._local_copy_notice(emit, phase="prepare")
+        await self._local_copy_notice(emit, phase="prepare", failure=failure)
         await emit.dismiss_gate()
         return await self._run_model(
             thread_id=thread_id,
@@ -672,9 +685,9 @@ class MemoryGateTurnRunner:
                     thread_id,
                     prepared=prepared,
                 )
-            except SpineClientError:
+            except SpineClientError as failure:
                 if snapshot.from_local_copy:
-                    await self._local_copy_notice(emit, phase="rescore")
+                    await self._local_copy_notice(emit, phase="rescore", failure=failure)
                 else:
                     await self._memory_unavailable(emit, phase="rescore")
                 current = snapshot
@@ -771,16 +784,19 @@ class MemoryGateTurnRunner:
         if failed:
             await self._memory_unavailable(emit, phase="citation")
 
-    async def _local_copy_notice(self, emit: RunEmitter, *, phase: str) -> None:
+    async def _local_copy_notice(
+        self, emit: RunEmitter, *, phase: str, failure: SpineClientError
+    ) -> None:
         as_of = self._mirror.as_of() if self._mirror is not None else None
+        memory = {
+            "unreachable": "The Palace is unreachable; memory is",
+            "slow": "The Palace did not answer in time; memory is",
+        }.get(_palace_was(failure), "Memory is")
         await emit.error(
             {
                 "code": "memory_local_copy",
                 "phase": phase,
-                "message": (
-                    "The Palace is unreachable; memory is from the local copy, "
-                    f"as of {_human_time(as_of)}."
-                ),
+                "message": f"{memory} from the local copy, as of {_human_time(as_of)}.",
             }
         )
 

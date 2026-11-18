@@ -565,6 +565,93 @@ async def test_a_lost_request_is_retried_only_where_resending_is_safe(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_a_first_memory_check_with_no_answer_is_asked_once_more(monkeypatch) -> None:
+    """F230 / FL-173: the first-turn check is repeated once before any fallback; if the lost
+    one had landed, the Palace refuses the repeat and the check it holds is read back, so
+    nothing counts twice. A rescore counts on every call and is never repeated. A wait that
+    ran out is reported as slow, not as a failed connection."""
+    import httpx
+
+    from harness import spine_client
+    from harness.spine_client import (
+        InjectPrepareRequest,
+        SpineClient,
+        SpineTimeoutError,
+        SpineTransportError,
+    )
+
+    async def no_wait(delay: float) -> None:
+        return None
+
+    monkeypatch.setattr(spine_client.asyncio, "sleep", no_wait)
+    held = InjectPrepareResponse(
+        injection_id="22345678-1234-5678-1234-567812345678",
+        snapshot_ts="2026-07-17T12:00:00Z",
+        scorer_version="v0",
+        injected=[],
+        near_misses=[],
+        final_block=None,
+        memory_allocation=memory_allocation(),
+    ).model_dump(mode="json")
+    calls: list[str] = []
+    script: list[object] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        calls.append(request.method)
+        if request.method == "GET":
+            restored = {"prepared": held, "pending": True, "event_sources": {}}
+            restored |= {"confirmed_memory_ids": [], "excluded_memory_ids": []}
+            return httpx.Response(200, json=restored)
+        step = script.pop(0)
+        if isinstance(step, type):
+            raise step("lost", request=request)
+        problem = {"type": "about:blank", "title": "Conflict", "status": 409, "detail": "x"}
+        return httpx.Response(
+            step,
+            headers={"Content-Type": "application/problem+json" if step == 409 else "x"},
+            json=problem if step == 409 else held,
+        )
+
+    client = SpineClient("http://palace.test", "t", transport=httpx.MockTransport(respond))
+    first = InjectPrepareRequest(
+        thread_id="12345678-1234-5678-1234-567812345678",
+        agent_id="a",
+        machine_id="m",
+        principal_id="p",
+        prompt="hello",
+        model_context_tokens=1000,
+    )
+
+    script[:] = [httpx.ReadTimeout, 200]
+    assert (await client.prepare_injection(first)).scorer_version == "v0"
+    assert calls == ["POST", "POST"]
+
+    calls.clear()
+    script[:] = [httpx.ReadTimeout, 409]
+    assert (await client.prepare_injection(first)).scorer_version == "v0"
+    assert calls == ["POST", "POST", "GET"]
+
+    calls.clear()
+    script[:] = [httpx.ReadTimeout, httpx.ReadTimeout]
+    with pytest.raises(SpineTimeoutError):
+        await client.prepare_injection(first)
+    assert calls == ["POST", "POST"]
+
+    calls.clear()
+    script[:] = [httpx.ConnectError, httpx.ConnectError]
+    with pytest.raises(SpineTransportError) as refused:
+        await client.prepare_injection(first)
+    assert not isinstance(refused.value, SpineTimeoutError) and calls == ["POST", "POST"]
+
+    calls.clear()
+    script[:] = [httpx.ReadTimeout]
+    with pytest.raises(SpineTimeoutError):
+        await client.prepare_injection(first.model_copy(update={"mode": "autonomous"}))
+    assert calls == ["POST"]
+    await client.aclose()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "method,path",
     [
