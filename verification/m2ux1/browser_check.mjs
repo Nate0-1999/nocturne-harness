@@ -42,6 +42,7 @@ try {
 
   for (const width of widths) {
     await page.setViewportSize({ width, height: width < 768 ? 844 : 900 })
+    await waitForSavedFrame(page)
     await resetRack(page)
     evidence.states.push(await assertCleanState(page, width, 'factory'))
     await openModule(page, 'model_device')
@@ -92,6 +93,24 @@ try {
 async function waitForRack(targetPage) {
   await headerFrame(targetPage).getByTestId('connection').getByText('Palace ready').waitFor({ state: 'attached' })
   await targetPage.getByTestId('stage-viewport').waitFor()
+}
+
+// The Stage re-frames for a new width a frame later and saves the layout after that. A reload
+// in between keeps the automatic-frame marker without its layout, and the old zoom sticks.
+async function waitForSavedFrame(targetPage) {
+  await targetPage.evaluate(() => new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  }))
+  await targetPage.waitForFunction(() => {
+    const saved = JSON.parse(localStorage.getItem('nocturne.stage.layout.v5') ?? 'null')
+    const layer = saved?.layers.find((candidate) => candidate.layer_id === saved.active_layer_id)
+    const shown = /translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)/u.exec(
+      document.querySelector('[data-testid="stage-canvas"]')?.style.transform ?? '',
+    )
+    return layer !== undefined && shown !== null &&
+      Number(shown[1]) === layer.camera.x && Number(shown[2]) === layer.camera.y &&
+      Math.abs(Number(shown[3]) - layer.camera.zoom) < 0.001
+  })
 }
 
 async function resetRack(targetPage) {
