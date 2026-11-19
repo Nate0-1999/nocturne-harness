@@ -525,7 +525,10 @@ def test_pydantic_harness_has_one_import_fence_and_exact_pin() -> None:
                         path.name,
                         module,
                     )
-                    if isinstance(node, ast.ImportFrom):
+                    if isinstance(node, ast.ImportFrom) and path.name in {
+                        "pydantic_ai_adapter.py",
+                        "pydantic_harness_adapter.py",
+                    }:
                         assert not any(alias.name.startswith("_") for alias in node.names), (
                             path.name,
                             module,

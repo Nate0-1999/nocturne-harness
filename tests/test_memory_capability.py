@@ -180,14 +180,18 @@ def test_pydantic_ai_capability_imports_are_fenced_to_adapter() -> None:
     }
 
     for path in package_root.rglob("*.py"):
-        if path.name in {"pydantic_ai_adapter.py", "pydantic_harness_adapter.py"}:
+        if path.name == "pydantic_ai_adapter.py":
             continue
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module is not None:
                 imports_capability_module = node.module.startswith(capability_modules)
                 imports_capability_name = node.module == "pydantic_ai" and any(
-                    alias.name in capability_names for alias in node.names
+                    alias.name in capability_names
+                    and not (
+                        path.name == "pydantic_harness_adapter.py" and alias.name == "RunContext"
+                    )
+                    for alias in node.names
                 )
                 if imports_capability_module or imports_capability_name:
                     offenders.append(str(path.relative_to(package_root)))
