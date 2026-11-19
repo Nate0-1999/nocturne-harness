@@ -72,7 +72,7 @@ async def test_in_process_toolset_owns_location_and_presence(tmp_path: Path) -> 
 
 @pytest.mark.asyncio
 async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -> None:
-    """D.2 136 adopts the official filesystem battery for all six file tools. [ADR-013, ADR-015]"""
+    """The filesystem seam preserves six-tool behavior across churn. [ADR-013, ADR-015]"""
 
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     try:

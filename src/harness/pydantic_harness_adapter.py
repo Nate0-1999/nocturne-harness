@@ -1,6 +1,6 @@
 """The sole adapter from Nocturne's toolset seam to pydantic-ai-harness.
 
-The preserved compaction prompt/helpers derive from pydantic-ai-harness 0.31.0:
+The preserved compaction prompt/helpers and search derive from pydantic-ai-harness 0.31.0:
 Copyright (c) 2026 Pydantic Services Inc. (MIT).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import ast
 import asyncio
+import fnmatch
 import hashlib
 import json
 import os
@@ -872,23 +873,47 @@ class PydanticHarnessToolset:
             glob = glob.replace("**/", "*")
         context = arguments.get("context", 0)
         limit = arguments.get("limit", 100)
-        filesystem = self._filesystem(target, search_limit=limit)
-        workspace = LocalWorkspaceBackend(target if target.is_dir() else target.parent)
-        matches = await filesystem.search_files(
-            pattern,
-            path="." if target.is_dir() else target.name,
-            include_glob=glob,
-            workspace=workspace,
-        )
+        # ADR-013 / M8UP: 0.71 dispatches to rg/POSIX grep. Preserve 0.31's
+        # Python regex semantics and output without requiring another program.
+        try:
+            compiled = re.compile(pattern)
+        except re.error as exc:
+            raise ValueError(f"Invalid regex pattern: {exc}") from exc
+        results = []
+        truncated = False
+        for path in [target] if target.is_file() else sorted(target.rglob("*")):
+            relative = path.relative_to(target)
+            if any(part.startswith(".") for part in relative.parts):
+                continue
+            if glob and not fnmatch.fnmatch(str(relative), glob):
+                continue
+            resolved = path.resolve()
+            if not _inside(target, resolved) or not resolved.is_file():
+                continue
+            try:
+                raw = resolved.read_bytes()
+            except OSError:
+                continue
+            if b"\x00" in raw[:8192]:
+                continue
+            for number, line in enumerate(raw.decode("utf-8", errors="replace").splitlines(), 1):
+                if compiled.search(line):
+                    if len(results) >= limit:
+                        results.append(f"[... truncated at {limit} matches]")
+                        truncated = True
+                        break
+                    results.append(f"{relative}:{number}:{line}")
+            if truncated:
+                break
+        matches = "\n".join(results) if results else "No matches found."
         self._emit("read", target)
         if context == 0 or not matches or matches.startswith("["):
             return matches
-        return await self._grep_context(filesystem, workspace, matches, context)
+        return await self._grep_context(target, matches, context)
 
     @staticmethod
     async def _grep_context(
-        filesystem: FileSystemToolset[Any],
-        workspace: LocalWorkspaceBackend,
+        root: Path,
         matches: str,
         context: int,
     ) -> str:
@@ -903,6 +928,9 @@ class PydanticHarnessToolset:
                 (max(1, line_number - context), line_number + context)
             )
         blocks: list[str] = []
+        folder = root if root.is_dir() else root.parent
+        filesystem = PydanticHarnessToolset._filesystem(root)
+        workspace = LocalWorkspaceBackend(folder)
         for path, ranges in intervals.items():
             merged: list[list[int]] = []
             for start, end in sorted(ranges):
@@ -911,11 +939,15 @@ class PydanticHarnessToolset:
                 else:
                     merged.append([start, end])
             for start, end in merged:
-                blocks.append(
-                    await filesystem.read_file(
-                        path, offset=start - 1, limit=end - start + 1, workspace=workspace
-                    )
+                text = await filesystem.read_file(
+                    path if root.is_dir() else root.name,
+                    offset=start - 1,
+                    limit=end - start + 1,
+                    workspace=workspace,
                 )
+                if root.is_file():
+                    text = text.replace(f"[{root.name} |", "[. |", 1)
+                blocks.append(text)
         return "\n--\n".join(blocks) if blocks else matches
 
     async def _find(self, arguments: Mapping[str, object]) -> str:
