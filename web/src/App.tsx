@@ -1952,6 +1952,14 @@ function HeaderModule() {
   const memoryTotal = selectedThread?.memoryPanel.total ?? 0
   const threadsOpen = rackModuleSelectionIsOpen(selection, 'threads')
   const memoriesOpen = rackModuleSelectionIsOpen(selection, 'memory')
+  // F230: a local-copy notice means a Palace check just failed; ask again so the header agrees.
+  const probePalace = useRef(() => {})
+  const localCopyNotice = (selectedThread?.lastError?.detail as { code?: string } | null)?.code === 'memory_local_copy'
+    ? selectedThread?.lastError
+    : null
+  useEffect(() => {
+    if (localCopyNotice) probePalace.current()
+  }, [localCopyNotice])
 
   useEffect(() => {
     if (snapshot.connection !== 'connected') return
@@ -1972,6 +1980,7 @@ function HeaderModule() {
       if (active) setPalaceStatus('checking')
     })
     probe()
+    probePalace.current = probe
     const interval = globalThis.setInterval(probe, 60_000)
     return () => {
       active = false

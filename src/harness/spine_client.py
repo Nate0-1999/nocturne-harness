@@ -1086,6 +1086,10 @@ class SpineTransportError(SpineClientError):
         super().__init__("Spine request failed before receiving a response")
 
 
+class SpineTimeoutError(SpineTransportError):
+    """F230: the request reached Spine and no answer came back in time."""
+
+
 class SpineResponseError(SpineClientError):
     """Spine returned an HTTP response that violates C.4."""
 
@@ -1229,11 +1233,27 @@ class SpineClient:
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
         """Mirror POST /v1/inject/prepare."""
 
-        response = await self._request(
-            "POST",
-            "v1/inject/prepare",
-            json_body=request.model_dump(mode="json", exclude_none=True, exclude_defaults=True),
-        )
+        async def ask() -> httpx.Response:
+            return await self._request(
+                "POST",
+                "v1/inject/prepare",
+                json_body=request.model_dump(mode="json", exclude_none=True, exclude_defaults=True),
+            )
+
+        try:
+            response = await ask()
+        except SpineTransportError as lost:
+            if request.mode != "gate" or not isinstance(lost.__cause__, _LOST):
+                raise
+            # FL-173 (F230): a first check that got no answer is asked once more. The Palace
+            # keeps one first check per thread, so the repeat cannot count twice: if the lost
+            # one landed after all, the repeat is refused and the check it holds is read back.
+            await asyncio.sleep(_RETRY_DELAYS[0])
+            response = await ask()
+            if response.status_code == 409:
+                held = await self.restore_injection(request.thread_id, request.principal_id)
+                if held is not None and held.pending:
+                    return held.prepared
         return _expect_success(response, status=200, adapter=_PREPARE_RESPONSE)
 
     async def restore_injection(
@@ -1787,7 +1807,12 @@ class SpineClient:
                         raise SpineProblemError(response, problem)
                 except _LOST as exc:
                     if not retryable or not delays:
-                        raise SpineTransportError from exc
+                        raise (
+                            SpineTimeoutError
+                            if isinstance(exc, httpx.TimeoutException)
+                            and not isinstance(exc, httpx.ConnectTimeout)
+                            else SpineTransportError
+                        ) from exc
                 except httpx.RequestError as exc:
                     raise SpineTransportError from exc
                 await asyncio.sleep(delays.pop(0))

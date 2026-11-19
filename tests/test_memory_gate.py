@@ -40,6 +40,8 @@ from harness.spine_client import (
     RestoredInjection,
     RevisionConflict,
     ScoredMemoryCard,
+    SpineClientError,
+    SpineTimeoutError,
     SpineTransportError,
 )
 from harness.tools_memory import MemoryToolContext
@@ -181,6 +183,7 @@ class RecordingSpine:
 
     def __init__(self, *, fail_prepare: bool = False, fail_commit: bool = False) -> None:
         self.fail_prepare = fail_prepare
+        self.prepare_failure: type[Exception] = SpineTransportError
         self.fail_commit = fail_commit
         self.prepare_requests: list[InjectPrepareRequest] = []
         self.commit_requests: list[InjectCommitRequest] = []
@@ -214,7 +217,7 @@ class RecordingSpine:
     async def prepare_injection(self, request: InjectPrepareRequest) -> InjectPrepareResponse:
         self.prepare_requests.append(request)
         if self.fail_prepare:
-            raise SpineTransportError
+            raise self.prepare_failure()
         if self.prepare_outcomes and request.mode == "autonomous":
             outcome = self.prepare_outcomes.pop(0)
             if isinstance(outcome, Exception):
@@ -1299,17 +1302,28 @@ class LocalCopyStub:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "failure,reason,words",
+    [
+        (SpineTransportError, "unreachable", "The Palace is unreachable; memory is from"),
+        (SpineTimeoutError, "slow", "The Palace did not answer in time; memory is from"),
+        (SpineClientError, None, "Memory is from"),
+    ],
+)
 async def test_unreachable_palace_opens_the_gate_from_the_local_copy_and_queues_deletes(
-    tmp_path: Path,
+    tmp_path: Path, failure: type[Exception], reason: str | None, words: str
 ) -> None:
     """ADR-003 / F175: with a local copy the first-turn check still opens and says so; nothing
     is committed to the Palace, the context cites no Palace events, and ×! waits in the outbox.
+    F230: the gate and the notice say unreachable only when the Palace could not be reached,
+    slow when it did not answer in time, and neither when it answered with a refusal.
     """
     kept_id = UUID("92345678-1234-5678-1234-567812345678")
     deleted_id = UUID("a2345678-1234-5678-1234-567812345678")
     kept = scored_card(kept_id, label="Keep", body="Keep this body.", rank=1)
     gone = scored_card(deleted_id, label="Gone", body="Delete this body.", rank=2)
     spine = RecordingSpine(fail_prepare=True)
+    spine.prepare_failure = failure
     local = LocalCopyStub(
         spine.prepare_response.model_copy(update={"injected": [kept, gone], "near_misses": []})
     )
@@ -1332,6 +1346,7 @@ async def test_unreachable_palace_opens_the_gate_from_the_local_copy_and_queues_
     )
     await asyncio.wait_for(emitted.opened.wait(), 1)
     assert emitted.gate_values[0]["local_copy_as_of"] == local.prepared.snapshot_ts.isoformat()
+    assert emitted.gate_values[0]["local_copy_reason"] == reason
     assert emitted.decision is not None
     emitted.decision.set_result(
         GateCommitPayload(
@@ -1354,7 +1369,7 @@ async def test_unreachable_palace_opens_the_gate_from_the_local_copy_and_queues_
     assert snapshot is not None and snapshot.from_local_copy and snapshot.event_sources == {}
     assert delegate.calls == [(THREAD_ID, "hello", (), final_block(kept), frozenset({deleted_id}))]
     assert [error["code"] for error in emitted.errors] == ["memory_local_copy"]
-    assert "from the local copy, as of" in str(emitted.errors[0]["message"])
+    assert str(emitted.errors[0]["message"]).startswith(f"{words} the local copy, as of")
     assert emitted.events == ["gate.open", "error:prepare", "gate.dismiss"]
 
 

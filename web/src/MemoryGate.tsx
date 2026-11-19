@@ -400,7 +400,11 @@ export function MemoryGate({
                 ? 'Edit or expire this memory before continuing.'
                 : localCopy === null
                   ? 'Review the memories before the model starts.'
-                  : 'Review the local copy while the Palace is unreachable.'}
+                  : gate.local_copy_reason === 'slow'
+                    ? 'Review the local copy; the Palace did not answer in time.'
+                    : gate.local_copy_reason === null
+                      ? 'Review the local copy.'
+                      : 'Review the local copy while the Palace is unreachable.'}
             </p>
             {gate.stage === 'review' && <GateAudition injectionId={gate.injection_id} />}
           </div>
