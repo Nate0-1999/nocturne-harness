@@ -104,6 +104,7 @@ async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -
         )
         found = await toolset.execute("find", {"pattern": "*.txt", "path": ".", "limit": 10})
         listed = await toolset.execute("ls", {"path": ".", "limit": 10})
+        invalid_regex = await toolset.execute("grep", {"pattern": "[", "path": "."})
     finally:
         await toolset.close()
 
@@ -114,6 +115,10 @@ async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -
     assert grep.success and "1\tA" in grep.content and "2\tBeta" in grep.content
     assert found.success and found.content == "note.txt"
     assert listed.success and listed.content.startswith("note.txt  (")
+    assert not invalid_regex.success
+    assert invalid_regex.content == (
+        "Invalid regex pattern: unterminated character set at position 0"
+    )
 
 
 @pytest.mark.asyncio

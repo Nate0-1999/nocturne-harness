@@ -878,6 +878,7 @@ class PydanticHarnessToolset:
         try:
             compiled = re.compile(pattern)
         except re.error as exc:
+            # F156 / ADR-013: retain upstream 0.31's invalid-regex refusal verbatim.
             raise ValueError(f"Invalid regex pattern: {exc}") from exc
         results = []
         truncated = False
