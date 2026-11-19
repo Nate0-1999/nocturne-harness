@@ -1,0 +1,26 @@
+{
+  "principal": "nocturne-verification-5e6ad936-d760-4c00-8a49-4ee95a4ce2c4",
+  "rows": [
+    {
+      "purpose": "remember",
+      "receipts": 18,
+      "cost_usd": "0.001378000000"
+    },
+    {
+      "purpose": "building",
+      "receipts": 176,
+      "cost_usd": "0.047817600000"
+    },
+    {
+      "purpose": "embedding",
+      "receipts": 173,
+      "cost_usd": "0.000059200000"
+    },
+    {
+      "purpose": "extraction",
+      "receipts": 53,
+      "cost_usd": "0.011104400000"
+    }
+  ],
+  "active_memories": 6
+}

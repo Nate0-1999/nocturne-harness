@@ -1,0 +1,5 @@
+{
+  "grep_context": "note.txt-1-one\nnote.txt:2:match\nnote.txt-3-three",
+  "bundled_resource": "M8UP-RESOURCE-OK",
+  "adopted_in_product": false
+}

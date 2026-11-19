@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/Users/nateoswalt/relay/m8up/scratch/newest/lib/python3.12/site-packages/harness/agent_runtime.py", line 40, in <module>
+    from harness.agent import HarnessAgent
+  File "/Users/nateoswalt/relay/m8up/scratch/newest/lib/python3.12/site-packages/harness/agent.py", line 33, in <module>
+    from harness.pydantic_ai_adapter import (
+  File "/Users/nateoswalt/relay/m8up/scratch/newest/lib/python3.12/site-packages/harness/pydantic_ai_adapter.py", line 20, in <module>
+    from harness.pydantic_harness_adapter import adopted_skills, message_tokens
+  File "/Users/nateoswalt/relay/m8up/scratch/newest/lib/python3.12/site-packages/harness/pydantic_harness_adapter.py", line 53, in <module>
+    from pydantic_ai_harness.compaction._summarizing_compaction import _format_messages
+ImportError: cannot import name '_format_messages' from 'pydantic_ai_harness.compaction._summarizing_compaction' (/Users/nateoswalt/relay/m8up/scratch/newest/lib/python3.12/site-packages/pydantic_ai_harness/compaction/_summarizing_compaction.py)

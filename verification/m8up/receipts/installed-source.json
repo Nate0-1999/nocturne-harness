@@ -1,0 +1,14 @@
+{
+  "runtime_files_match_checkout": {
+    "pydantic_harness_adapter.py": true,
+    "pydantic_ai_adapter.py": true,
+    "agent_runtime.py": true,
+    "__init__.py": true
+  },
+  "versions": {
+    "nocturne-harness": "0.1.101",
+    "nocturne-memory": "0.1.101",
+    "pydantic-ai": "2.71.0",
+    "pydantic-ai-harness": "0.71.0"
+  }
+}

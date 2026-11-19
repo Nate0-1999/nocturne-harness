@@ -1,0 +1,7 @@
+{
+ "ok": true,
+ "result": {
+  "error": "TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"rack-plugin-frame-conversation\"]').contentFrame().getByRole('button', { name: 'STOP', exact: true }) to be visible\u001b[22m\n",
+  "thread": "62340e6b-1c76-4f6a-947f-8c1ffd8532e3"
+ }
+}
