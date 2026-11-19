@@ -24,7 +24,11 @@ async def test_background_shell_survives_other_calls_and_stops(tmp_path):
             return
         assert started.success, started.content
         command_id = started.content.split("ID: ", 1)[1].split(".", 1)[0]
-        await asyncio.sleep(0.1)
+        for _ in range(50):
+            read = await tools.execute("read_shell", {"command_id": command_id})
+            if "ready" in read.content:
+                break
+            await asyncio.sleep(0.1)
         for _ in range(3):
             assert (await tools.execute("ls", {"path": "."})).success
             read = await tools.execute("read_shell", {"command_id": command_id})

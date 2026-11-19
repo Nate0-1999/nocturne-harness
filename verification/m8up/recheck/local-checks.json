@@ -1,0 +1,93 @@
+{
+  "repo": "harness",
+  "scope": "Hosted-check repair only; no provider calls or product behavior changes.",
+  "checks": [
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/ruff",
+        "check",
+        "."
+      ],
+      "returncode": 0,
+      "stdout": "All checks passed!\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/python",
+        "scripts/check_test_motivations.py"
+      ],
+      "returncode": 0,
+      "stdout": "test motivation check passed: 1042 tests, 0 grandfathered\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/ruff",
+        "format",
+        "--check",
+        "src",
+        "tests"
+      ],
+      "returncode": 0,
+      "stdout": "148 files already formatted\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/python",
+        "scripts/check_rules.py",
+        "--freeze-only"
+      ],
+      "returncode": 0,
+      "stdout": "Product rules: PASS\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/python",
+        "scripts/check_rules.py"
+      ],
+      "returncode": 0,
+      "stdout": "Product rules: PASS\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/python",
+        "scripts/check_guard_citations.py"
+      ],
+      "returncode": 0,
+      "stdout": "Guard citations: PASS\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "node",
+        "--experimental-strip-types",
+        "--test",
+        "web/tests/surfaceHonesty.test.mjs",
+        "web/tests/chromeDiet.test.mjs",
+        "web/tests/rackBridge.test.mjs",
+        "web/tests/coreGuards.test.mjs"
+      ],
+      "returncode": 0,
+      "stdout": "\u2714 app settings own the live theme, transcript backup, and layout controls (7.178ms)\n\u2714 module settings expose only bound scope controls and remove dead Palace scope (1.026792ms)\n\u2714 internal implementation labels do not reach the owner surface (44.531417ms)\n\u2714 snapshot and connection walls quote their actual error messages (42.997042ms)\n\u2714 module host wall rejects external origins and accepts a local port (6.100541ms)\n\u2714 a stale Palace availability banner clears when any later request succeeds (0.174708ms)\n\u2714 a refused /remember hands its text back to an empty composer (0.378333ms)\n\u2714 a later notice of the same run keeps the memory-unavailable sentence (1.660958ms)\n\u2714 bridge message kinds stay closed and only control manifests receive scorer writes (20.648292ms)\n\u2714 owner connection copy never claims whole-product health from the socket alone (0.608333ms)\n\u2714 source tree product copy rejects internal words and work identifiers (107.8745ms)\n\u2714 owner surfaces state the situation without daemon, factory, or link jargon (3.024ms)\n\u2139 tests 12\n\u2139 suites 0\n\u2139 pass 12\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 337.525917\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Users/nateoswalt/relay/m8up/harness/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_pydantic_harness_toolset.py",
+        "-k",
+        "six_file_tools"
+      ],
+      "returncode": 0,
+      "stdout": ".                                                                        [100%]\n1 passed, 35 deselected in 0.96s\n",
+      "stderr": ""
+    }
+  ]
+}

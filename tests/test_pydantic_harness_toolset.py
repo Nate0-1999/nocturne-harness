@@ -72,7 +72,7 @@ async def test_in_process_toolset_owns_location_and_presence(tmp_path: Path) -> 
 
 @pytest.mark.asyncio
 async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -> None:
-    """D.2 136 adopts the official filesystem battery for all six file tools. [ADR-013, ADR-015]"""
+    """The filesystem seam preserves six-tool behavior across churn. [ADR-013, ADR-015]"""
 
     toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
     try:
@@ -104,6 +104,7 @@ async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -
         )
         found = await toolset.execute("find", {"pattern": "*.txt", "path": ".", "limit": 10})
         listed = await toolset.execute("ls", {"path": ".", "limit": 10})
+        invalid_regex = await toolset.execute("grep", {"pattern": "[", "path": "."})
     finally:
         await toolset.close()
 
@@ -114,6 +115,10 @@ async def test_six_file_tools_delegate_core_semantics_upstream(tmp_path: Path) -
     assert grep.success and "1\tA" in grep.content and "2\tBeta" in grep.content
     assert found.success and found.content == "note.txt"
     assert listed.success and listed.content.startswith("note.txt  (")
+    assert not invalid_regex.success
+    assert invalid_regex.content == (
+        "Invalid regex pattern: unterminated character set at position 0"
+    )
 
 
 @pytest.mark.asyncio
@@ -506,8 +511,33 @@ def test_pydantic_harness_has_one_import_fence_and_exact_pin() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert offenders == []
-    assert '"pydantic-ai==2.43.0"' in pyproject
-    assert '"pydantic-ai-harness[skills]==0.31.0"' in pyproject
+    assert '"pydantic-ai==2.71.0"' in pyproject
+    assert '"pydantic-ai-harness[skills]==0.71.0"' in pyproject
+
+    # M8UP / F156: a private upstream import killed agent import and 21 test modules.
+    for path in (ROOT / "src" / "harness").glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            modules = (
+                [node.module or ""]
+                if isinstance(node, ast.ImportFrom)
+                else [alias.name for alias in node.names]
+                if isinstance(node, ast.Import)
+                else []
+            )
+            for module in modules:
+                if module.split(".")[0] in {"pydantic_ai", "pydantic_ai_harness"}:
+                    assert not any(part.startswith("_") for part in module.split(".")), (
+                        path.name,
+                        module,
+                    )
+                    if isinstance(node, ast.ImportFrom) and path.name in {
+                        "pydantic_ai_adapter.py",
+                        "pydantic_harness_adapter.py",
+                    }:
+                        assert not any(alias.name.startswith("_") for alias in node.names), (
+                            path.name,
+                            module,
+                        )
 
 
 @pytest.mark.asyncio

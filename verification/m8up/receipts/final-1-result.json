@@ -1,0 +1,33 @@
+{
+ "ok": true,
+ "result": {
+  "thread": "dd2a5d85-6f43-4c03-94d4-b55bcb80c907",
+  "steps": [
+   {
+    "step": "first-answer",
+    "answer": "NOCTURNE\n\nThe answer could not finish. Try sending the prompt again. Partial answer kept.\n\nThe M8UP verification phrase is copper orchid 619.\n\nopenai/gpt-4.1-mini stopped answering: nothing arrived for 1 min (1 min 4 s since the request began), so this turn stopped. Send \"continue\" to try again.\n\nTOOLS · 0 CALLS"
+   },
+   {
+    "step": "file-shell",
+    "answer": "NOCTURNE\n\nThe contents of note.txt are: \"M8UP copper orchid 619\"\n\nThe output of the command printf M8UP-SHELL-1 is: M8UP-SHELL-1\n\nTOOLS · 2 CALLS"
+   },
+   {
+    "step": "remember",
+    "answer": "NOCTURNE\n\nAlready known — reinforced 'm8up shell marker'."
+   },
+   {
+    "step": "skill",
+    "answer": "NOCTURNE\n\nThe reference marker for the m8up-check skill is: M8UP-SKILL-OK\n\nTOOLS · 2 CALLS"
+   },
+   {
+    "step": "model",
+    "answer": "NOCTURNE\n\nModel unchanged: model must be an openrouter:<broker-model-id> string."
+   },
+   {
+    "step": "compact",
+    "answer": "NOCTURNE\nCONVERSATION COMPACTED · FULL HISTORY KEPT IN THE JOURNAL\n\nContext compacted with memories-then-drop.\n\nTOOLS · 0 CALLS"
+   }
+  ],
+  "gate": "FIRST-TURN MEMORY CHECK\n\nREVIEW WHAT HARNESS REMEMBERS\n\nReview the memories before the model starts.\n\nStage\nreview\nInjection\ne14102a9-e1cd-4212-84e7-9aab4a00b21c\nRetrieval recipe\nm3tl-where-v1\nSnapshot\n2026-11-19T15:01:02.763997Z\nINJECTED MEMORIES\n\n2 SELECTED\n\n0.633\nM8UP verification phrase\nREMOVE\nDELETE\n\nThe M8UP verification phrase is copper orchid 619.\n\n0.574\nm8up shell marker\nREMOVE\nDELETE\n\nThe M8UP run one shell marker is M8UP-SHELL-1.\n\nNEAR MISSES\n\n0 ADDED\n\nSave more memories to see near-miss suggestions.\n\n2 MEMORIES WILL BE USED\n0 removed · 0 added\nSTOP RUN\nCONTINUE"
+ }
+}

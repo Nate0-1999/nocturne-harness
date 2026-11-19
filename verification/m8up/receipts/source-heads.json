@@ -1,0 +1,14 @@
+{
+  "harness": {
+    "base": "7a58fdfa800db67a47853f66f63e361dc3b87df6",
+    "head": "db2e5fb8b54058eef0200d737a0f75280ee70200"
+  },
+  "spine": {
+    "base": "a8a4a8a8b12e08562cd1a696ef4bb8dc0d6bac82",
+    "head": "1a0e7806fe9a11b74d62ff9c7bbf3b5f9ffc09f4"
+  },
+  "garden": {
+    "base": "f6539eedce3f7262c64e98589ad44efd3eb5c836",
+    "head": "75583fd268a8bd2c6bda9c10e7493a92c9769ee1"
+  }
+}

@@ -1,0 +1,25 @@
+All checks passed!
+Would reformat: src/spine/curation/__init__.py
+Would reformat: src/spine/curation/diagnostics.py
+Would reformat: src/spine/curation/progress.py
+Would reformat: src/spine/curation/provider.py
+Would reformat: src/spine/curation/service.py
+Would reformat: src/spine/db/migrations/versions/0015_symphony_memory_bridge.py
+Would reformat: src/spine/db/migrations/versions/0018_curator_runs.py
+Would reformat: src/spine/db/migrations/versions/0024_curator_progress.py
+Would reformat: src/spine/learner/compaction.py
+Would reformat: src/spine/learner/evidence.py
+Would reformat: src/spine/learner/service.py
+Would reformat: src/spine/memory/service.py
+Would reformat: src/spine/queue/contracts.py
+Would reformat: src/spine/queue/router.py
+Would reformat: src/spine/queue/service.py
+Would reformat: tests/test_compaction_learning.py
+Would reformat: tests/test_config.py
+Would reformat: tests/test_curation.py
+Would reformat: tests/test_curator_policy.py
+Would reformat: tests/test_db.py
+Would reformat: tests/test_inject_scorer.py
+Would reformat: tests/test_queue_api.py
+Would reformat: tests/test_transcripts.py
+23 files would be reformatted, 131 files already formatted

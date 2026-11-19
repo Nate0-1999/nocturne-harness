@@ -4564,3 +4564,12 @@ notice makes the header ask the Palace again at once. The spend-receipt notice t
 local-copy one, and the last Symphony refusal, join the client's list (F241's choice stays
 open). /remember, tau and A-079's no-training rule are unchanged; Memory is a version twin.
 Pair 0.1.100 was unused in releases, PyPI, open PRs and the BOARD at selection.
+
+## M8UP — Keep upstream churn inside the adapters (P4)
+
+PRECEDENT: PLAN M8UP, ADR-013, F156, SD-047. Use the public workspace and skill
+catalog APIs on 2.71.0 / 0.71.0; retain the previous transcript, summary prompt,
+text-only file reads and thread-owned shell lifetime. A short loader thread keeps
+the synchronous skill seam intact; upstream shell job files stay in our scratch.
+The exhausted /remember path must never publish generated metadata as an answer.
+0.1.101 was unused in PyPI, tags and open PRs; M8TO reserves 0.1.100 separately.

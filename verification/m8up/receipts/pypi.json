@@ -1,0 +1,18 @@
+{
+  "pydantic-ai": {
+    "version": "2.71.0",
+    "uploaded": "2026-11-19T02:45:42.336985Z"
+  },
+  "pydantic-ai-harness": {
+    "version": "0.71.0",
+    "uploaded": "2026-11-19T02:45:46.258133Z"
+  },
+  "nocturne-harness": {
+    "version": "0.1.99",
+    "uploaded": "2026-11-18T02:25:14.672156Z"
+  },
+  "nocturne-memory": {
+    "version": "0.1.99",
+    "uploaded": "2026-11-18T00:46:11.895830Z"
+  }
+}

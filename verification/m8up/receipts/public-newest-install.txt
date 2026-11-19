@@ -1,0 +1,16 @@
+Using Python 3.12.9 environment at: scratch/newest
+Resolved 96 packages in 57ms
+Uninstalled 6 packages in 62ms
+Installed 6 packages in 30ms
+ - google-genai==3.6.1
+ + google-genai==2.34.0
+ - pydantic-ai==2.43.0
+ + pydantic-ai==2.71.0
+ - pydantic-ai-harness==0.31.0
+ + pydantic-ai-harness==0.71.0
+ - pydantic-ai-slim==2.43.0
+ + pydantic-ai-slim==2.71.0
+ - pydantic-evals==2.43.0
+ + pydantic-evals==2.71.0
+ - pydantic-graph==2.43.0
+ + pydantic-graph==2.71.0

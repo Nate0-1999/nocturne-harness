@@ -96,7 +96,7 @@ async def test_vanilla_agent_discovers_search_and_edit_only() -> None:
     """SPEC D.2 153 verifies that vanilla agents discover search and edit tools and
     instruction; this prevents drift in the owned memory capability seam.
     """
-    assert pydantic_ai.__version__ == "2.43.0"  # PLAN M3TH current upstream
+    assert pydantic_ai.__version__ == "2.71.0"  # PLAN M8UP current upstream
     model = TestModel(call_tools=[], custom_output_text="ok")
     capability = MemoryCapability()
     agent = Agent(
@@ -187,7 +187,11 @@ def test_pydantic_ai_capability_imports_are_fenced_to_adapter() -> None:
             if isinstance(node, ast.ImportFrom) and node.module is not None:
                 imports_capability_module = node.module.startswith(capability_modules)
                 imports_capability_name = node.module == "pydantic_ai" and any(
-                    alias.name in capability_names for alias in node.names
+                    alias.name in capability_names
+                    and not (
+                        path.name == "pydantic_harness_adapter.py" and alias.name == "RunContext"
+                    )
+                    for alias in node.names
                 )
                 if imports_capability_module or imports_capability_name:
                     offenders.append(str(path.relative_to(package_root)))
