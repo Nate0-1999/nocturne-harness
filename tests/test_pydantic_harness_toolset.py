@@ -506,8 +506,25 @@ def test_pydantic_harness_has_one_import_fence_and_exact_pin() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert offenders == []
-    assert '"pydantic-ai==2.43.0"' in pyproject
-    assert '"pydantic-ai-harness[skills]==0.31.0"' in pyproject
+    assert '"pydantic-ai==2.71.0"' in pyproject
+    assert '"pydantic-ai-harness[skills]==0.71.0"' in pyproject
+
+    # M8UP / F156: a private upstream import killed agent import and 21 test modules.
+    for path in (ROOT / "src" / "harness").glob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            modules = (
+                [node.module or ""]
+                if isinstance(node, ast.ImportFrom)
+                else [alias.name for alias in node.names]
+                if isinstance(node, ast.Import)
+                else []
+            )
+            for module in modules:
+                if module.split(".")[0] in {"pydantic_ai", "pydantic_ai_harness"}:
+                    assert not any(part.startswith("_") for part in module.split(".")), (
+                        path.name,
+                        module,
+                    )
 
 
 @pytest.mark.asyncio

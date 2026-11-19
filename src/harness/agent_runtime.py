@@ -735,7 +735,8 @@ class PydanticAITurnRunner:
             await emit.event(_turn_limit_event(limits, reached=reached))
             final = captured[-1] if captured else None
             if (
-                isinstance(final, ModelResponse)
+                not is_remember
+                and isinstance(final, ModelResponse)
                 and final.text
                 and not final.tool_calls
                 and not (compaction is not None and compaction.completed)

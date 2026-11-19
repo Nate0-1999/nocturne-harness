@@ -4549,3 +4549,12 @@ requirement without changing validation. The restore preview names memories and 
 copying its exact command keeps backup IDs out of the visible copy and leaves the stopped-app
 restore ritual intact. The archive check did not reproduce; its handler is unchanged.
 Pair 0.1.99 was unused in live releases, PyPI, open PRs and the refreshed BOARD at selection.
+
+## M8UP — Keep upstream churn inside the adapters (P4)
+
+PRECEDENT: PLAN M8UP, ADR-013, F156, SD-047. Use the public workspace and skill
+catalog APIs on 2.71.0 / 0.71.0; retain the previous transcript, summary prompt,
+text-only file reads and thread-owned shell lifetime. A short loader thread keeps
+the synchronous skill seam intact; upstream shell job files stay in our scratch.
+The exhausted /remember path must never publish generated metadata as an answer.
+0.1.101 was unused in PyPI, tags and open PRs; M8TO reserves 0.1.100 separately.

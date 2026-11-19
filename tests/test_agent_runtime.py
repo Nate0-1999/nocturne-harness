@@ -640,14 +640,15 @@ async def test_the_checkers_account_is_a_status_line_and_its_acknowledgement_is_
     answer; the model's bare acknowledgement of it never enters the answer. [P3]"""
     import subprocess
 
-    from pydantic_ai.messages import RetryPromptPart
-
     for command in (["init", "-q"], ["config", "user.name", "t"], ["config", "user.email", "t@t"]):
         subprocess.run(["git", "-C", str(tmp_path), *command], check=True)
 
     async def stream(messages, _info):
         latest = messages[-1].parts
-        if any(isinstance(part, RetryPromptPart) for part in latest):
+        if any(
+            isinstance(part, UserPromptPart) and "<pyai:retry_feedback>" in str(part.content)
+            for part in latest
+        ):
             yield "Check"
             yield "ed."
         elif any(isinstance(part, ToolReturnPart) for part in latest):

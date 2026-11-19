@@ -1,4 +1,26 @@
-"""The sole adapter from Nocturne's toolset seam to pydantic-ai-harness."""
+"""The sole adapter from Nocturne's toolset seam to pydantic-ai-harness.
+
+The preserved compaction prompt/helpers derive from pydantic-ai-harness 0.31.0:
+Copyright (c) 2026 Pydantic Services Inc. (MIT).
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 
 from __future__ import annotations
 
@@ -17,6 +39,7 @@ import tempfile
 import unicodedata
 import warnings
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from difflib import SequenceMatcher, get_close_matches
@@ -24,18 +47,21 @@ from pathlib import Path
 from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field
+from pydantic_ai import RunContext
 from pydantic_ai.exceptions import ModelRetry
 from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
     SystemPromptPart,
+    TextContent,
     TextPart,
     ToolCallPart,
     ToolReturnPart,
     UserPromptPart,
 )
+from pydantic_ai.usage import RunUsage
+from pydantic_ai.workspaces import LocalWorkspaceBackend, Workspace
 from pydantic_ai_harness import Skills
-from pydantic_ai_harness._output import truncate_head  # noqa: F401  (FL-198 head; fenced here)
 from pydantic_ai_harness.compaction import (
     SlidingWindowCompaction,
     SummarizingCompaction,
@@ -45,13 +71,7 @@ from pydantic_ai_harness.compaction import (
     estimate_token_count,
     reinject_pinned,
 )
-from pydantic_ai_harness.compaction._receipts import is_receipt_part
-from pydantic_ai_harness.compaction._shared import find_safe_cutoff, find_token_cutoff
-from pydantic_ai_harness.compaction._summarizing_compaction import (
-    _DEFAULT_SUMMARY_PROMPT as COMPACTION_SUMMARY_PROMPT,
-)
-from pydantic_ai_harness.compaction._summarizing_compaction import _format_messages
-from pydantic_ai_harness.filesystem import FileSystemToolset
+from pydantic_ai_harness.file_system import FileSystemToolset
 from pydantic_ai_harness.shell import ShellToolset
 from pydantic_core import to_jsonable_python
 from spine.tokens import cl100k_token_count
@@ -72,6 +92,134 @@ from harness.toolset import (
     ToolsetError,
     WorkspaceBoundaryError,
 )
+
+# ADR-013: these formerly private helpers are owned here, preserving the 0.31
+# transcript and prompt rather than adopting upstream's new compaction format.
+COMPACTION_SUMMARY_PROMPT = """\
+You are a context summarization assistant.  The conversation below will be replaced by \
+your summary, so it must carry everything needed to continue the task.
+
+Write the summary under these exact section headings, omitting a section only if it has \
+no content:
+
+## Intent
+The user's overall goal and any standing constraints or preferences.
+
+## Key decisions
+Choices made and the reasoning, so they are not relitigated.
+
+## Artifacts
+Files, paths, identifiers, commands, and APIs touched -- quote exact names.
+
+## Current state
+What is done and what is in progress right now.
+
+## Next steps
+The immediate actions still required to finish the task.
+
+## Open questions
+Unresolved questions or blockers.
+
+Focus on results, not a replay of completed actions.  Respond ONLY with the summary -- no \
+preamble, no markdown fences.
+
+<messages>
+{messages}
+</messages>\
+"""
+
+
+def truncate_head(text: str, max_chars: int) -> str:
+    """FL-198: retain the page's lead and its existing truncation notice."""
+    if len(text) <= max_chars:
+        return text
+    marker = f"\n[... page text truncated at {max_chars} characters]"
+    return text[: max(max_chars - len(marker), 0)] + marker
+
+
+def is_receipt_part(part: object) -> bool:
+    return (
+        isinstance(part, UserPromptPart)
+        and not isinstance(part.content, str)
+        and any(
+            isinstance(item, TextContent)
+            and item.metadata == "pydantic-ai-harness.compaction.receipt.v1"
+            for item in part.content
+        )
+    )
+
+
+def _format_messages(messages) -> str:
+    lines = []
+    for message in messages:
+        if isinstance(message, ModelRequest):
+            if (message.metadata or {}).get("pydantic-ai-harness.compaction.kept-user-message.v1"):
+                continue
+            for part in message.parts:
+                if isinstance(part, UserPromptPart):
+                    content = part.content
+                    if not isinstance(content, str):
+                        content = " ".join(
+                            item if isinstance(item, str) else item.content
+                            for item in content
+                            if isinstance(item, (str, TextContent))
+                        )
+                    lines.append(f"User: {content}")
+                elif isinstance(part, SystemPromptPart):
+                    lines.append(f"System: {part.content}")
+                elif isinstance(part, ToolReturnPart):
+                    content = str(part.content)
+                    if len(content) > 500:
+                        content = content[:495] + "[...]"
+                    lines.append(f"Tool [{part.tool_name}]: {content}")
+        else:
+            for part in message.parts:
+                if isinstance(part, TextPart):
+                    lines.append(f"Assistant: {part.content}")
+                elif isinstance(part, ToolCallPart):
+                    lines.append(f"Tool Call [{part.tool_name}]: {part.args}")
+    return "\n".join(lines)
+
+
+def _safe_cutoff(messages, cutoff: int) -> bool:
+    for index in range(max(0, cutoff - 5), min(len(messages), cutoff + 5)):
+        message = messages[index]
+        if isinstance(message, ModelResponse):
+            ids = {part.tool_call_id for part in message.parts if isinstance(part, ToolCallPart)}
+            for reply_index in range(index + 1, len(messages)):
+                reply = messages[reply_index]
+                if isinstance(reply, ModelRequest) and any(
+                    isinstance(part, ToolReturnPart) and part.tool_call_id in ids
+                    for part in reply.parts
+                ):
+                    if (index < cutoff) != (reply_index < cutoff):
+                        return False
+    return True
+
+
+def find_safe_cutoff(messages, keep: int) -> int:
+    return next(
+        (
+            index
+            for index in range(max(0, len(messages) - keep), -1, -1)
+            if _safe_cutoff(messages, index)
+        ),
+        0,
+    )
+
+
+def find_token_cutoff(messages, target_tokens: int, tokenizer=None) -> int:
+    if not messages or estimate_token_count(messages, tokenizer) <= target_tokens:
+        return 0
+    lo, hi = 0, len(messages)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if estimate_token_count(messages[mid:], tokenizer) <= target_tokens:
+            hi = mid
+        else:
+            lo = mid + 1
+    return find_safe_cutoff(messages, len(messages) - min(lo, len(messages) - 1))
+
 
 _READ_TOOLS = frozenset({"read", "grep", "find", "ls"})
 _WRITE_TOOLS = frozenset({"edit", "write"})
@@ -321,8 +469,12 @@ def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
     libraries = tuple(path.resolve(strict=True) for path in directories if path.is_dir())
     if not libraries:
         return ()
-    leaves: list[Any] = []
-    Skills(libraries).apply(leaves.append)
+    # The owned catalog is synchronous, also when called by the running daemon.
+    # Upstream now reads skills asynchronously; keep that change inside this seam.
+    with ThreadPoolExecutor(max_workers=1) as loader:
+        catalog = loader.submit(
+            asyncio.run, Skills(libraries).load(LocalWorkspaceBackend(Path.cwd()))
+        ).result()
     packages = {
         unicodedata.normalize("NFKC", child.name): child
         for library in libraries
@@ -330,9 +482,9 @@ def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
         if child.is_dir() and (child / "SKILL.md").is_file()
     }
     adopted: list[AdoptedSkill] = []
-    for leaf in leaves:
-        package = packages[leaf.id]
-        instructions = list(leaf.get_instructions() or ())
+    for leaf in catalog.skills:
+        package = packages[leaf.name]
+        instructions = [f"# Skill: {leaf.name}\n\n{leaf.body}"]
         resources = _resource_instructions(package)
         if resources:
             instructions.append(resources)
@@ -343,7 +495,7 @@ def adopted_skills(directories: Sequence[Path]) -> tuple[AdoptedSkill, ...]:
             digest.update(resource.read_bytes())
         adopted.append(
             AdoptedSkill(
-                id=leaf.id,
+                id=leaf.name,
                 description=leaf.description,
                 instructions=tuple(instructions),
                 source=str(package.resolve()),
@@ -395,7 +547,7 @@ class PydanticHarnessToolset:
         self.crossings = crossings or Crossings()
         self._presence_events: list[PresenceEvent] = []
         self._closed = False
-        self._background_shells: dict[str, ShellToolset] = {}
+        self._background_shells: dict[str, tuple[ShellToolset, RunContext[Any]]] = {}
         self._scratch: Path | None = None
         self._emit("spawn", location.cwd)
 
@@ -508,7 +660,8 @@ class PydanticHarnessToolset:
     async def close(self) -> None:
         if self._closed:
             return
-        for shell in self._background_shells.values():
+        for command_id, (shell, ctx) in self._background_shells.items():
+            await shell.stop_command(ctx, command_id)
             await shell.__aexit__()
         self._background_shells.clear()
         if self._scratch is not None:
@@ -592,10 +745,9 @@ class PydanticHarnessToolset:
     ) -> FileSystemToolset[Any]:
         # WALL money / ADR015: page tool output before it becomes paid model context.
         return FileSystemToolset(
-            root_dir=root,
             allowed_patterns=[],
             denied_patterns=[],
-            protected_patterns=[],
+            read_only_patterns=[],
             max_read_lines=2000,
             max_list_results=list_limit,
             max_search_results=search_limit,
@@ -604,12 +756,24 @@ class PydanticHarnessToolset:
 
     async def _read(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("read", arguments.get("path"))
+        # M8UP: upstream now returns image/PDF attachments; retain our text-only read.
+        if target.is_file():
+            with target.open("rb") as source:
+                if b"\x00" in source.read(8192):
+                    self._emit("read", target)
+                    return (
+                        f"[Binary file: {target.stat().st_size} bytes. "
+                        "Use a binary-aware tool to inspect.]"
+                    )
         # M3CL2 walk: models send offset 0 by habit; 0 - 1 read from the last line, so a "read
         # from the top" showed one line and gpt-4.1-mini wandered the file for 27 reads.
         offset = max(1, arguments.get("offset", 1))
         limit = arguments.get("limit", 2000)
         result = await self._filesystem(target.parent).read_file(
-            target.name, offset=offset - 1, limit=limit
+            target.name,
+            offset=offset - 1,
+            limit=limit,
+            workspace=LocalWorkspaceBackend(target.parent),
         )
         self._emit("read", target)
         return result
@@ -623,7 +787,9 @@ class PydanticHarnessToolset:
             _refuse_destruction(target, original, content, arguments.get("replace"))
         _refuse_broken_python(target, original, content)
         # Presence (or an allowed outside folder, F198) makes the file's folder the root.
-        result = await self._filesystem(target.parent).write_file(target.name, content)
+        result = await self._filesystem(target.parent).write_file(
+            target.name, content, workspace=LocalWorkspaceBackend(target.parent)
+        )
         self._emit("write", target)
         return result
 
@@ -678,7 +844,11 @@ class PydanticHarnessToolset:
         _refuse_broken_python(target, original, revised)
         expected_hash = hashlib.sha256(original.encode()).hexdigest()[:12]
         result = await self._filesystem(target.parent).edit_file(
-            target.name, original, revised, expected_hash=expected_hash
+            target.name,
+            original,
+            revised,
+            expected_hash=expected_hash,
+            workspace=LocalWorkspaceBackend(target.parent),
         )
         self._emit("write", target)
         return result
@@ -703,14 +873,25 @@ class PydanticHarnessToolset:
         context = arguments.get("context", 0)
         limit = arguments.get("limit", 100)
         filesystem = self._filesystem(target, search_limit=limit)
-        matches = await filesystem.search_files(pattern, path=".", include_glob=glob)
+        workspace = LocalWorkspaceBackend(target if target.is_dir() else target.parent)
+        matches = await filesystem.search_files(
+            pattern,
+            path="." if target.is_dir() else target.name,
+            include_glob=glob,
+            workspace=workspace,
+        )
         self._emit("read", target)
         if context == 0 or not matches or matches.startswith("["):
             return matches
-        return await self._grep_context(filesystem, matches, context)
+        return await self._grep_context(filesystem, workspace, matches, context)
 
     @staticmethod
-    async def _grep_context(filesystem: FileSystemToolset[Any], matches: str, context: int) -> str:
+    async def _grep_context(
+        filesystem: FileSystemToolset[Any],
+        workspace: LocalWorkspaceBackend,
+        matches: str,
+        context: int,
+    ) -> str:
         intervals: dict[str, list[tuple[int, int]]] = {}
         for line in matches.splitlines():
             try:
@@ -731,7 +912,9 @@ class PydanticHarnessToolset:
                     merged.append([start, end])
             for start, end in merged:
                 blocks.append(
-                    await filesystem.read_file(path, offset=start - 1, limit=end - start + 1)
+                    await filesystem.read_file(
+                        path, offset=start - 1, limit=end - start + 1, workspace=workspace
+                    )
                 )
         return "\n--\n".join(blocks) if blocks else matches
 
@@ -739,14 +922,18 @@ class PydanticHarnessToolset:
         target = self._preflight("find", arguments.get("path"), default=".")
         pattern = arguments.get("pattern")
         limit = arguments.get("limit", 1000)
-        result = await self._filesystem(target, find_limit=limit).find_files(pattern, path=".")
+        result = await self._filesystem(target, find_limit=limit).find_files(
+            pattern, path=".", workspace=LocalWorkspaceBackend(target)
+        )
         self._emit("read", target)
         return result
 
     async def _ls(self, arguments: Mapping[str, object]) -> str:
         target = self._preflight("ls", arguments.get("path"), default=".")
         limit = arguments.get("limit", 500)
-        result = await self._filesystem(target, list_limit=limit).list_directory(".")
+        result = await self._filesystem(target, list_limit=limit).list_directory(
+            ".", workspace=LocalWorkspaceBackend(target)
+        )
         self._emit("read", target)
         return result
 
@@ -763,10 +950,10 @@ class PydanticHarnessToolset:
             )
             self._emit("write", self._location.cwd)
             return result
-        shell, wrapped = self._shell_command(arguments)
+        shell, ctx, wrapped = self._shell_command(arguments)
         run = asyncio.ensure_future(
             shell.run_command(
-                wrapped, timeout_seconds=float(timeout) if timeout is not None else None
+                ctx, wrapped, timeout_seconds=float(timeout) if timeout is not None else None
             )
         )
         try:
@@ -804,9 +991,9 @@ class PydanticHarnessToolset:
         return result
 
     async def _start_shell(self, arguments: Mapping[str, object]) -> str:
-        shell, wrapped = self._shell_command(arguments)
+        shell, ctx, wrapped = self._shell_command(arguments)
         try:
-            result = await shell.start_command(wrapped)
+            result = await shell.start_command(ctx, wrapped)
         except BaseException:
             await shell.__aexit__()
             raise
@@ -815,25 +1002,27 @@ class PydanticHarnessToolset:
             # A-069: retain only a successfully launched upstream process handle.
             raise ToolsetError(result)
         command_id = result.rsplit("ID: ", 1)[1].strip()
-        self._background_shells[command_id] = shell
+        self._background_shells[command_id] = (shell, ctx)
         self._emit("write", self._location.cwd)
         return f"Started background shell. ID: {command_id}. Use read_shell or stop_shell."
 
     async def _read_shell(self, arguments: Mapping[str, object]) -> str:
         command_id = str(arguments.get("command_id", ""))
-        shell = self._background_shells.get(command_id)
-        if shell is None:
+        handle = self._background_shells.get(command_id)
+        if handle is None:
             # A-069: a shell handle belongs to its originating thread.
             raise ToolsetError("No background shell with that ID in this thread.")
-        return await shell.check_command(command_id)
+        shell, ctx = handle
+        return await shell.check_command(ctx, command_id)
 
     async def _stop_shell(self, arguments: Mapping[str, object]) -> str:
         command_id = str(arguments.get("command_id", ""))
-        shell = self._background_shells.get(command_id)
-        if shell is None:
+        handle = self._background_shells.get(command_id)
+        if handle is None:
             # A-069: stopping a shell requires this thread's retained handle.
             raise ToolsetError("No background shell with that ID in this thread.")
-        return await shell.stop_command(command_id)
+        shell, ctx = handle
+        return await shell.stop_command(ctx, command_id)
 
     def _outside_directory(self, command: str) -> Path | None:
         try:
@@ -847,7 +1036,9 @@ class PydanticHarnessToolset:
                     return target
         return None
 
-    def _shell_command(self, arguments: Mapping[str, object]) -> tuple[ShellToolset, str]:
+    def _shell_command(
+        self, arguments: Mapping[str, object]
+    ) -> tuple[ShellToolset, RunContext[Any], str]:
         command = arguments.get("command")
         if not isinstance(command, str) or not command.strip():
             # A-069: the saved or interactive shell must name actual work.
@@ -1009,7 +1200,6 @@ class PydanticHarnessToolset:
             if value := os.environ.get(optional):
                 environment[optional] = value
         shell = ShellToolset(
-            cwd=self._location.cwd,
             allowed_commands=[],
             denied_commands=[],
             denied_operators=[],
@@ -1019,7 +1209,14 @@ class PydanticHarnessToolset:
             allow_interactive=False,
             env=environment,
         )
-        return shell, wrapped
+        ctx = RunContext(
+            deps=None,
+            model=None,
+            usage=RunUsage(),
+            workspace=Workspace(LocalWorkspaceBackend(self._scratch, env=environment)),
+        )
+        # Upstream's job metadata stays disposable, as the old temporary output files did.
+        return shell, ctx, f"cd {shlex.quote(str(self._location.cwd))} && {wrapped}"
 
 
 def message_tokens(messages) -> int:
