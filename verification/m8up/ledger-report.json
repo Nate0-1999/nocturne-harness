@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "7a58fdfa800db67a47853f66f63e361dc3b87df6",
-      "head": "71a4cca61c98f0beb8e844d7c98a91e60cda509f"
+      "head": "f4bcb47d9fe210e8a4959da8df8bbf8d5a50a3f5"
     }
   ],
   "unmapped": {
@@ -114,7 +114,9 @@
     "harness/verification/m8up/recheck/harness-suite.txt": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
     "harness/verification/m8up/recheck/installed-source.json": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
     "harness/verification/m8up/recheck/interruptions.json": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
+    "harness/verification/m8up/recheck/local-checks.json": "M8UP offline check/evidence only; excluded from shipped distributions.",
     "harness/verification/m8up/recheck/no_rg_path.py": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
+    "harness/verification/m8up/recheck/offline-checks.json": "M8UP offline check/evidence only; excluded from shipped distributions.",
     "harness/verification/m8up/recheck/packaged-path.json": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
     "harness/verification/m8up/recheck/path.json": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
     "harness/verification/m8up/recheck/pilot/attempt-5-transcript.txt": "M8UP verification/evidence only; excluded from the shipped wheel and sdist.",
