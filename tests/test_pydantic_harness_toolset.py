@@ -525,6 +525,11 @@ def test_pydantic_harness_has_one_import_fence_and_exact_pin() -> None:
                         path.name,
                         module,
                     )
+                    if isinstance(node, ast.ImportFrom):
+                        assert not any(alias.name.startswith("_") for alias in node.names), (
+                            path.name,
+                            module,
+                        )
 
 
 @pytest.mark.asyncio
