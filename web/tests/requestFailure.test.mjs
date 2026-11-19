@@ -23,8 +23,15 @@ test('an authored refusal and its next step stay as written', async () => {
     'The Palace is still busy. Try again shortly.')
 })
 
-/** SPEC C.6 / FL-018: a spend warning must not erase the memory-degraded notice. */
+/** SPEC C.6 / FL-018 / F230: a spend warning must not erase the memory-degraded notice,
+ * whichever reason it gives; F241: the last Symphony refusal stays as written. */
 test('the local-copy clock and a joined authored notice retain their wording', () => {
-  const sentence = 'The Palace is unreachable; memory is from the local copy, as of 18:30. The Palace is still busy. Try again shortly.'
-  assert.equal(serverMessage(sentence, 'The request failed. Try again.'), sentence)
+  const spend = 'Answer delivered; 2 spend receipt line(s) are waiting for the ledger (durably on disk).'
+  for (const sentence of [
+    'The Palace is unreachable; memory is from the local copy, as of 18:30. The Palace is still busy. Try again shortly.',
+    `The Palace is unreachable; memory is from the local copy, as of 18:30. ${spend}`,
+    `The Palace did not answer in time; memory is from the local copy, as of 18:30. ${spend}`,
+    'Memory is from the local copy, as of Nov 17, 18:30.',
+    'This attempt has already returned; the judges are reviewing it.',
+  ]) assert.equal(serverMessage(sentence, 'The request failed. Try again.'), sentence)
 })

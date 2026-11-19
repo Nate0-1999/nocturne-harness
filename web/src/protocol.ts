@@ -341,8 +341,10 @@ export type GateOpenPayload = JsonObject & {
   near_misses: ScoredMemoryCard[]
   wrong_removed: MemoryUnit[]
   resolution_error?: string | null
-  /** M4BW: the Palace was unreachable; these cards come from the local copy as of this time. */
+  /** M4BW: the Palace gave no check; these cards come from the local copy as of this time. */
   local_copy_as_of?: string
+  /** F230: why the copy was used; null when the Palace answered with a refusal. */
+  local_copy_reason?: 'unreachable' | 'slow' | null
 }
 
 export type RemovalReason = 'not_relevant' | 'wrong' | 'never'
