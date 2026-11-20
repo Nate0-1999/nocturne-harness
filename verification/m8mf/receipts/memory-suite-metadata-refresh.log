@@ -1,0 +1,376 @@
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 60%]
+.....F.................................................................. [ 80%]
+.............................................................ss......    [100%]
+=================================== FAILURES ===================================
+_ test_manual_retrain_below_floor_does_not_delay_floor_and_above_floor_resets_stride _
+
+self = <sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_cursor object at 0x10ea015a0>
+operation = 'INSERT INTO optimization_run (run_uid, loop, trigger_kind, trigger_event_uid, trigger_thread_id, corpus_fingerprint, ...JSONB, $14::JSONB, $15::VARCHAR, $16::JSONB, $17::JSONB, $18::TIMESTAMP WITH TIME ZONE, $19::TIMESTAMP WITH TIME ZONE)'
+parameters = ('01M7WQ1Z37W777V9329CSV2591', 'injection_scoring', 'manual', '01M7WQ1Z2Q5AEYK1AYDD4EV3EV', None, '5295032d8ec33a8894eee5e1cdea96f5c8cbdb204cac94aecef943bc231c4ff2', ...)
+
+    async def _prepare_and_execute(self, operation, parameters):
+        adapt_connection = self._adapt_connection
+    
+        async with adapt_connection._execute_mutex:
+            if not adapt_connection._started:
+                await adapt_connection._start_transaction()
+    
+            if parameters is None:
+                parameters = ()
+    
+            try:
+                prepared_stmt, attributes = await adapt_connection._prepare(
+                    operation, self._invalidate_schema_cache_asof
+                )
+    
+                if attributes:
+                    self.description = [
+                        (
+                            attr.name,
+                            attr.type.oid,
+                            None,
+                            None,
+                            None,
+                            None,
+                            None,
+                        )
+                        for attr in attributes
+                    ]
+                else:
+                    self.description = None
+    
+                if self.server_side:
+                    self._cursor = await prepared_stmt.cursor(*parameters)
+                    self.rowcount = -1
+                else:
+>                   self._rows = deque(await prepared_stmt.fetch(*parameters))
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:550: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+spine/.venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py:177: in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py:268: in __bind_execute
+    data, status, _ = await self.__do_execute(
+spine/.venv/lib/python3.12/site-packages/asyncpg/prepared_stmt.py:257: in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   ???
+E   asyncpg.exceptions.CheckViolationError: new row for relation "optimization_run" violates check constraint "optimization_run_check1"
+E   DETAIL:  Failing row contains (01M7WQ1Z37W777V9329CSV2591, injection_scoring, manual, 01M7WQ1Z2Q5AEYK1AYDD4EV3EV, null, 5295032d8ec33a8894eee5e1cdea96f5c8cbdb204cac94aecef943bc231c4ff2, 6, 1000, {"unit": "eligible_disposition", "threads": [{"selected": 2, "av..., m3ms-share-v1, m2f-1c5b937c231c3197, {"params": {"tau": 0.55, "top_k": 8, "near_miss_k": 3, "thread_w..., {"params": {"tau": 0.55, "top_k": 8, "_learner": {"fit": {"tau":..., {"train": {"incumbent": {"disagreements": 2, "injected_tokens": ..., proposed, {"rule": "replay_margin", "winner": "challenger", "applied": fal..., [], 2026-11-20 14:51:33.976319+00, 2026-11-20 14:51:33.863878+00).
+
+asyncpg/protocol/protocol.pyx:205: CheckViolationError
+
+The above exception was the direct cause of the following exception:
+
+self = <sqlalchemy.engine.base.Connection object at 0x10ed62390>
+dialect = <sqlalchemy.dialects.postgresql.asyncpg.PGDialect_asyncpg object at 0x11b3870b0>
+context = <sqlalchemy.dialects.postgresql.asyncpg.PGExecutionContext_asyncpg object at 0x10e5702f0>
+statement = <sqlalchemy.dialects.postgresql.asyncpg.PGCompiler_asyncpg object at 0x10f234770>
+parameters = [('01M7WQ1Z37W777V9329CSV2591', 'injection_scoring', 'manual', '01M7WQ1Z2Q5AEYK1AYDD4EV3EV', None, '5295032d8ec33a8894eee5e1cdea96f5c8cbdb204cac94aecef943bc231c4ff2', ...)]
+
+    def _exec_single_context(
+        self,
+        dialect: Dialect,
+        context: ExecutionContext,
+        statement: Union[str, Compiled],
+        parameters: Optional[_AnyMultiExecuteParams],
+    ) -> CursorResult[Any]:
+        """continue the _execute_context() method for a single DBAPI
+        cursor.execute() or cursor.executemany() call.
+    
+        """
+        if dialect.bind_typing is BindTyping.SETINPUTSIZES:
+            generic_setinputsizes = context._prepare_set_input_sizes()
+    
+            if generic_setinputsizes:
+                try:
+                    dialect.do_set_input_sizes(
+                        context.cursor, generic_setinputsizes, context
+                    )
+                except BaseException as e:
+                    self._handle_dbapi_exception(
+                        e, str(statement), parameters, None, context
+                    )
+    
+        cursor, str_statement, parameters = (
+            context.cursor,
+            context.statement,
+            context.parameters,
+        )
+    
+        effective_parameters: Optional[_AnyExecuteParams]
+    
+        if not context.executemany:
+            effective_parameters = parameters[0]
+        else:
+            effective_parameters = parameters
+    
+        if self._has_events or self.engine._has_events:
+            for fn in self.dispatch.before_cursor_execute:
+                str_statement, effective_parameters = fn(
+                    self,
+                    cursor,
+                    str_statement,
+                    effective_parameters,
+                    context,
+                    context.executemany,
+                )
+    
+        if self._echo:
+            self._log_info(str_statement)
+    
+            stats = context._get_cache_stats()
+    
+            if not self.engine.hide_parameters:
+                self._log_info(
+                    "[%s] %r",
+                    stats,
+                    sql_util._repr_params(
+                        effective_parameters,
+                        batches=10,
+                        ismulti=context.executemany,
+                    ),
+                )
+            else:
+                self._log_info(
+                    "[%s] [SQL parameters hidden due to hide_parameters=True]",
+                    stats,
+                )
+    
+        evt_handled: bool = False
+        try:
+            if context.execute_style is ExecuteStyle.EXECUTEMANY:
+                effective_parameters = cast(
+                    "_CoreMultiExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_executemany:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_executemany(
+                        cursor,
+                        str_statement,
+                        effective_parameters,
+                        context,
+                    )
+            elif not effective_parameters and context.no_parameters:
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute_no_params:
+                        if fn(cursor, str_statement, context):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+                    self.dialect.do_execute_no_params(
+                        cursor, str_statement, context
+                    )
+            else:
+                effective_parameters = cast(
+                    "_CoreSingleExecuteParams", effective_parameters
+                )
+                if self.dialect._has_events:
+                    for fn in self.dialect.dispatch.do_execute:
+                        if fn(
+                            cursor,
+                            str_statement,
+                            effective_parameters,
+                            context,
+                        ):
+                            evt_handled = True
+                            break
+                if not evt_handled:
+>                   self.dialect.do_execute(
+                        cursor, str_statement, effective_parameters, context
+                    )
+
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1969: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+    self._handle_exception(error)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AdaptedConnection <asyncpg.connection.Connection object at 0x10e6d33e0>>
+error = CheckViolationError('new row for relation "optimization_run" violates check constraint "optimization_run_check1"')
+
+    def _handle_exception(self, error):
+        if self._connection.is_closed():
+            self._transaction = None
+            self._started = False
+    
+        if not isinstance(error, AsyncAdapt_asyncpg_dbapi.Error):
+            exception_mapping = self.dbapi._asyncpg_error_translate
+    
+            for super_ in type(error).__mro__:
+                if super_ in exception_mapping:
+                    translated_error = exception_mapping[super_](
+                        "%s: %s" % (type(error), error)
+                    )
+                    translated_error.pgcode = translated_error.sqlstate = (
+                        getattr(error, "sqlstate", None)
+                    )
+>                   raise translated_error from error
+E                   sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.CheckViolationError'>: new row for relation "optimization_run" violates check constraint "optimization_run_check1"
+E                   DETAIL:  Failing row contains (01M7WQ1Z37W777V9329CSV2591, injection_scoring, manual, 01M7WQ1Z2Q5AEYK1AYDD4EV3EV, null, 5295032d8ec33a8894eee5e1cdea96f5c8cbdb204cac94aecef943bc231c4ff2, 6, 1000, {"unit": "eligible_disposition", "threads": [{"selected": 2, "av..., m3ms-share-v1, m2f-1c5b937c231c3197, {"params": {"tau": 0.55, "top_k": 8, "near_miss_k": 3, "thread_w..., {"params": {"tau": 0.55, "top_k": 8, "_learner": {"fit": {"tau":..., {"train": {"incumbent": {"disagreements": 2, "injected_tokens": ..., proposed, {"rule": "replay_margin", "winner": "challenger", "applied": fal..., [], 2026-11-20 14:51:33.976319+00, 2026-11-20 14:51:33.863878+00).
+
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: IntegrityError
+
+The above exception was the direct cause of the following exception:
+
+memory_session_factory = async_sessionmaker(class_='AsyncSession', bind=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x10e2ce010>, autoflush=True, expire_on_commit=False)
+
+    @pytest.mark.asyncio
+    async def test_manual_retrain_below_floor_does_not_delay_floor_and_above_floor_resets_stride(
+        memory_session_factory: async_sessionmaker[AsyncSession],
+    ) -> None:
+        """A-051 keeps FORCE RETRAIN and automatic cadence on one durable evidence boundary."""
+    
+        await _reset_proposals(memory_session_factory)
+        service = _service(
+            memory_session_factory,
+            min_dispositions=4,
+            retrain_signal_stride=4,
+        )
+        await _insert_gate(memory_session_factory, gate=50)
+        below_floor = await service.retrain()
+        await _insert_gate(memory_session_factory, gate=51)
+        at_floor = await service.retrain_if_due()
+        await _insert_gate(memory_session_factory, gate=52)
+>       manual_reset = await service.retrain()
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+
+spine/tests/test_learner_api.py:1114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+spine/src/spine/learner/service.py:252: in retrain
+    response = await self._retrain(
+spine/src/spine/learner/service.py:347: in _retrain
+    async with session.begin():
+               ^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py:1886: in __aexit__
+    await greenlet_spawn(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:203: in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/util.py:147: in __exit__
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/util.py:145: in __exit__
+    self.commit()
+<string>:2: in commit
+    ???
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1316: in commit
+    self._prepare_impl()
+<string>:2: in _prepare_impl
+    ???
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py:1290: in _prepare_impl
+    self.session.flush()
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py:4353: in flush
+    self._flush(objects)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py:4488: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py:122: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py:4449: in _flush
+    flush_context.execute()
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py:465: in execute
+    rec.execute(self)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py:641: in execute
+    util.preloaded.orm_persistence.save_obj(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py:94: in save_obj
+    _emit_insert_statements(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py:1049: in _emit_insert_statements
+    result = connection.execute(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1421: in execute
+    return meth(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1848: in _execute_context
+    return self._exec_single_context(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:2365: in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:563: in _prepare_and_execute
+    self._handle_exception(error)
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:513: in _handle_exception
+    self._adapt_connection._handle_exception(error)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <AdaptedConnection <asyncpg.connection.Connection object at 0x10e6d33e0>>
+error = CheckViolationError('new row for relation "optimization_run" violates check constraint "optimization_run_check1"')
+
+    def _handle_exception(self, error):
+        if self._connection.is_closed():
+            self._transaction = None
+            self._started = False
+    
+        if not isinstance(error, AsyncAdapt_asyncpg_dbapi.Error):
+            exception_mapping = self.dbapi._asyncpg_error_translate
+    
+            for super_ in type(error).__mro__:
+                if super_ in exception_mapping:
+                    translated_error = exception_mapping[super_](
+                        "%s: %s" % (type(error), error)
+                    )
+                    translated_error.pgcode = translated_error.sqlstate = (
+                        getattr(error, "sqlstate", None)
+                    )
+>                   raise translated_error from error
+E                   sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.CheckViolationError'>: new row for relation "optimization_run" violates check constraint "optimization_run_check1"
+E                   DETAIL:  Failing row contains (01M7WQ1Z37W777V9329CSV2591, injection_scoring, manual, 01M7WQ1Z2Q5AEYK1AYDD4EV3EV, null, 5295032d8ec33a8894eee5e1cdea96f5c8cbdb204cac94aecef943bc231c4ff2, 6, 1000, {"unit": "eligible_disposition", "threads": [{"selected": 2, "av..., m3ms-share-v1, m2f-1c5b937c231c3197, {"params": {"tau": 0.55, "top_k": 8, "near_miss_k": 3, "thread_w..., {"params": {"tau": 0.55, "top_k": 8, "_learner": {"fit": {"tau":..., {"train": {"incumbent": {"disagreements": 2, "injected_tokens": ..., proposed, {"rule": "replay_margin", "winner": "challenger", "applied": fal..., [], 2026-11-20 14:51:33.976319+00, 2026-11-20 14:51:33.863878+00).
+E                   [SQL: INSERT INTO optimization_run (run_uid, loop, trigger_kind, trigger_event_uid, trigger_thread_id, corpus_fingerprint, corpus_size, corpus_max_size, corpus_stratification, incumbent_version, challenger_version, incumbent_params, challenger_params, backtest_scores, verdict, tie_break_applied, cost_refs, started_at, completed_at) VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::UUID, $6::VARCHAR, $7::BIGINT, $8::BIGINT, $9::JSONB, $10::VARCHAR, $11::VARCHAR, $12::JSONB, $13::JSONB, $14::JSONB, $15::VARCHAR, $16::JSONB, $17::JSONB, $18::TIMESTAMP WITH TIME ZONE, $19::TIMESTAMP WITH TIME ZONE)]
+E                   [parameters: ('01M7WQ1Z37W777V9329CSV2591', 'injection_scoring', 'manual', '01M7WQ1Z2Q5AEYK1AYDD4EV3EV', None, '5295032d8ec33a8894eee5e1cdea96f5c8cbdb204cac94aecef943bc231c4ff2', 6, 1000, '{"strategy": "thread_round_robin_newest_oldest_v1", "unit": "eligible_disposition", "available": 6, "selected": 6, "max_size": 1000, "threads": [{"th ... (168 characters truncated) ... : 2, "selected": 2, "selected_gates": 1}, {"thread_id": "00000000-0000-0000-0000-000000000098", "available": 2, "selected": 2, "selected_gates": 1}]}', 'm3ms-share-v1', 'm2f-1c5b937c231c3197', '{"version": "m3ms-share-v1", "weights": {"kw": 0.16, "sem": 0.42, "freq": 0.08, "hist": 0.07, "proj": 0.16, "time": 0.11}, "params": {"tau": 0.55, "t ... (409 characters truncated) ... ation-v1"}, "quarantine_kills": 3, "half_life_hist_days": 7, "half_life_time_days": 14, "memory_context_share": 0.1, "half_life_location_hops": 2.0}}', '{"version": "m2f-1c5b937c231c3197", "weights": {"sem": 0.7999984771585761, "kw": 0.08250038071035608, "time": 0.032500380710355985, "proj": 0.0825003 ... (4318 characters truncated) ... }, "bias_offsets": {"00000000-0000-0000-0000-000000000001": 5.532368347639219e-07, "00000000-0000-0000-0000-000000000002": -5.532368347639219e-07}}}}', '{"train": {"incumbent": {"disagreements": 2, "weighted_disagreements": "2", "injected_tokens": 2, "share_disagreements": 0, "weighted_share_disagreem ... (332 characters truncated) ... allenger": {"disagreements": 0, "weighted_disagreements": "0", "injected_tokens": 4, "share_disagreements": 0, "weighted_share_disagreements": "0"}}}', 'proposed', '{"applied": false, "rule": "replay_margin", "winner": "challenger", "weighted_improvement": "4", "required_margin": "1.0"}', '[]', datetime.datetime(2026, 11, 20, 14, 51, 33, 976319, tzinfo=datetime.timezone.utc), datetime.datetime(2026, 11, 20, 14, 51, 33, 863878, tzinfo=datetime.timezone.utc))]
+E                   (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+spine/.venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py:797: IntegrityError
+=========================== short test summary info ============================
+SKIPPED [1] spine/tests/test_unbuilt_rules.py:6: r11-2: shared Palaces and revocable principal grants are horizon work
+SKIPPED [1] spine/tests/test_unbuilt_rules.py:12: r9-9: worker/local cost stores have not converged into the spend ledger
+FAILED spine/tests/test_learner_api.py::test_manual_retrain_below_floor_does_not_delay_floor_and_above_floor_resets_stride
+1 failed, 354 passed, 2 skipped in 40.73s

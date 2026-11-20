@@ -1,0 +1,448 @@
+FF..........FF.FF.......                                                 [100%]
+=================================== FAILURES ===================================
+___________ test_unavailable_folder_answers_the_agent[read-missing] ____________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer0')
+condition = 'missing', name = 'read'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+    @pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+    async def test_unavailable_folder_answers_the_agent(
+        tmp_path: Path, condition: str, name: str
+    ) -> None:
+        """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+        folder = tmp_path / "catalog"
+        if condition == "file":
+            folder.write_text("not a folder")
+        elif condition == "unreadable":
+            folder.mkdir()
+            (folder / "note.txt").write_text("needle\n")
+            folder.chmod(0)
+        arguments = {
+            "read": {"path": str(folder / "note.txt")},
+            "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+            "edit": {
+                "path": str(folder / "note.txt"),
+                "edits": [{"oldText": "needle", "newText": "changed"}],
+            },
+            "grep": {"path": str(folder), "pattern": "needle"},
+            "find": {"path": str(folder), "pattern": "*.txt"},
+            "ls": {"path": str(folder)},
+            "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+        }[name]
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+>           result = await toolset.execute(name, arguments)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pydantic_harness_toolset.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/pydantic_harness_adapter.py:637: in execute
+    content = await {
+src/harness/pydantic_harness_adapter.py:773: in _read
+    result = await self._filesystem(target.parent).read_file(
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:906: in read_file
+    return await self._read_file(await self._scope(workspace), None, path, offset=offset, limit=limit)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:670: in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py:625: in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:192: in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:189: in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:226: in run_in_executor
+    raise outcome[1]
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:202: in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydantic_ai.workspaces.local.LocalWorkspaceBackend object at 0x1132749b0>
+
+    def _ensure_alive(self) -> Path:
+        root = self._resolved_working_dir or self._working_dir.resolve()
+        if not root.is_dir():
+>           raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+E           pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer0/catalog does not exist
+
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:184: WorkspaceUnavailableError
+_____________ test_unavailable_folder_answers_the_agent[read-file] _____________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer1')
+condition = 'file', name = 'read'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+    @pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+    async def test_unavailable_folder_answers_the_agent(
+        tmp_path: Path, condition: str, name: str
+    ) -> None:
+        """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+        folder = tmp_path / "catalog"
+        if condition == "file":
+            folder.write_text("not a folder")
+        elif condition == "unreadable":
+            folder.mkdir()
+            (folder / "note.txt").write_text("needle\n")
+            folder.chmod(0)
+        arguments = {
+            "read": {"path": str(folder / "note.txt")},
+            "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+            "edit": {
+                "path": str(folder / "note.txt"),
+                "edits": [{"oldText": "needle", "newText": "changed"}],
+            },
+            "grep": {"path": str(folder), "pattern": "needle"},
+            "find": {"path": str(folder), "pattern": "*.txt"},
+            "ls": {"path": str(folder)},
+            "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+        }[name]
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+>           result = await toolset.execute(name, arguments)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pydantic_harness_toolset.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/pydantic_harness_adapter.py:637: in execute
+    content = await {
+src/harness/pydantic_harness_adapter.py:773: in _read
+    result = await self._filesystem(target.parent).read_file(
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:906: in read_file
+    return await self._read_file(await self._scope(workspace), None, path, offset=offset, limit=limit)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:670: in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py:625: in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:192: in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:189: in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:226: in run_in_executor
+    raise outcome[1]
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:202: in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydantic_ai.workspaces.local.LocalWorkspaceBackend object at 0x116c5fc20>
+
+    def _ensure_alive(self) -> Path:
+        root = self._resolved_working_dir or self._working_dir.resolve()
+        if not root.is_dir():
+>           raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+E           pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer1/catalog does not exist
+
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:184: WorkspaceUnavailableError
+___________ test_unavailable_folder_answers_the_agent[find-missing] ____________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer12')
+condition = 'missing', name = 'find'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+    @pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+    async def test_unavailable_folder_answers_the_agent(
+        tmp_path: Path, condition: str, name: str
+    ) -> None:
+        """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+        folder = tmp_path / "catalog"
+        if condition == "file":
+            folder.write_text("not a folder")
+        elif condition == "unreadable":
+            folder.mkdir()
+            (folder / "note.txt").write_text("needle\n")
+            folder.chmod(0)
+        arguments = {
+            "read": {"path": str(folder / "note.txt")},
+            "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+            "edit": {
+                "path": str(folder / "note.txt"),
+                "edits": [{"oldText": "needle", "newText": "changed"}],
+            },
+            "grep": {"path": str(folder), "pattern": "needle"},
+            "find": {"path": str(folder), "pattern": "*.txt"},
+            "ls": {"path": str(folder)},
+            "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+        }[name]
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+>           result = await toolset.execute(name, arguments)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pydantic_harness_toolset.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/pydantic_harness_adapter.py:637: in execute
+    content = await {
+src/harness/pydantic_harness_adapter.py:958: in _find
+    result = await self._filesystem(target, find_limit=limit).find_files(
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:1707: in find_files
+    return await self._find_files(await self._scope(workspace), None, pattern, path=path)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:670: in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py:625: in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:192: in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:189: in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:226: in run_in_executor
+    raise outcome[1]
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:202: in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydantic_ai.workspaces.local.LocalWorkspaceBackend object at 0x116c60440>
+
+    def _ensure_alive(self) -> Path:
+        root = self._resolved_working_dir or self._working_dir.resolve()
+        if not root.is_dir():
+>           raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+E           pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer12/catalog does not exist
+
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:184: WorkspaceUnavailableError
+_____________ test_unavailable_folder_answers_the_agent[find-file] _____________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer13')
+condition = 'file', name = 'find'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+    @pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+    async def test_unavailable_folder_answers_the_agent(
+        tmp_path: Path, condition: str, name: str
+    ) -> None:
+        """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+        folder = tmp_path / "catalog"
+        if condition == "file":
+            folder.write_text("not a folder")
+        elif condition == "unreadable":
+            folder.mkdir()
+            (folder / "note.txt").write_text("needle\n")
+            folder.chmod(0)
+        arguments = {
+            "read": {"path": str(folder / "note.txt")},
+            "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+            "edit": {
+                "path": str(folder / "note.txt"),
+                "edits": [{"oldText": "needle", "newText": "changed"}],
+            },
+            "grep": {"path": str(folder), "pattern": "needle"},
+            "find": {"path": str(folder), "pattern": "*.txt"},
+            "ls": {"path": str(folder)},
+            "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+        }[name]
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+>           result = await toolset.execute(name, arguments)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pydantic_harness_toolset.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/pydantic_harness_adapter.py:637: in execute
+    content = await {
+src/harness/pydantic_harness_adapter.py:958: in _find
+    result = await self._filesystem(target, find_limit=limit).find_files(
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:1707: in find_files
+    return await self._find_files(await self._scope(workspace), None, pattern, path=path)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:670: in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py:625: in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:192: in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:189: in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:226: in run_in_executor
+    raise outcome[1]
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:202: in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydantic_ai.workspaces.local.LocalWorkspaceBackend object at 0x116ce3fb0>
+
+    def _ensure_alive(self) -> Path:
+        root = self._resolved_working_dir or self._working_dir.resolve()
+        if not root.is_dir():
+>           raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+E           pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer13/catalog does not exist
+
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:184: WorkspaceUnavailableError
+____________ test_unavailable_folder_answers_the_agent[ls-missing] _____________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer15')
+condition = 'missing', name = 'ls'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+    @pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+    async def test_unavailable_folder_answers_the_agent(
+        tmp_path: Path, condition: str, name: str
+    ) -> None:
+        """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+        folder = tmp_path / "catalog"
+        if condition == "file":
+            folder.write_text("not a folder")
+        elif condition == "unreadable":
+            folder.mkdir()
+            (folder / "note.txt").write_text("needle\n")
+            folder.chmod(0)
+        arguments = {
+            "read": {"path": str(folder / "note.txt")},
+            "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+            "edit": {
+                "path": str(folder / "note.txt"),
+                "edits": [{"oldText": "needle", "newText": "changed"}],
+            },
+            "grep": {"path": str(folder), "pattern": "needle"},
+            "find": {"path": str(folder), "pattern": "*.txt"},
+            "ls": {"path": str(folder)},
+            "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+        }[name]
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+>           result = await toolset.execute(name, arguments)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pydantic_harness_toolset.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/pydantic_harness_adapter.py:637: in execute
+    content = await {
+src/harness/pydantic_harness_adapter.py:967: in _ls
+    result = await self._filesystem(target, list_limit=limit).list_directory(
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:1326: in list_directory
+    return await self._list_directory(await self._scope(workspace), None, path)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:670: in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py:625: in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:192: in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:189: in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:226: in run_in_executor
+    raise outcome[1]
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:202: in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydantic_ai.workspaces.local.LocalWorkspaceBackend object at 0x116ce4740>
+
+    def _ensure_alive(self) -> Path:
+        root = self._resolved_working_dir or self._working_dir.resolve()
+        if not root.is_dir():
+>           raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+E           pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer15/catalog does not exist
+
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:184: WorkspaceUnavailableError
+______________ test_unavailable_folder_answers_the_agent[ls-file] ______________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer16')
+condition = 'file', name = 'ls'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+    @pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+    async def test_unavailable_folder_answers_the_agent(
+        tmp_path: Path, condition: str, name: str
+    ) -> None:
+        """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+        folder = tmp_path / "catalog"
+        if condition == "file":
+            folder.write_text("not a folder")
+        elif condition == "unreadable":
+            folder.mkdir()
+            (folder / "note.txt").write_text("needle\n")
+            folder.chmod(0)
+        arguments = {
+            "read": {"path": str(folder / "note.txt")},
+            "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+            "edit": {
+                "path": str(folder / "note.txt"),
+                "edits": [{"oldText": "needle", "newText": "changed"}],
+            },
+            "grep": {"path": str(folder), "pattern": "needle"},
+            "find": {"path": str(folder), "pattern": "*.txt"},
+            "ls": {"path": str(folder)},
+            "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+        }[name]
+        toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+        try:
+>           result = await toolset.execute(name, arguments)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_pydantic_harness_toolset.py:46: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/harness/pydantic_harness_adapter.py:637: in execute
+    content = await {
+src/harness/pydantic_harness_adapter.py:967: in _ls
+    result = await self._filesystem(target, list_limit=limit).list_directory(
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:1326: in list_directory
+    return await self._list_directory(await self._scope(workspace), None, path)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py:670: in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py:625: in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:192: in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:189: in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:226: in run_in_executor
+    raise outcome[1]
+.venv/lib/python3.12/site-packages/pydantic_ai/_utils.py:202: in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydantic_ai.workspaces.local.LocalWorkspaceBackend object at 0x116d72570>
+
+    def _ensure_alive(self) -> Path:
+        root = self._resolved_working_dir or self._working_dir.resolve()
+        if not root.is_dir():
+>           raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+E           pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1417/test_unavailable_folder_answer16/catalog does not exist
+
+.venv/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py:184: WorkspaceUnavailableError
+=========================== short test summary info ============================
+FAILED tests/test_pydantic_harness_toolset.py::test_unavailable_folder_answers_the_agent[read-missing]
+FAILED tests/test_pydantic_harness_toolset.py::test_unavailable_folder_answers_the_agent[read-file]
+FAILED tests/test_pydantic_harness_toolset.py::test_unavailable_folder_answers_the_agent[find-missing]
+FAILED tests/test_pydantic_harness_toolset.py::test_unavailable_folder_answers_the_agent[find-file]
+FAILED tests/test_pydantic_harness_toolset.py::test_unavailable_folder_answers_the_agent[ls-missing]
+FAILED tests/test_pydantic_harness_toolset.py::test_unavailable_folder_answers_the_agent[ls-file]
+6 failed, 18 passed, 36 deselected in 1.43s
