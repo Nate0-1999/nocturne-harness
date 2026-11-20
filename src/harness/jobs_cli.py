@@ -56,8 +56,6 @@ def bundle_nocturne(args, *, stdout, stdin=sys.stdin):
             "folder": ".",
             "model_policy": "elbow",
             "budget_usd": 0.5,
-            # F138: a job with a memory scope does not run yet; a new bundle starts without one.
-            "memory_scope": "none",
             "exit_condition": "true",
         }
         (root / "workflow.json").write_text(json.dumps(recipe, indent=2) + "\n")

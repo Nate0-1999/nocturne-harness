@@ -3,11 +3,15 @@
 import os
 from datetime import UTC, datetime
 from decimal import Decimal
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import pytest_asyncio
 
+from harness.envelope import StopReason, generate_ulid
+from harness.memory_gate import MemoryGateTurnRunner
+from harness.memory_panel import ThreadMemoryContextRegistry
+from harness.run_protocol import TurnOutcome
 from harness.spine_client import (
     CreatedMemoryResponse,
     CreateMemoryConflictError,
@@ -26,6 +30,7 @@ from harness.spine_client import (
     SpineClient,
     SpineProblemError,
 )
+from harness.tools_memory import MemoryToolContext
 
 pytestmark = [pytest.mark.contract, pytest.mark.asyncio]
 
@@ -39,6 +44,8 @@ SIMILAR_CANDIDATE = (
 )
 CAS_ORIGINAL = "H2 CAS original"
 CAS_PATCHED = "H2 CAS patched"
+RUN_FACT = "The contract lighthouse lamp is amber."
+RUN_PROMPT = "What colour is the contract lighthouse lamp?"
 
 
 def _required_environment(name: str) -> str:
@@ -315,3 +322,90 @@ async def test_live_spend_receipt_is_atomic_and_idempotent(spine_client: SpineCl
             SpendEventsRequest(events=[event.model_copy(update={"quantity": Decimal(11)})])
         )
     assert conflict.value.status_code == 409
+
+
+async def test_live_workflow_run_gets_its_memories_and_a_bare_mode_does_not(
+    spine_client: SpineClient,
+) -> None:
+    """A-088 / F138: the real Palace gives a saved workflow's run its memories with no gate and
+    no human lock, and still refuses the same call for a thread that is no run.
+    """
+    tag = uuid4().hex
+    principal, machine, project_key = f"run-{tag}", f"run-machine-{tag}", f"run-{tag}"
+    fact = await spine_client.create_memory(
+        _create_request(
+            principal_id=principal, label=f"Lamp {tag}", body=RUN_FACT, project_key=project_key
+        )
+    )
+    assert isinstance(fact, CreatedMemoryResponse)
+    blocks: list[str | None] = []
+
+    class Delegate:
+        async def run(self, *, message_history, dynamic_instructions, **_) -> TurnOutcome:
+            await dynamic_instructions.render()
+            blocks.append(dynamic_instructions.memory_block)
+            return TurnOutcome(StopReason.END_TURN, tuple(message_history))
+
+    async with SpineClient(
+        _required_environment("SPINE_URL"),
+        _required_environment("SPINE_TOKEN"),
+        principal_id=principal,
+    ) as client:
+        job = await client.job_write(
+            "PUT",
+            f"v1/jobs/{generate_ulid()}",
+            {
+                "machine_id": machine,
+                "definition": {
+                    "name": f"Lamp {tag}",
+                    "prompt": RUN_PROMPT,
+                    "folder": "/tmp",
+                    "model_policy": "elbow",
+                    "budget_usd": "0.1",
+                    "exit_condition": "true",
+                },
+                "expected_revision": 0,
+            },
+        )
+        assert job["definition"]["memory_scope"] == "workspace"
+        run = await client.job_write(
+            "POST",
+            f"v1/jobs/{job['job_id']}/runs",
+            {
+                "machine_id": machine,
+                "run_id": generate_ulid(),
+                "thread_id": str(uuid4()),
+                "trigger_key": "manual",
+                "expected_revision": job["revision"],
+                "manual": True,
+            },
+        )
+
+        def context(thread_id: str) -> MemoryToolContext:
+            return MemoryToolContext(
+                spine=client,
+                principal_id=principal,
+                machine_id=machine,
+                agent_id="contract-agent",
+                thread_id=UUID(thread_id),
+                project_key=project_key,
+            )
+
+        contexts = ThreadMemoryContextRegistry()
+        runner = MemoryGateTurnRunner(
+            Delegate(), client, context, model_context_tokens=100_000, contexts=contexts
+        )
+        turn = {"prompt": RUN_PROMPT, "message_history": (), "emit": None}
+        await runner.run_workflow(memory_scope="workspace", thread_id=run["thread_id"], **turn)
+        assert len(blocks) == 1 and RUN_FACT in blocks[0]
+        entered = contexts.snapshot(run["thread_id"])
+        assert entered.member_ids == {fact.created.memory_id}
+        assert entered.confirmed_memory_ids == frozenset()
+        restored = await client.restore_injection(UUID(run["thread_id"]), principal)
+        assert restored is not None and not restored.pending
+        assert restored.confirmed_memory_ids == []
+
+        with pytest.raises(SpineProblemError) as refused:
+            await runner.run_workflow(memory_scope="workspace", thread_id=str(uuid4()), **turn)
+        assert refused.value.status_code == 409
+        assert len(blocks) == 1

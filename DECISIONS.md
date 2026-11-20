@@ -4573,3 +4573,16 @@ text-only file reads and thread-owned shell lifetime. A short loader thread keep
 the synchronous skill seam intact; upstream shell job files stay in our scratch.
 The exhausted /remember path must never publish generated metadata as an answer.
 0.1.101 was unused in PyPI, tags and open PRs; M8TO reserves 0.1.100 separately.
+
+## M8JM — A workflow run gets its memories (P4.1, P1.2)
+
+PRECEDENT: PLAN M8JM; F138; SD-059 (5); A-069; A-030; A-088; ADR-022; FL-182; reports 226, 250, 305.
+The Harness already asked the Palace for an autonomous first prepare on a run's new thread
+(M3SJ); the Palace refused every one (F138). The rule changed in the Palace (A-088), not here:
+a gate committed with no human would have recorded invented keeps. Two Harness changes. What a
+run is given without a gate is held as current context, not as confirmed, so it is never sent
+back as a human lock on a movement or later rescore; the Palace's own restore reads it the same
+way. `workflow new` no longer writes `memory_scope: "none"` (M7WB's workaround). The mocked
+scoped test once hid F138; the scoped run now meets the real Palace in `tests/contract`.
+A run's scope is its folder: a fact remembered in another project is not given to it.
+Pair 0.1.103 was unused in releases, PyPI, open PRs and the BOARD at selection (M8MF holds 0.1.102).
