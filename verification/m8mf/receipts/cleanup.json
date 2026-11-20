@@ -1,0 +1,15 @@
+{
+  "checked_ports": [
+    8186,
+    8886,
+    9686,
+    55586
+  ],
+  "listening": false,
+  "compose_project": "nocturne-3f76a317",
+  "database_network_volume_removed": true,
+  "browser_context_closed": true,
+  "app_palace_driver_stopped": true,
+  "scratch_credentials_removed": true,
+  "owner_port_8765": "not touched"
+}
