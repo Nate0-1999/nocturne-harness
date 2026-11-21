@@ -4594,3 +4594,18 @@ way. `workflow new` no longer writes `memory_scope: "none"` (M7WB's workaround).
 scoped test once hid F138; the scoped run now meets the real Palace in `tests/contract`.
 A run's scope is its folder: a fact remembered in another project is not given to it.
 Pair 0.1.103 was unused in releases, PyPI, open PRs and the BOARD at selection (M8MF holds 0.1.102).
+
+## M8SA — A job's sub-agent runs the bundle's tools, and a failed sub-agent answers its parent (P4, P4.2)
+
+PRECEDENT: PLAN M8SA; F247; A-084 (4); A-090; ADR-015; FL-198 (M3CO); SD-097; reports 305, 318.
+`delegate` gave each worker a toolset with empty grants and had no answer for a worker that
+failed (F247). Both changes are in `delegate`. The worker's toolset takes its parent's sealed
+bundle tools and nothing else: those exist on the parent only while jobs.py runs the job, so a
+worker outside a run gets none, and the declared walls and the thread's cards are not copied.
+A worker's failure, its start included, is journaled as `worker_failure` with its work so far,
+receipted, emitted as `worker_failed`, and handed to the parent as the library's failed tool
+result, which the page's tool list already reads as "failed". A cancel and the run's usage limit
+pass through; a failure that cannot be journaled still ends the run. Left out: the worker is not
+given the bundle's tool lines or skills (its parent names the tool in the task), and the page
+has no line of its own for a failed worker (web/ is M8OV's; how sub-agents are shown is SD-098).
+Pair 0.1.105 was unused in releases, PyPI, open PRs and the BOARD at selection (M8OV holds 0.1.104).
