@@ -113,9 +113,15 @@ jobs:
           python -m pip wheel --no-deps --wheel-dir /tmp/nocturne-harness-sdist-wheel dist/nocturne_harness-*.tar.gz
           cmp dist/nocturne_harness-*.whl /tmp/nocturne-harness-sdist-wheel/nocturne_harness-*.whl
       - name: Verify installed rebuilt wheel outside the checkout
+        env:
+          MEMORY_REF: ${{ needs.companion.outputs.ref }}
         run: |
           python -m venv /tmp/nocturne-wheel
-          /tmp/nocturne-wheel/bin/python -m pip install -c /tmp/harness-ci-constraints.txt /tmp/nocturne-harness-sdist-wheel/nocturne_harness-*.whl
+          if [[ "$MEMORY_REF" == refs/heads/* ]]; then
+            /tmp/nocturne-wheel/bin/python -m pip install -c /tmp/harness-ci-constraints.txt ./_d3/spine /tmp/nocturne-harness-sdist-wheel/nocturne_harness-*.whl
+          else
+            /tmp/nocturne-wheel/bin/python -m pip install -c /tmp/harness-ci-constraints.txt /tmp/nocturne-harness-sdist-wheel/nocturne_harness-*.whl
+          fi
           cd /tmp
           /tmp/nocturne-wheel/bin/python "$GITHUB_WORKSPACE/scripts/verify_wheel.py"
 
