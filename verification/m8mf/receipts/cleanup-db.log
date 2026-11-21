@@ -1,0 +1,9 @@
+ Container nocturne-3f76a317-postgres-1 Stopping 
+ Container nocturne-3f76a317-postgres-1 Stopped 
+ Container nocturne-3f76a317-postgres-1 Removing 
+ Container nocturne-3f76a317-postgres-1 Removed 
+ Network nocturne-3f76a317_default Removing 
+ Volume nocturne-3f76a317_nocturne_postgres Removing 
+ Volume nocturne-3f76a317_nocturne_postgres Removed 
+ Network nocturne-3f76a317_default Removed 
+{"compose_project": "nocturne-3f76a317", "principal": "nocturne-verification-498c3e13-e352-40a7-896d-ecc292551df8", "database_removed": true}

@@ -1,0 +1,1083 @@
+INFO:     Started server process [22711]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8886 (Press CTRL+C to quit)
+INFO:     127.0.0.1:56204 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /assets/index-DHRu_Hhn.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /assets/index-BPr6Tqxq.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56209 - "GET /?rack_module=header&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56211 - "GET /?rack_module=threads&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56215 - "GET /?rack_module=memory&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56213 - "GET /?rack_module=conversation&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir&conversation_mode=focused HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56219 - "GET /?rack_module=context_bars&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56217 - "GET /?rack_module=vitals&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56209 - "GET /?rack_module=palace_state&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56217 - "GET /assets/index-DHRu_Hhn.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56213 - "GET /assets/index-BPr6Tqxq.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56219 - "GET /?rack_module=gate&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56211 - "GET /?rack_module=palace_queue&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56215 - "GET /?rack_module=spend_strip&module_version=1.0.0&rack_host=http%3A%2F%2F127.0.0.1%3A8886&theme=neo-noir HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56220 - "WebSocket /ws" [accepted]
+INFO:     connection open
+INFO:     127.0.0.1:56223 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /v1/rack/query?resource=palace HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/seeds/jump-start HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /v1/approval-queue HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56229 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56230 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56229 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56229 - "GET /v1/model-policies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56229 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=6b996859-75d1-4835-aa8e-43a4fb01668e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56230 - "GET /v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=6b996859-75d1-4835-aa8e-43a4fb01668e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/models?thread_id=6b996859-75d1-4835-aa8e-43a4fb01668e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /v1/models?thread_id=6b996859-75d1-4835-aa8e-43a4fb01668e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /v1/models?thread_id=6b996859-75d1-4835-aa8e-43a4fb01668e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56223 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56271 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56229 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56205 - "GET /v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56204 - "GET /v1/model-policies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56230 - "GET /v1/models?thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/models?thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56230 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/models?thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/models?thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/curation HTTP/1.1" 200 OK
+Model turn failed: run=01M7WPMEV6FTWX3GA0GAK9W765 thread=4fe44b0d-29e5-4602-8857-5b957a0de9a6
+Traceback (most recent call last):
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/agent_runtime.py", line 637, in run
+    result = await self._agent.chat_agent.run(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/agent/abstract.py", line 703, in run
+    node = await agent_run._run_node_with_hooks(node, _stream_step, event_stream_handler)  # pyright: ignore[reportPrivateUsage]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 619, in _run_node_with_hooks
+    result = await lifecycle(node)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 599, in lifecycle
+    result = await step_fn(lifecycle_node)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/agent/abstract.py", line 687, in _stream_and_advance
+    await _handler(run_ctx, stream)
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/agent_runtime.py", line 1232, in handle
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 734, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  [Previous line repeated 8 more times]
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_run_context.py", line 152, in dispatch_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 293, in _with_event_stream_buffer
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4506, in _run_stream
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4466, in _run_stream
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4622, in _handle_tool_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 452, in process_tool_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 592, in run
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1399, in _run_strategy
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1385, in flush_pending
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 820, in _run_function_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1051, in _call_tools
+    if event := await handle_call_or_result(item, index_by_task[item]):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 976, in handle_call_or_result
+    (await coro_or_task) if inspect.isawaitable(coro_or_task) else coro_or_task.result()
+     ^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 851, in _call_tool
+    tool_result = await self._execute_tool_call(validated)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1225, in _execute_tool_call
+    return await self.tool_manager.execute_tool_call(validated)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1061, in execute_tool_call
+    return await self._execute_tool_call_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1346, in _execute_tool_call_impl
+    tool_result = await self._run_execute_hooks(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 768, in _run_execute_hooks
+    tool_result = await cap.wrap_tool_execute(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 930, in wrap_tool_execute
+    return await chain(args)
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 763, in lifecycle
+    tool_result = await cap.on_tool_execute_error(ctx, call=call, tool_def=tool_def, args=args, error=e)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 952, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 757, in lifecycle
+    tool_result = await do_execute(args)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 744, in do_execute
+    return await self._raw_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1374, in _raw_execute
+    tool_result = await self.toolset.call_tool(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/_tool_search.py", line 463, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/wrapper.py", line 68, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/combined.py", line 103, in call_tool
+    return await tool.source_toolset.call_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/combined.py", line 103, in call_tool
+    return await tool.source_toolset.call_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/wrapper.py", line 68, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/function.py", line 918, in call_tool
+    return await tool.call_func(tool_args, ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_function_schema.py", line 133, in call
+    return await function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_ai_adapter.py", line 344, in read
+    return await _execute_workspace_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_ai_adapter.py", line 321, in _execute_workspace_tool
+    result = await toolset.execute(tool_name, arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/toolset_runtime.py", line 90, in execute
+    result = await toolset.execute(tool_name, arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_harness_adapter.py", line 637, in execute
+    content = await {
+              ^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_harness_adapter.py", line 773, in _read
+    result = await self._filesystem(target.parent).read_file(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py", line 906, in read_file
+    return await self._read_file(await self._scope(workspace), None, path, offset=offset, limit=limit)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py", line 670, in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py", line 625, in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py", line 192, in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py", line 189, in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_utils.py", line 226, in run_in_executor
+    raise outcome[1]
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_utils.py", line 202, in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py", line 184, in _ensure_alive
+    raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /Users/nateoswalt/relay/m8mf/walk/project/catalog does not exist
+INFO:     127.0.0.1:56231 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56230 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56336 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56336 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56339 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/jobs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56341 - "GET /v1/model-policies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56231 - "GET /v1/models?thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56342 - "GET /v1/models?thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56228 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56341 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56342 - "GET /v1/models?thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/models?thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56342 - "GET /v1/curation HTTP/1.1" 200 OK
+Model turn failed: run=01M7WPMXBWA5FSPT7ESJN4A688 thread=814bf38f-08ce-4fcc-99b5-da893bf55a9c
+Traceback (most recent call last):
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/agent_runtime.py", line 637, in run
+    result = await self._agent.chat_agent.run(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/agent/abstract.py", line 703, in run
+    node = await agent_run._run_node_with_hooks(node, _stream_step, event_stream_handler)  # pyright: ignore[reportPrivateUsage]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 619, in _run_node_with_hooks
+    result = await lifecycle(node)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 599, in lifecycle
+    result = await step_fn(lifecycle_node)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/agent/abstract.py", line 687, in _stream_and_advance
+    await _handler(run_ctx, stream)
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/agent_runtime.py", line 1232, in handle
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 734, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  [Previous line repeated 8 more times]
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_run_context.py", line 152, in dispatch_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 293, in _with_event_stream_buffer
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4506, in _run_stream
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4466, in _run_stream
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4622, in _handle_tool_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 452, in process_tool_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 592, in run
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1399, in _run_strategy
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1385, in flush_pending
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 820, in _run_function_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1051, in _call_tools
+    if event := await handle_call_or_result(item, index_by_task[item]):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 976, in handle_call_or_result
+    (await coro_or_task) if inspect.isawaitable(coro_or_task) else coro_or_task.result()
+     ^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 851, in _call_tool
+    tool_result = await self._execute_tool_call(validated)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1225, in _execute_tool_call
+    return await self.tool_manager.execute_tool_call(validated)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1061, in execute_tool_call
+    return await self._execute_tool_call_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1346, in _execute_tool_call_impl
+    tool_result = await self._run_execute_hooks(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 768, in _run_execute_hooks
+    tool_result = await cap.wrap_tool_execute(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 930, in wrap_tool_execute
+    return await chain(args)
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 763, in lifecycle
+    tool_result = await cap.on_tool_execute_error(ctx, call=call, tool_def=tool_def, args=args, error=e)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 952, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 757, in lifecycle
+    tool_result = await do_execute(args)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 744, in do_execute
+    return await self._raw_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1374, in _raw_execute
+    tool_result = await self.toolset.call_tool(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/_tool_search.py", line 463, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/wrapper.py", line 68, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/combined.py", line 103, in call_tool
+    return await tool.source_toolset.call_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/combined.py", line 103, in call_tool
+    return await tool.source_toolset.call_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/wrapper.py", line 68, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/function.py", line 918, in call_tool
+    return await tool.call_func(tool_args, ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_function_schema.py", line 133, in call
+    return await function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_ai_adapter.py", line 551, in delegate_task
+    return await ctx.deps.delegate(task, share_percent)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/agent_runtime.py", line 447, in delegate
+    result = await self._agent.worker_agent.run(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/agent/abstract.py", line 705, in run
+    node = await agent_run.next(node)  # pyright: ignore[reportArgumentType]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 710, in next
+    return await self._run_node_with_hooks(node, self._stream_and_advance)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 619, in _run_node_with_hooks
+    result = await lifecycle(node)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 599, in lifecycle
+    result = await step_fn(lifecycle_node)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 760, in _stream_and_advance
+    return await self._advance_graph(node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/run.py", line 504, in _advance_graph
+    task = await self._graph_run.next(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_graph/graph_builder.py", line 603, in next
+    return await anext(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_graph/graph_builder.py", line 576, in __anext__
+    raise self._next.error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_graph/graph_builder.py", line 873, in _run_tracked_task
+    result = await self._run_task(t_)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_graph/graph_builder.py", line 931, in _run_task
+    output = await node.call(step_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_graph/step.py", line 253, in _call_node
+    return await node.run(GraphRunContext(state=ctx.state, deps=ctx.deps))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4265, in run
+    async with self.stream(ctx):
+               ^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/.local/share/uv/python/cpython-3.12.9-macos-aarch64-none/lib/python3.12/contextlib.py", line 217, in __aexit__
+    await anext(self.gen)
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4286, in stream
+    async for _event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 734, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1203, in wrap_run_event_stream
+    async for event in stream:
+  [Previous line repeated 1 more time]
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_run_context.py", line 152, in dispatch_event_stream
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 293, in _with_event_stream_buffer
+    async for event in stream:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4506, in _run_stream
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4466, in _run_stream
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_agent_graph.py", line 4622, in _handle_tool_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 452, in process_tool_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 592, in run
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1399, in _run_strategy
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1385, in flush_pending
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 820, in _run_function_calls
+    async for event in events:
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1051, in _call_tools
+    if event := await handle_call_or_result(item, index_by_task[item]):
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 976, in handle_call_or_result
+    (await coro_or_task) if inspect.isawaitable(coro_or_task) else coro_or_task.result()
+     ^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 851, in _call_tool
+    tool_result = await self._execute_tool_call(validated)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_tool_execution.py", line 1225, in _execute_tool_call
+    return await self.tool_manager.execute_tool_call(validated)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1061, in execute_tool_call
+    return await self._execute_tool_call_impl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1346, in _execute_tool_call_impl
+    tool_result = await self._run_execute_hooks(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 768, in _run_execute_hooks
+    tool_result = await cap.wrap_tool_execute(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 930, in wrap_tool_execute
+    return await chain(args)
+           ^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 1178, in wrapped
+    return await cap.wrap_tool_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1505, in wrap_tool_execute
+    return await handler(args)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 763, in lifecycle
+    tool_result = await cap.on_tool_execute_error(ctx, call=call, tool_def=tool_def, args=args, error=e)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 952, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/combined.py", line 947, in on_tool_execute_error
+    return await capability.on_tool_execute_error(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/capabilities/abstract.py", line 1541, in on_tool_execute_error
+    raise error
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 757, in lifecycle
+    tool_result = await do_execute(args)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 744, in do_execute
+    return await self._raw_execute(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/tool_manager.py", line 1374, in _raw_execute
+    tool_result = await self.toolset.call_tool(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/_tool_search.py", line 463, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/wrapper.py", line 68, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/combined.py", line 103, in call_tool
+    return await tool.source_toolset.call_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/combined.py", line 103, in call_tool
+    return await tool.source_toolset.call_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/wrapper.py", line 68, in call_tool
+    return await self.wrapped.call_tool(name, tool_args, ctx, tool)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/toolsets/function.py", line 918, in call_tool
+    return await tool.call_func(tool_args, ctx)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_function_schema.py", line 133, in call
+    return await function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_ai_adapter.py", line 344, in read
+    return await _execute_workspace_tool(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_ai_adapter.py", line 321, in _execute_workspace_tool
+    result = await toolset.execute(tool_name, arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/toolset_runtime.py", line 90, in execute
+    result = await toolset.execute(tool_name, arguments)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_harness_adapter.py", line 637, in execute
+    content = await {
+              ^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/harness/pydantic_harness_adapter.py", line 773, in _read
+    result = await self._filesystem(target.parent).read_file(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py", line 906, in read_file
+    return await self._read_file(await self._scope(workspace), None, path, offset=offset, limit=limit)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai_harness/file_system/_toolset.py", line 670, in _scope
+    cwd = paths.normpath(await facade.working_dir())
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/workspace.py", line 625, in working_dir
+    return await self._backend.working_dir()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py", line 192, in working_dir
+    return str(await self._get_working_dir())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py", line 189, in _get_working_dir
+    return await run_in_executor(self._ensure_alive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_utils.py", line 226, in run_in_executor
+    raise outcome[1]
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/_utils.py", line 202, in call_with_sync_agent_guard
+    value = func(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/nateoswalt/relay/m8mf/walk/public-101/lib/python3.12/site-packages/pydantic_ai/workspaces/_host.py", line 184, in _ensure_alive
+    raise WorkspaceUnavailableError(f'local workspace directory {self._working_dir!s} does not exist')
+pydantic_ai.workspaces.protocol.WorkspaceUnavailableError: local workspace directory /Users/nateoswalt/relay/m8mf/walk/project/catalog does not exist
+INFO:     127.0.0.1:56342 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=814bf38f-08ce-4fcc-99b5-da893bf55a9c HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56342 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56343 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56344 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56571 - "GET /v1/rack/query?resource=context_window&as_of=now&thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/model-policies HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/models?thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56568 - "GET /v1/models?thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56571 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56569 - "GET /v1/rack/query?resource=scorer_console&as_of=now&thread_id=4fe44b0d-29e5-4602-8857-5b957a0de9a6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56569 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56431 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56571 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56568 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56569 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56577 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56432 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56863 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56729 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56865 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56864 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56863 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56728 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56862 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57012 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57103 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57103 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57103 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57103 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57103 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57152 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57154 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57103 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57151 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57152 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57153 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57011 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57305 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57437 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57438 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57306 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57439 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57440 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57437 - "GET /v1/rack/query?resource=scorer_console&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57438 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57438 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57438 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57438 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57254 - "GET /v1/local-copy HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57605 - "GET /v1/curation HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57496 - "GET /v1/rack/query?resource=spend_table&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57606 - "GET /v1/rack/query?resource=vitals&as_of=now HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57606 - "GET /v1/transcripts/catalog HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [22711]

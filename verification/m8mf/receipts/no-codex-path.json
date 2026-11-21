@@ -1,0 +1,8 @@
+{
+  "PATH": "/Users/nateoswalt/relay/m8mf/scratch/no-rg-bin",
+  "rg": null,
+  "codex": null,
+  "command": ".venv/bin/pytest -m 'not contract' -q",
+  "result": "2007 passed, 4 skipped, 3 live contracts deselected",
+  "method": "Only normal-system-tool symlinks; no Codex or ChatGPT Resources directory; rg and codex basenames excluded."
+}

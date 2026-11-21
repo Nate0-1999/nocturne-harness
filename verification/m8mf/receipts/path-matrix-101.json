@@ -1,0 +1,162 @@
+{
+  "version": "0.1.101",
+  "rows": [
+    {
+      "condition": "missing",
+      "tool": "read",
+      "raised": "WorkspaceUnavailableError",
+      "content": "local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing does not exist"
+    },
+    {
+      "condition": "missing",
+      "tool": "write",
+      "success": false,
+      "content": "Modification requires presence in the file's directory. Create the missing directory with bash mkdir, then Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing first.",
+      "boundary": null
+    },
+    {
+      "condition": "missing",
+      "tool": "edit",
+      "success": false,
+      "content": "Modification requires presence in the file's directory. Create the missing directory with bash mkdir, then Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing first.",
+      "boundary": null
+    },
+    {
+      "condition": "missing",
+      "tool": "grep",
+      "success": false,
+      "content": "No file or folder /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing.",
+      "boundary": null
+    },
+    {
+      "condition": "missing",
+      "tool": "find",
+      "raised": "WorkspaceUnavailableError",
+      "content": "local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing does not exist"
+    },
+    {
+      "condition": "missing",
+      "tool": "ls",
+      "raised": "WorkspaceUnavailableError",
+      "content": "local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing does not exist"
+    },
+    {
+      "condition": "missing",
+      "tool": "bash",
+      "success": true,
+      "content": "[stderr]\nzsh:cd:1: no such file or directory: /var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/missing\n\n[exit code: 1]",
+      "boundary": null
+    },
+    {
+      "condition": "missing",
+      "tool": "skill catalog",
+      "count": 0
+    },
+    {
+      "condition": "file",
+      "tool": "read",
+      "raised": "WorkspaceUnavailableError",
+      "content": "local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/file does not exist"
+    },
+    {
+      "condition": "file",
+      "tool": "write",
+      "success": false,
+      "content": "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/file first.",
+      "boundary": null
+    },
+    {
+      "condition": "file",
+      "tool": "edit",
+      "success": false,
+      "content": "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/file first.",
+      "boundary": null
+    },
+    {
+      "condition": "file",
+      "tool": "grep",
+      "success": true,
+      "content": "No matches found.",
+      "boundary": null
+    },
+    {
+      "condition": "file",
+      "tool": "find",
+      "raised": "WorkspaceUnavailableError",
+      "content": "local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/file does not exist"
+    },
+    {
+      "condition": "file",
+      "tool": "ls",
+      "raised": "WorkspaceUnavailableError",
+      "content": "local workspace directory /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/file does not exist"
+    },
+    {
+      "condition": "file",
+      "tool": "bash",
+      "success": true,
+      "content": "[stderr]\nzsh:cd:1: not a directory: /var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/file\n\n[exit code: 1]",
+      "boundary": null
+    },
+    {
+      "condition": "file",
+      "tool": "skill catalog",
+      "count": 0
+    },
+    {
+      "condition": "unreadable",
+      "tool": "read",
+      "success": false,
+      "content": "[Errno 13] Permission denied: '/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/unreadable/note.txt'",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "write",
+      "success": false,
+      "content": "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/unreadable first.",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "edit",
+      "success": false,
+      "content": "Modification requires presence in the file's directory. Move to /private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/unreadable first.",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "grep",
+      "success": true,
+      "content": "No matches found.",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "find",
+      "success": false,
+      "content": "[Errno 13] Permission denied: '.'",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "ls",
+      "success": false,
+      "content": "[Errno 13] Permission denied: '.'",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "bash",
+      "success": true,
+      "content": "[stderr]\nzsh:cd:1: permission denied: /var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/unreadable\n\n[exit code: 1]",
+      "boundary": null
+    },
+    {
+      "condition": "unreadable",
+      "tool": "skill catalog",
+      "raised": "PermissionError",
+      "content": "[Errno 13] Permission denied: '/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/m8mf-matrix-c7737ivg/unreadable/SKILL.md'"
+    }
+  ]
+}

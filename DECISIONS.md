@@ -4574,6 +4574,14 @@ the synchronous skill seam intact; upstream shell job files stay in our scratch.
 The exhausted /remember path must never publish generated metadata as an answer.
 0.1.101 was unused in PyPI, tags and open PRs; M8TO reserves 0.1.100 separately.
 
+## M8MF — An unavailable workspace is a tool answer (P4)
+
+PRECEDENT: PLAN M8MF, F246, ADR-013, report 317. Catch upstream's public
+WorkspaceUnavailableError at both existing tool-answer seams. Preserve the library's
+message and all existing fence checks; do not catch unrelated RuntimeErrors. Real-library
+comparisons retain the existing write/edit, search, shell and skill-discovery behavior.
+Pair 0.1.102 was unused in PyPI, tags and open PRs immediately before the bump.
+
 ## M8JM — A workflow run gets its memories (P4.1, P1.2)
 
 PRECEDENT: PLAN M8JM; F138; SD-059 (5); A-069; A-030; A-088; ADR-022; FL-182; reports 226, 250, 305.
