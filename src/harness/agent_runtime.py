@@ -571,8 +571,7 @@ class PydanticAITurnRunner:
                     )
                     answer = (
                         f"The sub-agent failed and returned nothing. What failed: {reason}\n"
-                        "Its work so far is kept in the journal. Do the task yourself or hand "
-                        "it off again."
+                        "Its work so far is kept in the journal."
                     )
                     raise ToolFailed(answer) from exc  # A-090: the parent reads it and goes on
                 finally:

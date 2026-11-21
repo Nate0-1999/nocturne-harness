@@ -361,9 +361,7 @@ async def test_a_failed_worker_answers_its_parent_and_the_run_goes_on(tmp_path, 
     assert told.outcome == "failed"
     assert told.content.startswith("The sub-agent failed and returned nothing. What failed: ")
     assert what in told.content
-    assert told.content.endswith(
-        "Its work so far is kept in the journal. Do the task yourself or hand it off again."
-    )
+    assert told.content.endswith("Its work so far is kept in the journal.")
     (record,) = [row for row in rows if row["record_type"].startswith("worker")]
     assert record["record_type"] == "worker_failure" and what in record["result"]
     (event,) = [event for event in emit.events if event["event_kind"].startswith("worker")]
