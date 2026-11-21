@@ -12,6 +12,7 @@ from pydantic_ai import BinaryContent, ModelRetry, RunContext, ToolReturn
 from pydantic_ai.capabilities import AbstractCapability, Capability
 from pydantic_ai.messages import ModelRequest, ToolCallPart, UserPromptPart
 from pydantic_ai.tools import Tool, ToolDefinition
+from pydantic_ai.workspaces import WorkspaceUnavailableError
 from spine.tokens import cl100k_token_count
 
 from harness.capability import CapabilityHandler, CapabilityTool, HarnessCapability
@@ -319,7 +320,7 @@ async def _execute_workspace_tool(
         return f"{tool_name} unavailable: this owner session has no workspace toolset"
     try:
         result = await toolset.execute(tool_name, arguments)
-    except (ToolsetError, OSError, ValueError) as exc:
+    except (ToolsetError, OSError, ValueError, WorkspaceUnavailableError) as exc:
         return f"{tool_name} refused: {str(exc).strip() or type(exc).__name__}"
     if result.boundary is not None and ctx.deps.boundary_review is not None:
         command = arguments.get("command")

@@ -1,0 +1,109 @@
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 21%]
+........................................................................ [ 25%]
+........................................................................ [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+........................................................................ [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 78%]
+........................................................................ [ 82%]
+........................................................................ [ 85%]
+........................................................................ [ 89%]
+.............................................F.......................... [ 93%]
+........................................................................ [ 96%]
+..................................ssss.............................      [100%]
+=================================== FAILURES ===================================
+__________ test_killed_worker_recovers_from_checkpoint_without_replay __________
+
+tmp_path = PosixPath('/private/var/folders/97/fytz87ls4yngjvpghz634zlc0000gn/T/pytest-of-nateoswalt/pytest-1419/test_killed_worker_recovers_fr0')
+
+    def test_killed_worker_recovers_from_checkpoint_without_replay(tmp_path: Path) -> None:
+        """SPEC D.2 114 and P3 require G14 recovery to quarantine uncertain mutations."""
+    
+        state = tmp_path / "state"
+        accepted = tmp_path / "accepted"
+        dead_location = tmp_path / "attempt-one"
+        fresh_location = tmp_path / "attempt-two"
+        accepted.mkdir()
+        dead_location.mkdir()
+        fresh_location.mkdir()
+        (accepted / "checkpoint.txt").write_text("accepted\n", encoding="utf-8")
+    
+        first = WorkerSupervisor(state)
+        attempt_one = first.spawn(
+            "worker-c3",
+            (
+                sys.executable,
+                "-c",
+                "from pathlib import Path; import time; "
+                "Path('uncertain.txt').write_text('attempt-one\\n'); time.sleep(30)",
+            ),
+            location=dead_location,
+            accepted_commit="commit-c2",
+        )
+        _wait_for(dead_location / "uncertain.txt")
+        first.close()
+    
+        restarted = WorkerSupervisor(state)
+        try:
+            assert restarted.latest("worker-c3").status is WorkerStatus.RUNNING
+            assert attempt_one.pid is not None
+            os.killpg(attempt_one.pid, signal.SIGKILL)
+            _wait_for_exit(restarted, "worker-c3")
+            certificate = restarted.certify_dead("worker-c3")
+            assert certificate.reason == "process_absent"
+            assert certificate.accepted_commit == "commit-c2"
+            assert list(fresh_location.iterdir()) == []
+            assert (accepted / "checkpoint.txt").read_text(encoding="utf-8") == "accepted\n"
+    
+            attempt_two = restarted.recover(
+                "worker-c3",
+                (
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; Path('result.txt').write_text('attempt-two\\n')",
+                ),
+                location=fresh_location,
+                accepted_commit="commit-c2",
+            )
+            _wait_for(fresh_location / "result.txt")
+            _wait_for_exit(restarted, "worker-c3")
+    
+            attempts = restarted.attempts("worker-c3")
+>           assert [item.status for item in attempts] == [
+                WorkerStatus.QUARANTINED,
+                WorkerStatus.EXIT_OBSERVED,
+            ]
+E           AssertionError: assert [<WorkerStatu...G: 'running'>] == [<WorkerStatu...it_observed'>]
+E             
+E             At index 1 diff: <WorkerStatus.RUNNING: 'running'> != <WorkerStatus.EXIT_OBSERVED: 'exit_observed'>
+E             Use -v to get more diff
+
+tests/test_supervisor.py:127: AssertionError
+=============================== warnings summary ===============================
+tests/test_agent_runtime.py::test_sd023_openrouter_usage_only_chunks_price_every_build_request
+  /Users/nateoswalt/relay/m8mf/harness/tests/test_agent_runtime.py:985: PydanticAIDeprecationWarning: `httpx.AsyncClient` support for OpenAI-compatible providers is deprecated and will be removed in v3; use `httpx2.AsyncClient` instead.
+    provider=OpenRouterProvider(api_key="test", http_client=http_client),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_unbuilt_rules.py:6: r7-16: edge-on terminal stack mode is unbuilt
+SKIPPED [1] tests/test_unbuilt_rules.py:12: r9-6: per-role strongest/leaf model policies await SD-018
+SKIPPED [1] tests/test_unbuilt_rules.py:18: r8-3: R10 superseded the Cube; flat focus camera awaits owner ruling
+SKIPPED [1] tests/test_unbuilt_rules.py:24: r8-7: hue-band validator is unbuilt; owner has not defined numeric bands
+FAILED tests/test_supervisor.py::test_killed_worker_recovers_from_checkpoint_without_replay
+1 failed, 2006 passed, 4 skipped, 3 deselected, 1 warning in 105.08s (0:01:45)

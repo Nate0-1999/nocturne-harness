@@ -61,7 +61,7 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 from pydantic_ai.usage import RunUsage
-from pydantic_ai.workspaces import LocalWorkspaceBackend, Workspace
+from pydantic_ai.workspaces import LocalWorkspaceBackend, Workspace, WorkspaceUnavailableError
 from pydantic_ai_harness import Skills
 from pydantic_ai_harness.compaction import (
     SlidingWindowCompaction,
@@ -654,7 +654,7 @@ class PydanticHarnessToolset:
                 boundary=exc.wall,
                 boundary_target=exc.target,
             )
-        except (ToolsetError, ModelRetry, OSError, ValueError) as exc:
+        except (ToolsetError, ModelRetry, OSError, ValueError, WorkspaceUnavailableError) as exc:
             return ToolExecutionResult(tool_name=tool_name, content=str(exc), success=False)
         return ToolExecutionResult(tool_name=tool_name, content=content, success=True)
 
