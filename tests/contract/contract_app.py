@@ -34,6 +34,8 @@ VECTORS = {
     ),
     "H2 CAS original": _basis(4),
     "H2 CAS patched": _basis(5),
+    "The contract lighthouse lamp is amber.": _basis(6),
+    "What colour is the contract lighthouse lamp?": _basis(6),
 }
 
 

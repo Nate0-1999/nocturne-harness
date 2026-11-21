@@ -165,10 +165,12 @@ class ThreadMemoryContextRegistry:
         added_back: Sequence[UUID],
         final_block: str,
         from_local_copy: bool = False,
+        human_reviewed: bool = True,
     ) -> ThreadMemorySnapshot:
         """Bind canonical final-block fragments to the committed event membership.
 
         M4BW: a context scored from the local copy has no Palace injection events to cite.
+        A-088: what a workflow run was given without a gate is no human lock.
         """
 
         if thread_id in self._threads:
@@ -205,7 +207,7 @@ class ThreadMemoryContextRegistry:
             injection_id=prepared.injection_id,
             fragments=dict(zip((card.memory_id for card in selected), fragments, strict=True)),
             excluded_memory_ids=set(removed_memory_ids),
-            confirmed_memory_ids={card.memory_id for card in selected},
+            confirmed_memory_ids={card.memory_id for card in selected} if human_reviewed else set(),
             near_miss_ids=set(near_misses) - removed_memory_ids - set(added_back),
             event_sources={}
             if from_local_copy

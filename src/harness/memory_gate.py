@@ -270,6 +270,7 @@ class MemoryGateTurnRunner:
             removed_memory_ids=frozenset(),
             added_back=[],
             final_block=prepared.final_block,
+            human_reviewed=False,
         )
         if self._on_context_changed is not None:
             await self._on_context_changed(thread_id)
