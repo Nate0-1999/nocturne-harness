@@ -4608,4 +4608,5 @@ result, which the page's tool list already reads as "failed". A cancel and the r
 pass through; a failure that cannot be journaled still ends the run. Left out: the worker is not
 given the bundle's tool lines or skills (its parent names the tool in the task), and the page
 has no line of its own for a failed worker (web/ is M8OV's; how sub-agents are shown is SD-098).
-Pair 0.1.105 was unused in releases, PyPI, open PRs and the BOARD at selection (M8OV holds 0.1.104).
+Pair 0.1.104, the next unused in releases, PyPI, open PRs, remote branches and the BOARD: first
+numbered 0.1.105 while M8OV held 0.1.104, renumbered when M8OV ended with no version.
