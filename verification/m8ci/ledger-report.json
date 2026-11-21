@@ -2,20 +2,20 @@
   "packet": "M8CI",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "b2072fd401332ed4c7eadde6b9258144cfbca0d0fb8674d9d603cd7806bf9b46",
+  "ledger_sha256": "ac9fb9bfc15dd277ff0f55c7b37808b231bf91e71514525f3a97bffbd4793dd2",
   "diffs": [
     {
       "repo": "harness",
-      "base": "2490877205ffab3ded1de3d5bf328966760b5a91",
-      "head": "38e5b79c28b518f7cdaea391a8dd1c042ff09215"
+      "base": "1d0ab91fdcb8a2d88395d098fa3186ada338a788",
+      "head": "2f4c7a521fd0ca2ef17f8cfd01fd9f777137cd13"
     }
   ],
   "unmapped": {
-    "harness/verification/m8ci/FL-195.png": "M8CI verification receipt or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/FL-196.png": "M8CI verification receipt or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/SHA256SUMS": "M8CI verification receipt or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/ledger-report.json": "M8CI verification receipt or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/proof-summary.json": "M8CI verification receipt or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/FL-195.png": "M8CI tool verification receipt, generated coverage or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/FL-196.png": "M8CI tool verification receipt, generated coverage or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/SHA256SUMS": "M8CI tool verification receipt, generated coverage or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/ledger-report.json": "M8CI tool verification receipt, generated coverage or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/proof-summary.json": "M8CI tool verification receipt, generated coverage or hash manifest; no shipped behavior.",
     "harness/verification/m8ci/impacted.json": "M8CI verification receipt, generated evidence or hash manifest; no shipped behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
@@ -27,7 +27,7 @@
       "verdict": "PASS",
       "screenshot": "FL-195.png",
       "flag": "",
-      "observed": "M8CI hosted positive triple passed every existing check. Deliberate unused-import lint faults, stale declared evidence, missing source, and altered frozen checker copies refused at their named steps; raw jobs/logs and observed GitHub captures retained. 34 real-Git Garden tests preserve main landing and merge-drift enforcement."
+      "observed": "Hosted positive probes ran every existing check. Deliberate source/lint/stale-evidence/frozen-copy faults refused at their named steps. Additional fresh-wheel probe confirms Memory installed from the resolved local twin. Current 34 real-Git Garden tests pass under hosted environment, including upstream, nested-feature, anonymous-edit and conflict-resolution cases; final draft checks and raw receipts accompany the handoff."
     },
     "FL-196": {
       "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
@@ -36,7 +36,7 @@
       "verdict": "PASS",
       "screenshot": "FL-196.png",
       "flag": "",
-      "observed": "M8CI hosted positive triple passed every existing check. Deliberate unused-import lint faults, stale declared evidence, missing source, and altered frozen checker copies refused at their named steps; raw jobs/logs and observed GitHub captures retained. 34 real-Git Garden tests preserve main landing and merge-drift enforcement."
+      "observed": "Hosted positive probes ran every existing check. Deliberate source/lint/stale-evidence/frozen-copy faults refused at their named steps. Additional fresh-wheel probe confirms Memory installed from the resolved local twin. Current 34 real-Git Garden tests pass under hosted environment, including upstream, nested-feature, anonymous-edit and conflict-resolution cases; final draft checks and raw receipts accompany the handoff."
     }
   },
   "not_run": {
