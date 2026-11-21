@@ -15,6 +15,74 @@ from harness.toolset import AgentLocation, ToolsetError, open_standard_toolset
 ROOT = Path(__file__).resolve().parents[1]
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+@pytest.mark.parametrize("name", ["read", "write", "edit", "grep", "find", "ls", "bash"])
+async def test_unavailable_folder_answers_the_agent(
+    tmp_path: Path, condition: str, name: str
+) -> None:
+    """F246 / ADR-013: real upstream file failures must not kill the core loop."""
+    folder = tmp_path / "catalog"
+    if condition == "file":
+        folder.write_text("not a folder")
+    elif condition == "unreadable":
+        folder.mkdir()
+        (folder / "note.txt").write_text("needle\n")
+        folder.chmod(0)
+    arguments = {
+        "read": {"path": str(folder / "note.txt")},
+        "write": {"path": str(folder / "note.txt"), "content": "needle\n"},
+        "edit": {
+            "path": str(folder / "note.txt"),
+            "edits": [{"oldText": "needle", "newText": "changed"}],
+        },
+        "grep": {"path": str(folder), "pattern": "needle"},
+        "find": {"path": str(folder), "pattern": "*.txt"},
+        "ls": {"path": str(folder)},
+        "bash": {"command": f"cd {folder} && printf M8MF-SHELL"},
+    }[name]
+    toolset = await open_standard_toolset(cwd=tmp_path, workspace_root=tmp_path)
+    try:
+        result = await toolset.execute(name, arguments)
+    finally:
+        if condition == "unreadable":
+            folder.chmod(0o700)
+        await toolset.close()
+    assert result.content
+    assert result.boundary is None
+    if name in {"write", "edit"}:
+        assert not result.success
+        assert "Modification requires presence in the file's directory." in result.content
+    elif name == "bash":
+        assert "[exit code: 1]" in result.content
+    elif name in {"read", "find", "ls"}:
+        assert not result.success
+    if condition != "unreadable":
+        assert not (folder / "note.txt").exists()
+
+
+@pytest.mark.parametrize("condition", ["missing", "file", "unreadable"])
+def test_unavailable_skill_library_keeps_existing_catalog_behavior(
+    tmp_path: Path, condition: str
+) -> None:
+    """F246 / ADR-013: a skill library is discovered, not an agent-selected workspace."""
+    library = tmp_path / "skills"
+    if condition == "file":
+        library.write_text("not a folder")
+    elif condition == "unreadable":
+        library.mkdir()
+        library.chmod(0)
+    try:
+        if condition == "unreadable":
+            with pytest.raises(PermissionError):
+                adopted_skills([library])
+        else:
+            assert adopted_skills([library]) == ()
+    finally:
+        if condition == "unreadable":
+            library.chmod(0o700)
+
+
 def test_progressive_instructions_are_complete_but_cannot_read_outside_credentials(
     tmp_path: Path,
 ) -> None:
