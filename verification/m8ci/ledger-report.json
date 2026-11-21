@@ -7,16 +7,16 @@
     {
       "repo": "harness",
       "base": "2490877205ffab3ded1de3d5bf328966760b5a91",
-      "head": "7856fa2c2ffd35127c624577f0c03d0c2c3d271d"
+      "head": "38e5b79c28b518f7cdaea391a8dd1c042ff09215"
     }
   ],
   "unmapped": {
-    "harness/verification/m8ci/impacted.json": "M8CI verification receipt, generated evidence or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/FL-196.png": "M8CI verification receipt, generated evidence or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/FL-195.png": "M8CI verification receipt, generated evidence or hash manifest; no shipped behavior.",
-    "harness/verification/m8ci/proof-summary.json": "M8CI coverage and verification receipt; no shipped behavior.",
-    "harness/verification/m8ci/ledger-report.json": "M8CI coverage and verification receipt; no shipped behavior.",
-    "harness/verification/m8ci/SHA256SUMS": "M8CI coverage and verification receipt; no shipped behavior."
+    "harness/verification/m8ci/FL-195.png": "M8CI verification receipt or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/FL-196.png": "M8CI verification receipt or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/SHA256SUMS": "M8CI verification receipt or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/ledger-report.json": "M8CI verification receipt or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/proof-summary.json": "M8CI verification receipt or hash manifest; no shipped behavior.",
+    "harness/verification/m8ci/impacted.json": "M8CI verification receipt, generated evidence or hash manifest; no shipped behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
