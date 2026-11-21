@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -10,7 +9,7 @@ permissions:
 
 jobs:
   companion:
-    name: Resolve pinned Memory release
+    name: Resolve pinned Memory source
     runs-on: ubuntu-latest
     outputs:
       ref: ${{ steps.version.outputs.ref }}
@@ -20,16 +19,33 @@ jobs:
         with:
           python-version: "3.12"
       - id: version
+        name: Resolve released pin or packet twin
         run: |
           python - <<'PY'
           import os
+          import subprocess
           import tomllib
           from pathlib import Path
 
           dependencies = tomllib.loads(Path("pyproject.toml").read_text())["project"]["dependencies"]
           version = next(pin.removeprefix("nocturne-memory==") for pin in dependencies if pin.startswith("nocturne-memory=="))
+          release = f"refs/tags/v{version}"
+          branch = os.environ["GITHUB_REF_NAME"]
+          twin = f"refs/heads/{branch}"
+          refs = subprocess.check_output([
+              "git", "ls-remote", "https://github.com/Nate0-1999/nocturne-memory.git",
+              release, twin,
+          ], text=True)
+          available = {line.split()[1] for line in refs.splitlines()}
+          if release in available:
+              ref = release
+          elif os.environ["GITHUB_REF_TYPE"] == "branch" and branch != "main" and twin in available:
+              ref = twin
+          else:
+              raise SystemExit(f"Memory {release} is not released and no permitted packet twin {twin} exists")
+          print(f"Testing Memory {ref}")
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              print(f"ref=v{version}", file=output)
+              print(f"ref={ref}", file=output)
           PY
 
   impact:
