@@ -4594,3 +4594,14 @@ way. `workflow new` no longer writes `memory_scope: "none"` (M7WB's workaround).
 scoped test once hid F138; the scoped run now meets the real Palace in `tests/contract`.
 A run's scope is its folder: a fact remembered in another project is not given to it.
 Pair 0.1.103 was unused in releases, PyPI, open PRs and the BOARD at selection (M8MF holds 0.1.102).
+
+## M8FX — Read the Farm as folders (P2.1)
+
+PRECEDENT: SD-102; PLAN M8FX; ADR-018 clauses 2, 3 and 5; M3VZ, M3LV.
+Explorer is the parallel DOM rendering allowed by clause 5, selected beside the
+unchanged Burrows renderer. It reads the same recorded trees and agent locations,
+shows each project/worktree root, and publishes the same path selection. Recorded
+file touches say "touched"; they do not claim that an agent is still editing there.
+The look is kept in browser storage, as the module's scope is; folders fold locally.
+No file action or new trace behavior. Pair 0.1.107 was absent from PyPI, release
+tags and all fetched branch versions; the open peers reserve 0.1.104–106 and 108.
