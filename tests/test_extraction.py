@@ -589,6 +589,7 @@ async def test_offline_compaction_keeps_the_palace_decision_after_delivery(tmp_p
     """F221 / A-096: reconnecting after compaction must identify the duplicate fact
     even if its queue reply arrives before the original record is appended."""
     import httpx
+
     from harness.envelope import EnvelopeFactory
     from harness.memory_outbox import MemoryOutbox
 
