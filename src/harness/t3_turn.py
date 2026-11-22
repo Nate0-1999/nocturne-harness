@@ -196,6 +196,7 @@ class NativeTurn:
             # Reconcile the confirmed submission without sending a second prompt.
             if status := await self.sync():
                 return status
+            await self.stop()
             raise
         raise T3Error("The subscription stream ended before the turn was confirmed.")
 

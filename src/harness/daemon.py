@@ -1567,7 +1567,7 @@ def create_dev_app(
                 raise HTTPException(503, str(exc)) from None
 
         @app.get("/v1/models")
-        async def model_browser(thread_id: str | None = None):
+        async def model_browser(thread_id: str | None = None, subscriptions: bool = False):
             """FL-202: the token source's models, the owner's pins, the four policies now."""
             catalog = completion_router.catalog
             current = None
@@ -1600,10 +1600,10 @@ def create_dev_app(
                     if not browser["models"] and completion_router.remote_catalog is None:
                         browser["unavailable"] = "This model source publishes no model list."
                 except ModelCatalogUnavailable as exc:
-                    if not t3.binary.is_file():
+                    if not (subscriptions and t3.binary.is_file() or t3.running):
                         raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
                     browser["unavailable"] = "The broker model list is unavailable."
-            if t3.binary.is_file():
+            if subscriptions and t3.binary.is_file() or t3.running:
                 try:
                     native = await sources(t3)
                 except T3Error:

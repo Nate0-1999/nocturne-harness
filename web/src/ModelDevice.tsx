@@ -116,7 +116,7 @@ export function ModelDevice() {
   const liveModel = live?.resolved_model ?? null
   const loadBrowser = useCallback(async () => {
     try {
-      setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId })))
+      setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId, subscriptions: true })))
       setBrowserError(null)
     } catch (error) {
       setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
@@ -249,7 +249,7 @@ export function ModelDevice() {
 
       <div className="model-device__truth">
         <span>Model in use</span>
-        <strong data-testid="model-device-resolved">{view?.resolved_model ?? 'Waiting for thread'}</strong>
+        <strong data-testid="model-device-resolved">{resolved?.startsWith('subscription:') ? modelLabel(resolved) : resolved ?? 'Waiting for thread'}</strong>
         {effort !== undefined && inUse?.reasoning === true && (
           <label className="model-effort" htmlFor="model-device-effort">
             <span>Thinking</span>

@@ -44,6 +44,8 @@ def project_sources(providers: list[dict]) -> list[dict]:
         elif (
             not account
             or provider.get("status") != "ready"
+            or provider.get("modelsRetained")
+            or provider.get("availability") == "unavailable"
             or auth.get("type") not in plans
             or auth.get("endpoint")
             or auth.get("action")

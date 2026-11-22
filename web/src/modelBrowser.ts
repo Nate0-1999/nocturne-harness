@@ -110,6 +110,10 @@ export function shortName(name: string): string {
 }
 
 export function modelLabel(model: string | null): string {
+  if (model?.startsWith('subscription:')) {
+    const [tool, , ...slug] = model.slice('subscription:'.length).split('/')
+    if (slug.length > 0) return `${tool === 'claudeAgent' ? 'Claude Code' : 'Codex'} · ${slug.join('/')}`
+  }
   return model === null ? '—' : model.slice(model.indexOf(':') + 1)
 }
 

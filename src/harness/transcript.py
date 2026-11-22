@@ -630,8 +630,15 @@ class TranscriptJournal:
             rows = self._read_file_rows(self._filename_for_thread(thread_id))
             for raw in reversed(rows):
                 row = json.loads(raw)
-                if row.get("record_type") == "subscription":
+                kind = row.get("record_type")
+                if kind == "subscription":
                     return row
+                if kind == "rewind":
+                    return None
+                payload = row.get("event", {}).get("payload", {})
+                change = payload.get("event", payload)
+                if change.get("event_kind") == "model_change":
+                    return None
         return None
 
     def append_compaction_record(self, thread_id: str, record: dict[str, Any]) -> None:
