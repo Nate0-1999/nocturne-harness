@@ -61,9 +61,135 @@ export function useModelBrowser(threadId: string | null, model: string | null): 
   return browser
 }
 
-/** FL-202 / FL-206: the conversation's model chip, strategy first; it opens the Model Device. */
-export function ModelChip({ browser, model }: { browser: ModelBrowser | null, model: string | null }) {
+/** FL-202 / FL-206: the conversation's model chip, strategy first. */
+function ModelChip({ browser, model }: { browser: ModelBrowser | null, model: string | null }) {
   return modelMark(browser, model, currentEffort(browser, model), true, currentStrategy(browser, model))
+}
+
+/** SD-101: the conversation header's Model box lists the pinned models. One tap is this
+ * conversation's `model.slug` write and nothing else: no policy is saved, so new conversations
+ * start where they did. The last row opens the Model Device. */
+export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
+  browser: ModelBrowser | null
+  threadId: string | null
+  model: string | null
+  /** ADR-023: a running turn keeps its model, so the rows wait for it. */
+  busy: boolean
+  onOpenDevice: () => void
+}) {
+  const { events } = useRackPlugin()
+  const [open, setOpen] = useState(false)
+  // Pins change in the Model Device, which tells no other module: the list reads them as it opens.
+  const [fresh, setFresh] = useState<ModelBrowser | null>(null)
+  const [status, setStatus] = useState('')
+  const root = useRef<HTMLDivElement>(null)
+  const box = useRef<HTMLButtonElement>(null)
+  const listed = fresh ?? browser
+  const inUse = model ?? listed?.current?.model ?? null
+
+  useEffect(() => {
+    if (!open) return
+    const away = (event: Event) => {
+      if (!(event.target instanceof Node && root.current?.contains(event.target))) setOpen(false)
+    }
+    document.addEventListener('pointerdown', away)
+    globalThis.addEventListener('blur', away)
+    return () => {
+      document.removeEventListener('pointerdown', away)
+      globalThis.removeEventListener('blur', away)
+    }
+  }, [open])
+
+  function toggle() {
+    setOpen(!open)
+    setStatus('')
+    if (open) return
+    events.dispatch({ type: 'models.load', thread_id: threadId })
+      .then((value) => setFresh(parseBrowser(value)))
+      .catch(() => setFresh(null))
+  }
+
+  async function pick(pin: string) {
+    if (threadId === null) return
+    try {
+      await events.dispatch({ type: 'parameter.write', thread_id: threadId, parameter_id: 'model.slug', value: pin })
+      setOpen(false)
+      box.current?.focus()
+    } catch (error) {
+      setStatus(failureMessage(error, 'The model was not switched. Wait for the answer to finish and try again.'))
+    }
+  }
+
+  return (
+    <div
+      className="model-switch"
+      ref={root}
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || !open) return
+        setOpen(false)
+        box.current?.focus()
+      }}
+    >
+      <Button variant="bare"
+        type="button"
+        ref={box}
+        className="chat-header__model"
+        data-testid="active-model"
+        aria-label={`Active model: ${model ?? 'being chosen'}`}
+        aria-expanded={open}
+        data-tooltip="Switch model"
+        data-tooltip-detail="Your pinned models, for this conversation only; the last row opens the Model Device."
+        onClick={toggle}
+      >
+        <span aria-hidden="true">Model</span>
+        <span className="chat-header__model-value" data-testid="active-model-detail">
+          <ModelChip browser={browser} model={model} />
+        </span>
+        <span className="chat-header__model-action" aria-hidden="true">Open</span>
+      </Button>
+      {open && (
+        <section className="model-switch__list" aria-label="Pinned models" data-testid="model-switch">
+          <ul>
+            {(listed?.pins ?? []).map((pin) => {
+              const entry = listed?.models.find((item) => item.model === pin)
+              const current = pin === inUse
+              return (
+                <li key={pin}>
+                  <Button variant="bare"
+                    type="button"
+                    className="model-switch__row"
+                    data-model={pin}
+                    aria-current={current || undefined}
+                    data-tooltip={pin}
+                    data-tooltip-detail={current ? 'This conversation uses it now.'
+                      : busy ? 'Wait for the answer to finish.' : 'Use it in this conversation only.'}
+                    disabled={current || busy || threadId === null}
+                    onClick={() => { void pick(pin) }}
+                  >
+                    <span className="model-switch__name">{entry === undefined ? modelLabel(pin) : shortName(entry.name)}</span>
+                    <span>{current ? 'In use' : entry === undefined ? '—' : formatPrice(entry)}</span>
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
+          {status !== '' && <p role="status">{status}</p>}
+          {listed !== null && listed.pins.length === 0 && <p>Pin models in the Model Device to list them here.</p>}
+          <Button variant="bare"
+            type="button"
+            className="model-switch__row"
+            data-testid="model-switch-device"
+            data-tooltip="Open Model Device"
+            data-tooltip-detail="Browse, pin and switch models; set the thinking level."
+            onClick={() => { setOpen(false); onOpenDevice() }}
+          >
+            <span className="model-switch__name">All models</span>
+            <span>Model Device</span>
+          </Button>
+        </section>
+      )}
+    </div>
+  )
 }
 
 export function ModelDevice() {
