@@ -157,7 +157,9 @@ class T3Client:
             },
         )
 
-    async def message(self, thread: str, message: str, text: str):
+    async def message(self, thread: str, message: str, text: str, *, archived: bool = False):
+        if archived:
+            await self.dispatch(thread, "thread.unarchive")
         return await self.dispatch(
             thread,
             "message.dispatch",

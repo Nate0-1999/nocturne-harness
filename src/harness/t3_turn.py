@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import logging
 import re
 from contextlib import aclosing
 
@@ -11,6 +12,9 @@ from harness.envelope import StopReason
 from harness.run_protocol import TurnOutcome
 from harness.t3_client import TERMINAL, RunTransitions, T3Error, new_id
 from harness.t3_sources import resolve_offer
+
+
+logger = logging.getLogger(__name__)
 
 
 def _native_names(title: str, project_id: str) -> tuple[str, str]:
@@ -100,7 +104,9 @@ class SubscriptionTurns:
                 binding["native_project"], thread, message, text, source["tool"], model["id"], title
             )
             if fresh
-            else client.message(thread, message, text)
+            else client.message(
+                thread, message, text, archived=prior["thread"]["archivedAt"] is not None
+            )
         )
         try:
             acknowledgement = await asyncio.shield(send)
@@ -110,6 +116,16 @@ class SubscriptionTurns:
             await send
             await observer.stop()
             raise
+        finally:
+            if observer.transitions.finished:
+                try:
+                    await client.dispatch(thread, "thread.archive")
+                except Exception as exc:
+                    logger.warning(
+                        "Could not archive subscription thread %s (%s). It may still appear active.",
+                        thread,
+                        type(exc).__name__,
+                    )
         history = tuple(message_history)
         if status == "completed":
             history += (
@@ -210,6 +226,7 @@ class NativeTurn:
                     (r for r in projection["runs"] if r["userMessageId"] == self.message), None
                 )
                 if run and run["status"] in TERMINAL:
+                    self.transitions.terminal({"type": "run.updated", "payload": run})
                     return
                 if run and not sent:
                     await self.client.interrupt(self.thread, run["id"])
