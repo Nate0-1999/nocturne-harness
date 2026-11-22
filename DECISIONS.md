@@ -4655,3 +4655,10 @@ conversation agent's instructions and tool list, memories given without a gate, 
 worker's tool list. The module follows the selected conversation.
 Pair 0.1.108 was unused in releases, PyPI, open PRs and the BOARD at selection (M8SA, M8DM,
 M8MP and M8FX hold 0.1.104 to 0.1.107).
+## M8RA — Read replies through the browser's sentence queue [P1.2]
+
+SD-106 extends M3OU. Focused replies and Deck cards share one reader per conversation frame.
+The reader parses the same GFM as the rendered reply and holds the unfinished sentence
+until more text or the end arrives. A rate change cancels the active utterance and
+resumes at its last reported word, or from the sentence start on engines without word events.
+Playback speed uses the existing home/principal preference scope.

@@ -15,6 +15,7 @@ import { failureMessage, RequestFailure } from './requestFailure'
 import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
 import { OutLoud } from './OutLoud'
+import { ReplyReader } from './ReplyReader'
 import { Button, ConfirmButton, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
@@ -439,6 +440,7 @@ function ProposedResponseCardView({
         <time dateTime={card.created_at}>{new Date(card.created_at).toLocaleTimeString()}</time>
       </header>
       <p className="deck-proposal__answer">{card.assistant_text}</p>
+      <ReplyReader id={`deck:${card.proposal_run_id}`} text={card.assistant_text} />
       {card.alternatives.length > 0 && (
         <div className="deck-alternatives" aria-label="Alternative replies">
           {card.alternatives.map((alternative) => (
