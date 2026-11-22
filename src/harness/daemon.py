@@ -123,6 +123,7 @@ from harness.spine_client import (
 )
 from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
+from harness.t3_server import T3Server
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import Crossings
@@ -940,6 +941,7 @@ def create_dev_app(
     configured = settings or HarnessSettings()
     completion_router = CompletionRouter(configured)
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
+    t3 = T3Server(home)
     role_policy_path = home / "model-policies.json"
     model_pin_path = home / "model-pins.json"
     local_model_path = home / "local-model.json"
@@ -1821,6 +1823,7 @@ def create_dev_app(
         app.router.add_event_handler("startup", flush_receipt_queue)
         app.router.add_event_handler("startup", start_local_copy)
         app.router.add_event_handler("shutdown", stop_local_copy)
+        app.router.add_event_handler("shutdown", t3.close)
         app.router.add_event_handler("startup", restore_symphonies)
         app.router.add_event_handler("startup", extraction.backfill_projects)
         if idle_extraction is not None:
