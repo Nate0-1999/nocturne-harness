@@ -521,6 +521,99 @@
   text-transform: uppercase;
 }
 
+/* SD-101: the Model box with its list of pinned models; the wrapper holds the box's place in the row. */
+.model-switch {
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1 1 14rem;
+}
+
+.model-switch > .chat-header__model {
+  width: 100%;
+}
+
+.model-switch__list {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  width: 100%;
+  min-width: min(16rem, 85vw);
+  border: 1px solid var(--line-strong);
+  background: var(--ground);
+  box-shadow: 0 1rem 3rem var(--ground);
+}
+
+.model-switch__list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.model-switch__list p {
+  margin: 0;
+  padding: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-md);
+}
+
+.model-switch__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--data-font);
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.model-switch__list li:first-child > .model-switch__row {
+  border-top: 0;
+}
+
+.model-switch__name {
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--body-font);
+  font-size: var(--text-base);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-switch__row[aria-current] .model-switch__name,
+.model-switch__row:hover:not(:disabled) .model-switch__name,
+.model-switch__row:focus-visible .model-switch__name {
+  color: var(--accent);
+}
+
+.model-switch__row:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.model-switch__row:disabled {
+  cursor: default;
+}
+
+/* The model in use is marked, not faded like a row that waits. */
+.model-switch__row[aria-current] {
+  opacity: 1;
+}
+
+@media (pointer: coarse) {
+  .model-switch__row {
+    min-height: 2.75rem;
+  }
+}
+
 .chat-header h1 {
   max-width: 42rem;
   margin: 0;
@@ -2394,7 +2487,7 @@
     max-width: 48vw;
   }
 
-  .chat-header__model {
+  .model-switch {
     flex-basis: 10rem;
   }
 
