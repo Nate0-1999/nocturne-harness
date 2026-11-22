@@ -27,6 +27,7 @@
 /* A sliver of work is never hidden under the wait beside it. */
 .profiler-bar:not([data-kind=model]) { z-index: 1; }
 .profiler-key { white-space: nowrap; }
+.profiler-instrument .kit-module-header__actions { flex-wrap: wrap; justify-content: flex-end; }
 .profiler-key::before { content: ''; width: .625rem; height: .625rem; }
 [data-running] > .profiler-row .profiler-bar[data-kind=agent] { border-right-style: dashed; }
 
