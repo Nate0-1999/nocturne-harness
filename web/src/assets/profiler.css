@@ -26,6 +26,7 @@
 .profiler-bar[data-kind=memory], .profiler-key[data-kind=memory]::before { background: var(--ink); }
 /* A sliver of work is never hidden under the wait beside it. */
 .profiler-bar:not([data-kind=model]) { z-index: 1; }
+.profiler-key { white-space: nowrap; }
 .profiler-key::before { content: ''; width: .625rem; height: .625rem; }
 [data-running] > .profiler-row .profiler-bar[data-kind=agent] { border-right-style: dashed; }
 

@@ -100,7 +100,7 @@ function Profiler({ threadId }: { threadId: string | null }) {
     if (!live) return
     const timer = globalThis.setTimeout(() => setRefresh((value) => value + 1), 1000)
     return () => globalThis.clearTimeout(timer)
-  }, [live, profile])
+  }, [live, refresh])
 
   const shown = run !== null && (live || opened !== null) ? run : null
   const charted = shown !== null
