@@ -126,6 +126,8 @@ class T3Server:
             "NO_COLOR": "1",
             "GIT_TERMINAL_PROMPT": "0",
         }
+        if user := os.environ.get("USER"):
+            env["USER"] = user
         while True:
             with socket.socket() as sock:
                 sock.bind(("127.0.0.1", 0))

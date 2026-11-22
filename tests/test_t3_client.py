@@ -7,6 +7,46 @@ from harness.t3_client import RunTransitions, T3Error
 from harness.t3_server import T3Server
 
 
+@pytest.mark.asyncio
+async def test_supervisor_passes_only_native_session_and_private_runtime_settings(
+    tmp_path, monkeypatch
+):
+    """A-095: Claude needs USER for Max, but inheriting API keys risks billing the wrong account."""
+
+    class SpawnObserved(Exception):
+        pass
+
+    async def inspect_spawn(*args, env, **kwargs):
+        assert set(env) == {
+            "HOME",
+            "USER",
+            "SHELL",
+            "PATH",
+            "TMPDIR",
+            "T3CODE_HOME",
+            "T3CODE_LAN",
+            "T3CODE_TAILSCALE_SERVE",
+            "T3CODE_TELEMETRY_ENABLED",
+            "T3CODE_LOG_WS_EVENTS",
+            "T3CODE_CODEX_PROBE_TIMEOUT_MS",
+            "T3CODE_AUTO_BOOTSTRAP_PROJECT_FROM_CWD",
+            "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+            "DISABLE_AUTOUPDATER",
+            "DISABLE_TELEMETRY",
+            "NO_COLOR",
+            "GIT_TERMINAL_PROMPT",
+        }
+        assert env["USER"] == "verification-user"
+        raise SpawnObserved
+
+    monkeypatch.setenv("USER", "verification-user")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-marker")
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "test-marker")
+    monkeypatch.setattr("asyncio.create_subprocess_exec", inspect_spawn)
+    with pytest.raises(SpawnObserved):
+        await T3Server(tmp_path)._start()
+
+
 def test_recorded_interrupt_closes_once_even_after_replay():
     """A-095: a native interrupt replay must close the Nocturne run once."""
     frames = json.loads((Path(__file__).parent / "fixtures/t3/terminal-replay.json").read_text())
