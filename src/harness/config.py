@@ -32,11 +32,11 @@ class HarnessSettings(BaseSettings):
     local_model: str | None = None
     local_when_offline: bool = False
     local_model_context_tokens: int = Field(default=32768, ge=1)
-    chat_model: str = "openrouter:minimax/minimax-m3"
+    chat_model: str = "openrouter:openai/gpt-4.1-mini"
     model_policy_chat: str | None = None
     model_policy_subagent: str | None = None
     model_policy_judge: str | None = None
-    model_context_tokens: int = Field(default=1_000_000, ge=1)
+    model_context_tokens: int = Field(default=1_047_576, ge=1)
     run_request_limit: int = Field(default=40, ge=1)
     run_total_tokens_limit: int = Field(default=500_000, ge=1)
     # F169: a model request that sends nothing this long (not even OpenRouter's keep-alive) ends.
