@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "8f3fc1b536064c1d02fe1c61b62e26ccd2f66b8d",
-      "head": "6b4c1a3692e0866ad4df75ae9ee5b2d7e6348213"
+      "head": "34f8773c582bb4138a6001580c7771a60dec4372"
     }
   ],
   "unmapped": {
@@ -235,7 +235,7 @@
       "verdict": "PASS",
       "screenshot": "FL-106.png",
       "flag": "",
-      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden)."
+      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden). The answer fidelity rewalk showed the /model history and folder disclosure, then preserved a decorator, package scope and owner-supplied example address in both stream and journal (Garden answer/reply.png and answer/walk.txt)."
     },
     "FL-107": {
       "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
