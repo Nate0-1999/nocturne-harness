@@ -582,3 +582,58 @@ async def test_unreached_palace_queues_the_facts_and_replays_them_on_reconnect(
     assert [(c.verdict, c.body) for c in sent.candidates] == [
         ("new", "Thread-born memory candidates require owner consent.")
     ]
+
+
+@pytest.mark.asyncio
+async def test_offline_compaction_keeps_the_palace_decision_after_delivery(tmp_path):
+    """F221 / A-096: reconnecting after compaction must identify the duplicate fact
+    even if its queue reply arrives before the original record is appended."""
+    import httpx
+    from harness.envelope import EnvelopeFactory
+    from harness.memory_outbox import MemoryOutbox
+
+    thread = uuid4()
+    journal = _journal(tmp_path / "transcripts", str(thread), NOW)
+    outbox = MemoryOutbox(tmp_path / "outbox", ids=EnvelopeFactory(machine_id="mac"))
+    palace = FakeSpine()
+
+    async def offline(request):
+        raise SpineTransportError() from httpx.ConnectError("refused")
+
+    async def delivered(request):
+        return ExtractionResponse(
+            cards=[],
+            duplicate_count=1,
+            outcomes=[
+                {
+                    "candidate_id": request.candidate_ids[0],
+                    "status": "hard_duplicate",
+                    "memory_id": MEMORY_ID,
+                    "label": "Existing release fact",
+                    "reason": "Hard-duplicate cosine similarity threshold",
+                }
+            ],
+        )
+
+    palace.search = offline
+    palace.create_extraction = delivered
+    service = ExtractionService(
+        journal=journal,
+        agent=FakeAgent(),
+        spine=palace,
+        principal_id="owner",
+        machine_id="mac",
+        outbox=outbox,
+    )
+    draft = await FakeAgent().extract_thread("recent release discussion")
+    result = await service.admit(thread, draft, tail="tail", origin="compaction")
+    assert result.facts[0]["outcome"] == {"status": "waiting"}
+    [queued] = outbox.waiting()
+    await service.replay(queued.payload)
+    journal.append_compaction_record(str(thread), {"facts": result.facts})
+    [record] = journal.compaction_records(str(thread))
+    [fact] = record["facts"]
+    assert fact["outcome"]["candidate_id"] == fact["candidate_id"]
+    assert fact["outcome"]["memory_id"] == str(MEMORY_ID)
+    assert fact["outcome"]["label"] == "Existing release fact"
+    assert fact["proposal"] is None

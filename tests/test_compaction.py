@@ -851,7 +851,14 @@ async def test_compaction_memories_are_born_in_the_folders_their_facts_were_work
 
         async def create_extraction(self, request):
             self.requests.append(request)
-            return ExtractionResponse(cards=[], duplicate_count=0)
+            return ExtractionResponse(
+                cards=[],
+                duplicate_count=0,
+                outcomes=[
+                    {"candidate_id": key, "status": "refused", "reason": "fixture refusal"}
+                    for key in request.candidate_ids
+                ],
+            )
 
     model = FunctionModel(function=summarize, stream_function=answer)
     agent = HarnessAgent(settings(), model=model)
