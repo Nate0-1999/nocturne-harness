@@ -590,3 +590,54 @@ class ReturnShareCapability(AbstractCapability[MemoryToolContext]):
         if ctx.deps.record_cut is not None:
             await ctx.deps.record_cut(cut, text)
         return cut_notice(cut, text, journaled=ctx.deps.record_cut is not None)
+
+
+class WorkerStepsCapability(AbstractCapability[MemoryToolContext]):
+    """A-093: a sub-agent's start and each tool step are announced as they happen, with the
+    instructions and tools its first request really carries."""
+
+    id: str | None = "worker_steps"
+
+    def __init__(self, announce: Callable[[dict[str, object]], Any], worker_id: str, task: str):
+        self._announce, self._worker_id, self._task = announce, worker_id, task
+        self._started = False
+
+    async def before_model_request(self, ctx, request_context):
+        if not self._started:
+            self._started = True
+            await self._announce(
+                {
+                    "event_kind": "worker_started",
+                    "worker_id": self._worker_id,
+                    "task": self._task,
+                    "instructions": request_context.messages[-1].instructions,
+                    "tools": [
+                        tool.name
+                        for tool in request_context.model_request_parameters.function_tools
+                    ],
+                }
+            )
+        return request_context
+
+    async def _step(self, call: ToolCallPart, state: str) -> None:
+        await self._announce(
+            {
+                "event_kind": "worker_step",
+                "worker_id": self._worker_id,
+                "tool": call.tool_name,
+                "call_id": call.tool_call_id,
+                "state": state,
+            }
+        )
+
+    async def before_tool_execute(self, ctx, *, call, tool_def, args):
+        await self._step(call, "started")
+        return args
+
+    async def after_tool_execute(self, ctx, *, call, tool_def, args, result):
+        await self._step(call, "finished")
+        return result
+
+    async def on_tool_execute_error(self, ctx, *, call, tool_def, args, error):
+        await self._step(call, "finished")
+        raise error

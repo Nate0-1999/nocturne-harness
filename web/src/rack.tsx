@@ -59,7 +59,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = CustomRackModuleId | 'header' | 'spend_strip' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security'
+export type RackModuleId = CustomRackModuleId | 'header' | 'spend_strip' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security' | 'profiler'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -80,7 +80,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'palace_nebula' ||
     value === 'farm' || value === 'roots' ||
     value === 'injection_console' ||
-    value === 'recipe' || value === 'jobs' || value === 'security'
+    value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler'
 }
 
 export interface RackSnapshot {
@@ -194,10 +194,12 @@ export interface RackModuleManifest {
 }
 
 export interface RackQueryRequest {
-  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'targets' | 'overwhelm' | 'palace'
+  resource: 'catalog' | 'selected_thread' | 'memory_panel' | 'vitals' | 'spend_table' | 'context_window' | 'parameters' | 'memory_graph' | 'scorer_console' | 'recipe_graph' | 'tools' | 'visualization' | 'jobs' | 'targets' | 'overwhelm' | 'palace' | 'profile'
   as_of?: string | null
   thread_id?: string
   thread_ids?: string[]
+  /** profile: the run to open; the thread's newest run when absent. */
+  run_id?: string
   /** visualization: digests of the directory trees the module already holds; those arrive without their nodes. */
   known?: string[]
 }
@@ -509,6 +511,13 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: true, default_scope: 'ATTUNED',
+  },
+  // SD-098: who ran, for how long, on what, and what each had going in.
+  profiler: {
+    id: 'profiler', name: 'Profiler', version: '1.0.0', class: 'visualizer', slot: 'panel',
+    streams: ['thread.snapshot', 'run.started', 'run.done'], actions: [],
+    bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
+    law_bound: false, default_scope: 'ATTUNED',
   },
 }
 
@@ -920,6 +929,12 @@ export const rackQuerySurface: RackQuerySurface = {
     const asOf = request.as_of ?? null
     if (request.resource === 'palace') {
       return parseRackQueryResult(await fetchJson('/v1/rack/query?resource=palace'))
+    }
+    if (request.resource === 'profile') {
+      const url = new URL('/v1/profile', globalThis.location.origin)
+      url.searchParams.set('thread_id', request.thread_id ?? '')
+      if (request.run_id) url.searchParams.set('run_id', request.run_id)
+      return { status: 'live', as_of: null, data: await fetchJson(url.toString(), { cache: 'no-store' }) }
     }
     if (request.resource === 'targets') {
       return { status: 'live', as_of: null, data: await fetchJson('/v1/targets', { cache: 'no-store' }) }
