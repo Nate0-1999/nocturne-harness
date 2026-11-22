@@ -141,6 +141,10 @@ async function openModule(targetPage, moduleId) {
     const modelControl = frame(targetPage, 'conversation').locator('button[aria-label^="Active model:"]')
     await modelControl.waitFor()
     await modelControl.evaluate((element) => element.click())
+    // SD-101: the box opens the pinned-model list; its last row opens the device.
+    const deviceRow = frame(targetPage, 'conversation').getByTestId('model-switch-device')
+    await deviceRow.waitFor()
+    await deviceRow.evaluate((element) => element.click())
   } else if (moduleId === 'thread_end') {
     await frame(targetPage, 'threads').locator('.thread-item--selected')
       .getByRole('button', { name: /^Archive / })
