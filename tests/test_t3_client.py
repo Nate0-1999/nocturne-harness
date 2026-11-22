@@ -145,3 +145,24 @@ def test_failed_archive_digest_prevents_installation(tmp_path, monkeypatch):
     with client, pytest.raises(t3_install.InstallError, match="integrity check"):
         t3_install.install(tmp_path)
     assert not (tmp_path / "t3" / "install" / t3_install.VERSION).exists()
+
+
+def test_authenticated_claude_ultra_survives_failed_usage_probe():
+    """A-095: a missing usage reading hid a real Max login; API billing must stay ineligible."""
+    from harness.t3_sources import offers, project_sources
+
+    provider = {
+        "instanceId": "claudeAgent",
+        "installed": True,
+        "status": "ready",
+        "auth": {"status": "authenticated", "type": "Claude Ultra", "workspaceId": "test-id"},
+        "usageLimits": {"unavailable": {"reason": "probeFailed"}},
+        "models": [{"slug": "test-model"}],
+    }
+    rows = project_sources([provider])
+    assert rows[1]["availability"] == "available"
+    assert rows[1]["usage_known"] is False
+    assert len(list(offers(rows))) == 1
+    for billing in ("apiKey", "console"):
+        provider["auth"]["type"] = billing
+        assert not list(offers(project_sources([provider])))

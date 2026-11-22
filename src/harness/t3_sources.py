@@ -8,7 +8,25 @@ from harness.t3_client import T3Error
 
 TOOLS = {
     "codex": ("Codex", {"chatgpt"}),
-    "claudeAgent": ("Claude Code", {"max", "pro", "team", "enterprise"}),
+    "claudeAgent": (
+        "Claude Code",
+        {
+            "pro",
+            "team",
+            "enterprise",
+            "max",
+            "maxplan",
+            "max5",
+            "max20",
+            "claudeultra",
+            "claudemaxsubscription",
+            "claudemax5xsubscription",
+            "claudemax20xsubscription",
+            "claudeprosubscription",
+            "claudeteamsubscription",
+            "claudeenterprisesubscription",
+        },
+    ),
 }
 SLUG = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9._/-]*")
 VERSION = re.compile(r"[0-9][a-zA-Z0-9.+-]{0,64}")
@@ -46,11 +64,10 @@ def project_sources(providers: list[dict]) -> list[dict]:
             or provider.get("status") != "ready"
             or provider.get("modelsRetained")
             or provider.get("availability") == "unavailable"
-            or auth.get("type") not in plans
+            or re.sub(r"[\s_-]+", "", (auth.get("type") or "").lower()) not in plans
             or auth.get("endpoint")
             or auth.get("action")
             or auth.get("subscriptionSharing")
-            or limits.get("unavailable")
         ):
             status = "unknown"
         elif global_limits or limits.get("zeroSpendCap"):
@@ -87,6 +104,7 @@ def project_sources(providers: list[dict]) -> list[dict]:
                 "version": version if VERSION.fullmatch(version) else None,
                 "account": account,
                 "availability": status,
+                "usage_known": bool(limits) and not limits.get("unavailable"),
                 "models": models,
                 "limited_until": max(
                     filter(None, (_instant(w.get("resetsAt")) for w in global_limits)), default=None
