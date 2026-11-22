@@ -351,7 +351,7 @@ def _profile_row(fold: dict, row: dict) -> None:
                 if mark["end"] is None and step.get("state", "running") != "running":
                     mark["end"] = at
         return
-    if record == "worker_return":
+    if record in {"worker_return", "worker_failure"}:  # A-090: a failed sub-agent also ends
         run = fold["runs"].get(fold["open"])
         if run is not None and row["worker_id"] not in run["workers"]:
             run["workers"][row["worker_id"]] = _history_worker(row.get("history") or [], at)
@@ -411,7 +411,7 @@ def _profile_row(fold: dict, row: dict) -> None:
                 worker["calls"][step.get("call_id")] = _call({"tool_name": step.get("tool")}, at)
             elif step.get("call_id") in worker["calls"]:
                 worker["calls"][step["call_id"]]["end"] = at
-        elif worker is not None and step.get("event_kind") == "worker_return":
+        elif worker is not None and step.get("event_kind") in {"worker_return", "worker_failed"}:
             worker["end"] = at
 
 

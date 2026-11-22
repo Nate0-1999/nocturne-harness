@@ -34,15 +34,17 @@ test('shared settings and descriptive hover tips have no strip-specific chrome e
 
 /** PLAN M2TC findings 22-23 / P2 make archive quiet and Model Device visibly actionable. */
 test('archive is icon-compact while Model Device advertises its click action', async () => {
-  const [app, shellCss, rackCss] = await Promise.all([
+  const [app, modelDevice, shellCss, rackCss] = await Promise.all([
     readFile(new URL('src/App.tsx', webRoot), 'utf8'),
+    readFile(new URL('src/ModelDevice.tsx', webRoot), 'utf8'),
     readFile(new URL('src/assets/shell.css', webRoot), 'utf8'),
     readFile(new URL('src/assets/rack.css', webRoot), 'utf8'),
   ])
 
   assert.match(app, /data-tooltip="Archive this thread"/u)
-  assert.match(app, /className="chat-header__model-action"/u)
-  assert.match(app, /data-tooltip="Open Model Device"/u)
+  // SD-101: the Model box and its list live beside the chip; the list's last row opens the device.
+  assert.match(modelDevice, /className="chat-header__model-action"/u)
+  assert.match(modelDevice, /data-tooltip="Open Model Device"/u)
   assert.match(shellCss, /\.thread-item__archive\s*\{[^}]*width:\s*1\.65rem/su)
   assert.match(shellCss, /\.chat-header__model\s*\{[^}]*cursor:\s*pointer/su)
   assert.match(rackCss, /\.archive-button\s*\{[^}]*width:\s*1\.75rem/su)

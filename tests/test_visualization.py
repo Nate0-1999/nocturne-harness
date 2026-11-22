@@ -606,3 +606,36 @@ def test_a_run_profiles_as_its_agents_with_timed_steps(tmp_path):
         ("tool", "bash", 8, 9),
         ("model", "model", 9, 10),
     ]
+
+
+def test_a_failed_sub_agent_ends_its_bar(tmp_path):
+    """SD-098 / A-090 / A-093: a sub-agent that fails announces worker_failed and returns
+    nothing, so without this its bar in the profile would run on for ever."""
+    import json
+    from types import SimpleNamespace
+
+    from harness.visualization import agent_profile
+
+    def row(second, envelope, **payload):
+        return {
+            "captured_at": f"2026-11-22T09:00:{second:06.3f}+00:00",
+            "record_type": "event",
+            "thread_id": "thread",
+            "event": {"type": envelope, "payload": {"run_id": "run-1", **payload}},
+        }
+
+    def delta(second, **event):
+        return row(second, "run.delta", kind="event", event=event)
+
+    rows = [
+        row(0, "run.started", resolved_model="model-a"),
+        delta(1, event_kind="worker_started", worker_id="w-1", task="Count.", tools=[]),
+        delta(3, event_kind="worker_failed", worker_id="w-1", reason="The provider refused."),
+    ]
+    transcript = tmp_path / "thread.jsonl"
+    transcript.write_text("".join(json.dumps(item) + "\n" for item in rows))
+    journal = SimpleNamespace(path_for_thread=lambda _id: transcript)
+
+    run = agent_profile(journal, tmp_path, {}, "thread")["run"]
+    (worker,) = run["children"]
+    assert worker["end"] - run["start"] == 3

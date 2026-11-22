@@ -4595,6 +4595,47 @@ scoped test once hid F138; the scoped run now meets the real Palace in `tests/co
 A run's scope is its folder: a fact remembered in another project is not given to it.
 Pair 0.1.103 was unused in releases, PyPI, open PRs and the BOARD at selection (M8MF holds 0.1.102).
 
+## M8SA — A job's sub-agent runs the bundle's tools, and a failed sub-agent answers its parent (P4, P4.2)
+
+PRECEDENT: PLAN M8SA; F247; A-084 (4); A-090; ADR-015; FL-198 (M3CO); SD-097; reports 305, 318.
+`delegate` gave each worker a toolset with empty grants and had no answer for a worker that
+failed (F247). Both changes are in `delegate`. The worker's toolset takes its parent's sealed
+bundle tools and nothing else: those exist on the parent only while jobs.py runs the job, so a
+worker outside a run gets none, and the declared walls and the thread's cards are not copied.
+A worker's failure, its start included, is journaled as `worker_failure` with its work so far,
+receipted, emitted as `worker_failed`, and handed to the parent as the library's failed tool
+result, which the page's tool list already reads as "failed". A cancel and the run's usage limit
+pass through; a failure that cannot be journaled still ends the run. Left out: the worker is not
+given the bundle's tool lines or skills (its parent names the tool in the task), and the page
+has no line of its own for a failed worker (web/ is M8OV's; how sub-agents are shown is SD-098).
+Pair 0.1.104, the next unused in releases, PyPI, open PRs, remote branches and the BOARD: first
+numbered 0.1.105 while M8OV held 0.1.104, renumbered when M8OV ended with no version.
+
+## M8MP — The header's Model box switches this conversation alone [P4]
+
+PRECEDENT: PLAN M8MP; SD-101; M3SK, M6MS; SPEC C.6 `/model`; ADR-023 (2), (3); A-034; report 324.
+Switching one conversation took typing `/model` and the full name, or a Model Device row, which
+also saves that model for new conversations (M3SK). The Model box now opens the owner's pinned
+models in place; one tap is the Model Device's conversation switch (the `model.slug` write) and
+no policy is saved. The last row opens the Model Device, unchanged.
+The list is in the conversation module, so that manifest binds `model.slug` alone (ADR-023 (2):
+the public write, no private path), and the host's bound-write refusal, which covered imported
+modules only, covers every manifest. Pins are read as the list opens, because the Model Device
+tells no other module when a pin changes. While a turn runs the rows wait, as rewind does.
+Not changed: the bridge labels every write `model_device` to the daemon, as it did for imported
+modules, so the daemon's module check never sees the writing module.
+Pair 0.1.106 was unused in PyPI, tags, remote branches, open PRs and the BOARD at selection.
+
+## M8FX — Read the Farm as folders (P2.1)
+
+PRECEDENT: SD-102; PLAN M8FX; ADR-018 clauses 2, 3 and 5; M3VZ, M3LV.
+Explorer is the parallel DOM rendering allowed by clause 5, selected beside the
+unchanged Burrows renderer. It reads the same recorded trees and agent locations,
+shows each project/worktree root, and publishes the same path selection. Recorded
+file touches say "touched"; they do not claim that an agent is still editing there.
+The look is kept in browser storage, as the module's scope is; folders fold locally.
+No file action or new trace behavior. Pair 0.1.107 was absent from PyPI, release
+tags and all fetched branch versions; the open peers reserve 0.1.104–106 and 108.
 ## M8PF — A profiler of agents at work (P2, P3)
 
 PRECEDENT: PLAN M8PF; SD-098, SD-097; A-093; A-090 (draft M8SA); ADR-008, ADR-018; D.2 153;
