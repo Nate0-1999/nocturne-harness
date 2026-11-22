@@ -2,25 +2,17 @@
   "packet": "M8RA",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "ac9fb9bfc15dd277ff0f55c7b37808b231bf91e71514525f3a97bffbd4793dd2",
+  "ledger_sha256": "eee5d9ad96468d200cf4c29f13e74c52ee57eccf8037bdb7296cc612eee049cd",
   "diffs": [
     {
       "repo": "harness",
-      "base": "5e1aed0dde6f55eb82241f9cba6cebcb553cf542",
-      "head": "3140b61e0f9b419fd3019e8d16900b491602c970"
+      "base": "fd7d362abf3f6e81b99339aa1f3edb58ef07a70e",
+      "head": "b0840ef57b5d0beb70b0e51ed84a0fd8680d6a94"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "Records the sentence reader and preference decision.",
     "harness/src/harness/__init__.py": "Paired release metadata for the two wheels. No API operation or stored record changes.",
-    "harness/web/dist/assets/index-BPr6Tqxq.css": "Generated production asset for the walked browser changes.",
-    "harness/web/dist/assets/index-C2gGjSwm.css": "Generated production asset for the walked browser changes.",
-    "harness/web/dist/assets/index-DEoSCdsa.js": "Generated production asset for the walked browser changes.",
-    "harness/web/dist/assets/index-DHRu_Hhn.js": "Generated production asset for the walked browser changes.",
-    "harness/web/dist/index.html": "Generated production asset for the walked browser changes.",
-    "harness/web/package-lock.json": "Declares the existing GFM parser dependencies used directly by the reader.",
-    "harness/web/package.json": "Declares the existing GFM parser dependencies used directly by the reader.",
-    "harness/web/tests/speechText.test.mjs": "Focused verification of speech text, sentence boundaries or paired packaging metadata.",
     "harness/verification/m8ra/FL-009.png": "Packet verification receipt. It supplies review evidence and has no runtime behavior.",
     "harness/verification/m8ra/FL-069.png": "Packet verification receipt. It supplies review evidence and has no runtime behavior.",
     "harness/verification/m8ra/FL-070.png": "Packet verification receipt. It supplies review evidence and has no runtime behavior.",
@@ -50,6 +42,18 @@
     "harness/verification/m8ra/FL-215.png": "Packet verification receipt. It supplies review evidence and has no runtime behavior.",
     "harness/verification/m8ra/SHA256SUMS": "Packet verification receipt. It supplies review evidence and has no runtime behavior.",
     "harness/verification/m8ra/ledger-report.json": "Packet verification receipt. It supplies review evidence and has no runtime behavior.",
+    "harness/web/dist/assets/index-3ngYJf41.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-C9C6ezyI.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-CxLfYhog.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-DY6uvUV0.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/index.html": "Generated production asset for the walked browser changes.",
+    "harness/web/package-lock.json": "Declares the existing GFM parser dependencies used directly by the reader.",
+    "harness/web/package.json": "Declares the existing GFM parser dependencies used directly by the reader.",
+    "harness/web/tests/speechText.test.mjs": "Focused verification of speech text, sentence boundaries or paired packaging metadata.",
+    "harness/web/dist/assets/index-BPr6Tqxq.css": "Generated production asset for the walked browser changes.",
+    "harness/web/dist/assets/index-C2gGjSwm.css": "Generated production asset for the walked browser changes.",
+    "harness/web/dist/assets/index-DEoSCdsa.js": "Generated production asset for the walked browser changes.",
+    "harness/web/dist/assets/index-DHRu_Hhn.js": "Generated production asset for the walked browser changes.",
     "harness/web/dist/assets/index-CuLVyMNy.js": "Intermediate production bundle replaced by the final mobile layout fix in the same packet."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
@@ -281,7 +285,7 @@
     },
     "FL-206": {
       "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
-      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow \u00b7 <model>'. Pick Floor and Budget from the rail the same way.",
+      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way.",
       "protected": false,
       "verdict": "BLOCKED",
       "screenshot": "FL-206.png",
@@ -290,7 +294,7 @@
     },
     "FL-215": {
       "label": "A button says what it does and one symbol means one thing: one word per action and one icon per meaning, held in two tables in the kit; a confirmation names the action, the thing and what is lost and answers Yes or No. Errors name the failure and a next step while preserving authored guidance; an empty state says what fills it; long instructions and legends open on demand.",
-      "walk": "Open the app. Sending is Send; X removes or closes; Deny wears the barred circle and Approve the check. Archive a thread, Reset a layout and delete a memory: each question names what is lost and offers bare Yes/No. Archiving\u2026 stays visible while busy. Import malformed recipe/plugin JSON and interrupt a read: the message names the failure and recovery, never diagnostics. Preserve an authored refusal and a repeated /remember response. Inspect empty modules for one line saying what fills them; open Roots' Legend and the creation scoring legend. Continue, Wrong and Never remain owner-pending under F240.",
+      "walk": "Open the app. Sending is Send; X removes or closes; Deny wears the barred circle and Approve the check. Archive a thread, Reset a layout and delete a memory: each question names what is lost and offers bare Yes/No. Archiving… stays visible while busy. Import malformed recipe/plugin JSON and interrupt a read: the message names the failure and recovery, never diagnostics. Preserve an authored refusal and a repeated /remember response. Inspect empty modules for one line saying what fills them; open Roots' Legend and the creation scoring legend. Continue, Wrong and Never remain owner-pending under F240.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-215.png",
