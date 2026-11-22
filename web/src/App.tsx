@@ -2772,7 +2772,6 @@ function ChatModule() {
             />
           )}
           <ModelSwitch
-            key={selectedThreadId}
             browser={browser}
             threadId={selectedThreadId}
             model={selectedThread?.resolvedModel ?? null}
