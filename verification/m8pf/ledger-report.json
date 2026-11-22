@@ -2,12 +2,12 @@
   "packet": "M8PF",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "ac9fb9bfc15dd277ff0f55c7b37808b231bf91e71514525f3a97bffbd4793dd2",
+  "ledger_sha256": "eee5d9ad96468d200cf4c29f13e74c52ee57eccf8037bdb7296cc612eee049cd",
   "diffs": [
     {
       "repo": "harness",
-      "base": "5e1aed0dde6f55eb82241f9cba6cebcb553cf542",
-      "head": "37237c2f2649b7b6e34878316b6c58327af03ffa"
+      "base": "0286ddfcde175be3288136eeafc74ab95fe11768",
+      "head": "18efd41260cf08d2ceb7a737080843b7aca856e7"
     }
   ],
   "unmapped": {
@@ -15,16 +15,6 @@
     "harness/src/harness/__init__.py": "Lockstep package metadata, version 0.1.108; API contract remains 0.1.92.",
     "harness/tests/test_compaction.py": "One test that pins A-093 on the real runner: a sub-agent's start and tool steps are announced before its return.",
     "harness/tests/test_visualization.py": "One test of the profiler's projection: steps, overlapping calls, model waits and an open end.",
-    "harness/web/dist/assets/index-BPr6Tqxq.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/assets/index-CbBdZcVi.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/assets/index-DHRu_Hhn.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/assets/index-DtNEk3Vg.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/index.html": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/tests/rackModuleTemplate.test.mjs": "The module template's list gains the Profiler.",
-    "harness/web/dist/assets/index--G-6kxTf.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/assets/index-C0BMPQug.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/assets/index-D2dqjr5G.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
-    "harness/web/dist/assets/index-DKorDDx3.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
     "harness/verification/m8pf/FL-009.png": "M8PF evidence, report or handoff state; no product behavior.",
     "harness/verification/m8pf/FL-061.png": "M8PF evidence, report or handoff state; no product behavior.",
     "harness/verification/m8pf/FL-067.png": "M8PF evidence, report or handoff state; no product behavior.",
@@ -83,7 +73,21 @@
     "harness/verification/m8pf/FL-213.png": "M8PF evidence, report or handoff state; no product behavior.",
     "harness/verification/m8pf/FL-215.png": "M8PF evidence, report or handoff state; no product behavior.",
     "harness/verification/m8pf/SHA256SUMS": "M8PF evidence, report or handoff state; no product behavior.",
-    "harness/verification/m8pf/ledger-report.json": "M8PF evidence, report or handoff state; no product behavior."
+    "harness/verification/m8pf/ledger-report.json": "M8PF evidence, report or handoff state; no product behavior.",
+    "harness/web/dist/assets/index-3ngYJf41.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-DY6uvUV0.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-Focs3Icq.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-dQ6qrT_F.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/index.html": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/tests/rackModuleTemplate.test.mjs": "The module template's list gains the Profiler.",
+    "harness/web/dist/assets/index-BPr6Tqxq.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index-CbBdZcVi.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index-DHRu_Hhn.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index-DtNEk3Vg.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index--G-6kxTf.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index-C0BMPQug.js": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index-D2dqjr5G.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src.",
+    "harness/web/dist/assets/index-DKorDDx3.css": "The built web bundle for the Profiler module, an earlier build of it included; generated from web/src."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -476,7 +480,7 @@
     },
     "FL-126": {
       "label": "The ant farm: the whole directory tree as chambered burrows with files as cells, zoomable, floating on black with a faint grid, showing worktrees.",
-      "walk": "Open the ant farm; the whole directory's folders appear as chambers with files as cells, floating on black with a faint grid, and worktrees are visible. LOOK (v2.119): the module is judged beside its plate (farm.png) \u2014 same material, structure and density; the side-by-side capture is required.",
+      "walk": "Open the ant farm; the whole directory's folders appear as chambers with files as cells, floating on black with a faint grid, and worktrees are visible. LOOK (v2.119): the module is judged beside its plate (farm.png) — same material, structure and density; the side-by-side capture is required. SD-102: switch to Explorer; fold nested folders, inspect files and worktree roots and colored agent positions, select the same path in both looks, reload to retain the look, then repeat by keyboard and at phone width. Burrows and F123 stay unchanged.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-126.png",
@@ -485,7 +489,7 @@
     },
     "FL-129": {
       "label": "Roots: every parallel agent across projects gets a root-like, naturally meandering flow growing horizontally from roughly its agent's location, with dead roots for active loops, tips seen end-on as grids of starts in the next rotation, clustered by project on the view opposite the ant farm.",
-      "walk": "Run agents in parallel and open Roots; each has a meandering branch, width follows measured spend, depth follows time, forks join and stopped roots dry. Projects group together. The cube rotation was retired by v2.119. LOOK (v2.119): the module is judged beside its plate (roots.png) \u2014 same material, structure and density; the side-by-side capture is required.",
+      "walk": "Run agents in parallel and open Roots; each has a meandering branch, width follows measured spend, depth follows time, forks join and stopped roots dry. Projects group together. The cube rotation was retired by v2.119. LOOK (v2.119): the module is judged beside its plate (roots.png) — same material, structure and density; the side-by-side capture is required.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-129.png",
@@ -494,7 +498,7 @@
     },
     "FL-133": {
       "label": "A corner palace view with curators as ghosts moving through the database.",
-      "walk": "Open the separate Palace module during a real curator pass; ghost-like curators move between the feed's actual finding targets before the pass finishes. LOOK (v2.119): the module is judged beside its plate (palace.png) \u2014 same material, structure and density; the side-by-side capture is required.",
+      "walk": "Open the separate Palace module during a real curator pass; ghost-like curators move between the feed's actual finding targets before the pass finishes. LOOK (v2.119): the module is judged beside its plate (palace.png) — same material, structure and density; the side-by-side capture is required.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-133.png",
@@ -566,7 +570,7 @@
     },
     "FL-206": {
       "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
-      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow \u00b7 <model>'. Pick Floor and Budget from the rail the same way.",
+      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-206.png",
@@ -593,7 +597,7 @@
     },
     "FL-215": {
       "label": "A button says what it does and one symbol means one thing: one word per action and one icon per meaning, held in two tables in the kit; a confirmation names the action, the thing and what is lost and answers Yes or No. Errors name the failure and a next step while preserving authored guidance; an empty state says what fills it; long instructions and legends open on demand.",
-      "walk": "Open the app. Sending is Send; X removes or closes; Deny wears the barred circle and Approve the check. Archive a thread, Reset a layout and delete a memory: each question names what is lost and offers bare Yes/No. Archiving\u2026 stays visible while busy. Import malformed recipe/plugin JSON and interrupt a read: the message names the failure and recovery, never diagnostics. Preserve an authored refusal and a repeated /remember response. Inspect empty modules for one line saying what fills them; open Roots' Legend and the creation scoring legend. Continue, Wrong and Never remain owner-pending under F240.",
+      "walk": "Open the app. Sending is Send; X removes or closes; Deny wears the barred circle and Approve the check. Archive a thread, Reset a layout and delete a memory: each question names what is lost and offers bare Yes/No. Archiving… stays visible while busy. Import malformed recipe/plugin JSON and interrupt a read: the message names the failure and recovery, never diagnostics. Preserve an authored refusal and a repeated /remember response. Inspect empty modules for one line saying what fills them; open Roots' Legend and the creation scoring legend. Continue, Wrong and Never remain owner-pending under F240.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-215.png",
