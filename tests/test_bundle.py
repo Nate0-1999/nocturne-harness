@@ -1,5 +1,6 @@
 """A-084: a workflow's key values stay in its vault; only its saved tools run with them."""
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -82,6 +83,68 @@ async def test_the_agent_never_reads_the_vault_and_a_saved_tool_runs_with_its_ke
     finally:
         sealed.close()
         await toolset.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("in_a_job", [True, False])
+async def test_a_jobs_sub_agent_runs_the_bundles_tool_and_gains_nothing_else(
+    tmp_path: Path, monkeypatch, in_a_job: bool
+) -> None:
+    """A-090 / F247: in a job's run a sub-agent runs the saved bundle's tool as its parent does,
+    from the same sealed copy with the same redaction (it was told "The vault is sealed from an
+    agent's shell"). The wall the job declared stays with the parent, the vault stays
+    unreadable, and a sub-agent outside a job's run gets no tool. [ADR-015]
+    """
+    from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
+    from pydantic_ai.models.function import FunctionModel
+
+    from harness.toolset_runtime import LazyStandardToolset
+    from tests.test_agent_runtime import context
+    from tests.test_compaction import _delegate_turn, _delegating_parent
+
+    root = _bundle(tmp_path, monkeypatch, allow=["remote"])
+    vault = tmp_path / "home" / "vault" / "Show.env"
+    commands = ["nocturne tool run show one", f"cat {vault}", "git push origin main"]
+
+    def worker(messages, info):
+        if isinstance(messages[-1].parts[-1], ToolReturnPart):
+            return ModelResponse([TextPart("Done.")])
+        return ModelResponse(
+            [
+                ToolCallPart("bash", {"command": command}, tool_call_id=f"call-{index}")
+                for index, command in enumerate(commands)
+            ]
+        )
+
+    toolset = LazyStandardToolset(
+        cwd=root, workspace_root=root, agent_id="agent-1", machine_id="machine-1"
+    )
+    sealed = SealedTools.seal(root, bundle_record(root), "Show")
+    if in_a_job:  # what a job's run puts on its thread: the bundle's tools and its declared walls
+        toolset.crossings.tools = sealed
+        toolset.crossings.thread.update(["remote"])
+    try:
+        model = FunctionModel(function=worker, stream_function=_delegating_parent([]))
+        emit, rows, _snapshot = await _delegate_turn(tmp_path, model, deps=context(toolset=toolset))
+    finally:
+        sealed.close()
+        await toolset.close()
+
+    (record,) = [row for row in rows if row["record_type"] == "worker_return"]
+    ran, read, pushed = (
+        part["content"]
+        for message in record["history"]
+        for part in message["parts"]
+        if part["part_kind"] == "tool-return"
+    )
+    if in_a_job:
+        assert ran == "key=[vault:SHOW_KEY] args=one\n"
+    else:
+        assert "key=" not in ran
+    if fence_status()[0]:
+        assert "not permitted" in read or "Permission denied" in read
+    assert pushed.startswith("bash refused: That command may leave this project")
+    assert SECRET not in json.dumps([rows, emit.events, emit.texts])
 
 
 def test_the_pack_is_the_same_bytes_and_never_carries_a_key_value(

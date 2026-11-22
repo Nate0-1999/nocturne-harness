@@ -15,7 +15,13 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-from pydantic_ai import ModelHTTPError, UsageLimitExceeded, capture_run_messages
+from pydantic_ai import (
+    ModelHTTPError,
+    ToolFailed,
+    UnexpectedModelBehavior,
+    UsageLimitExceeded,
+    capture_run_messages,
+)
 from pydantic_ai.messages import (
     AgentStreamEvent,
     BinaryContent,
@@ -421,44 +427,54 @@ class PydanticAITurnRunner:
                 worker_id = generate_ulid()
                 worker_share = bounds.share(limit_tokens, share_percent)
                 location = context.toolset.location() if context.toolset is not None else None
-                toolset = (
-                    None
-                    if location is None
-                    else LazyStandardToolset(
-                        cwd=location.cwd,
-                        workspace_root=location.workspace_root,
-                        agent_id=f"{context.agent_id}/{worker_id}",
-                        machine_id=context.machine_id,
-                        fence_reads=location.fence_reads,
-                    )
-                )
-                worker_context = replace(
-                    context,
-                    toolset=toolset,
-                    delegate=None,
-                    boundary_review=None,
-                    agent_id=f"{context.agent_id}/{worker_id}",
-                )
+                toolset = None
+                worker_messages: list[ModelMessage] = []
                 try:
+                    toolset = (
+                        None
+                        if location is None
+                        else LazyStandardToolset(
+                            cwd=location.cwd,
+                            workspace_root=location.workspace_root,
+                            agent_id=f"{context.agent_id}/{worker_id}",
+                            machine_id=context.machine_id,
+                            fence_reads=location.fence_reads,
+                        )
+                    )
+                    granted = getattr(context.toolset, "crossings", None)
+                    if toolset is not None and granted is not None:
+                        # A-090 (F247): in a job's run the worker runs the saved bundle's tools as
+                        # its parent does, from the same sealed copy. Only the tools pass: the
+                        # walls the job declared and the thread's cards stay with the parent, and
+                        # outside a job's run there are no tools to pass.
+                        toolset.crossings.tools = granted.tools
+                    worker_context = replace(
+                        context,
+                        toolset=toolset,
+                        delegate=None,
+                        boundary_review=None,
+                        agent_id=f"{context.agent_id}/{worker_id}",
+                    )
                     prompt, history = task, ()
                     # WALL main context / D.2 153: worker bulk must not force compaction.
                     # Over the share: sent back to shorten by exactly D, twice; then cut.
                     for attempt in range(1, 4):
-                        result = await self._agent.worker_agent.run(
-                            prompt,
-                            # M3W6B-18: a sent-back worker wrote a new file though told not to;
-                            # it only shortens its return, with its tools off.
-                            deps=(
-                                worker_context
-                                if attempt == 1
-                                else replace(worker_context, toolset=None)
-                            ),
-                            model=selected_model,
-                            model_settings=model_settings,
-                            usage=run_usage,
-                            usage_limits=self._agent.usage_limits,
-                            message_history=list(history) or None,
-                        )
+                        with capture_run_messages() as worker_messages:
+                            result = await self._agent.worker_agent.run(
+                                prompt,
+                                # M3W6B-18: a sent-back worker wrote a new file though told not
+                                # to; it only shortens its return, with its tools off.
+                                deps=(
+                                    worker_context
+                                    if attempt == 1
+                                    else replace(worker_context, toolset=None)
+                                ),
+                                model=selected_model,
+                                model_settings=model_settings,
+                                usage=run_usage,
+                                usage_limits=self._agent.usage_limits,
+                                message_history=list(history) or None,
+                            )
                         full = result.output
                         self._extraction._journal.append_worker_return(
                             thread_id,
@@ -515,6 +531,49 @@ class PydanticAITurnRunner:
                         }
                     )
                     return delivered
+                except UsageLimitExceeded:
+                    raise  # the run's own limit is the owner's stop, as a cancel is
+                except Exception as exc:
+                    running = asyncio.current_task()
+                    if running is not None and running.cancelling():
+                        raise
+                    # A-090 (F247): a worker that fails ended its parent's whole run; it is an
+                    # answer to its parent instead, journaled with the work it had done.
+                    provider = _provider_error(exc, selected_model.model_name)
+                    reason = run_error_message(exc)
+                    if provider is not None:
+                        reason = f"the provider refused its request: {provider.message}"
+                    elif isinstance(exc, UnexpectedModelBehavior):
+                        # The library's advice after its first sentence is for developers.
+                        reason = f"its model's reply could not be used: {reason.split('. ')[0]}"
+                    logger.warning(
+                        "Sub-agent failed: run=%s worker=%s", emit.run_id, worker_id, exc_info=exc
+                    )
+                    self._extraction._journal.append_worker_return(
+                        thread_id,
+                        worker_id,
+                        reason,
+                        to_jsonable_python(worker_messages),
+                        failed=True,
+                    )
+                    if worker_messages:
+                        # WALL money: what the worker spent before it failed is still receipted.
+                        await self._record_spend(
+                            worker_messages,
+                            prior_history=history,
+                            context=worker_context,
+                            emit=emit,
+                            purpose="building",
+                            memory_id=None,
+                        )
+                    await emit.event(
+                        {"event_kind": "worker_failed", "worker_id": worker_id, "reason": reason}
+                    )
+                    answer = (
+                        f"The sub-agent failed and returned nothing. What failed: {reason}\n"
+                        "Its work so far is kept in the journal."
+                    )
+                    raise ToolFailed(answer) from exc  # A-090: the parent reads it and goes on
                 finally:
                     if toolset is not None:
                         await toolset.close()

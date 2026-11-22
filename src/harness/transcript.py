@@ -702,14 +702,17 @@ class TranscriptJournal:
         worker_id: str,
         result: str,
         history: list[Any],
+        *,
+        failed: bool = False,
     ) -> None:
-        """D.2 153: full worker output stays here, never in the parent's provider history."""
+        """D.2 153: full worker output stays here, never in the parent's provider history.
+        A-090: a worker that failed leaves what failed as its result, and its work so far."""
         with self._lock:
             self._append(
                 thread_id,
                 {
                     "version": 1,
-                    "record_type": "worker_return",
+                    "record_type": "worker_failure" if failed else "worker_return",
                     "worker_id": worker_id,
                     "result": result,
                     "history": history,
