@@ -11,7 +11,7 @@ from typing import Literal
 from uuid import UUID, uuid4
 
 from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent, _within_cap
-from harness.memory_outbox import MemoryOutbox, never_reached_palace
+from harness.memory_outbox import MemoryOutbox, never_reached_palace, palace_refused
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
@@ -65,11 +65,32 @@ class ExtractionService:
     async def replay(self, payload: Mapping[str, object]) -> None:
         """M4BW: a queued compaction batch reaches the Palace's queue now, through its law."""
         request = ExtractionRequest.model_validate(payload["request"])
-        response = await self._create_extraction(request)
+        try:
+            response = await self._create_extraction(request)
+        except SpineProblemError as exc:
+            # A terminal delivery refusal moves the batch out of the outbox.
+            # Its compaction record must stop waiting at the same time.
+            if request.candidate_ids and palace_refused(exc) and exc.status_code != 402:
+                self._journal.append_admission_outcomes(
+                    str(request.thread_id), self._delivery_refusals(request, exc)
+                )
+            raise
         if request.candidate_ids:
             self._journal.append_admission_outcomes(
                 str(request.thread_id), self._outcomes(request, response)
             )
+
+    @staticmethod
+    def _delivery_refusals(request: ExtractionRequest, exc: SpineProblemError) -> dict[str, dict]:
+        return {
+            str(key): {
+                "candidate_id": str(key),
+                "status": "refused",
+                "source": "delivery",
+                "reason": exc.problem.detail or exc.problem.title or f"HTTP {exc.status_code}",
+            }
+            for key in request.candidate_ids or []
+        }
 
     @staticmethod
     def _outcomes(request: ExtractionRequest, response: ExtractionResponse) -> dict[str, dict]:
@@ -286,6 +307,9 @@ class ExtractionService:
                 try:
                     response = await self._create_extraction(request)
                 except SpineClientError as exc:
+                    if request.candidate_ids and palace_refused(exc) and exc.status_code != 402:
+                        outcomes.update(self._delivery_refusals(request, exc))
+                        continue
                     replay_safe = account and isinstance(exc, (SpineTransportError, SpineBusyError))
                     if self._outbox is None or not (replay_safe or never_reached_palace(exc)):
                         raise
