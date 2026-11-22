@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import re
 from contextlib import aclosing
 
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
@@ -10,6 +11,12 @@ from harness.envelope import StopReason
 from harness.run_protocol import TurnOutcome
 from harness.t3_client import TERMINAL, RunTransitions, T3Error, new_id
 from harness.t3_sources import resolve_offer
+
+
+def _native_names(title: str, project_id: str) -> tuple[str, str]:
+    title = title.strip()
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40].rstrip("-")
+    return title or "Nocturne conversation", f"nocturne-{slug or 'conversation'}-{project_id[:8]}"
 
 
 class SubscriptionTurns:
@@ -43,7 +50,10 @@ class SubscriptionTurns:
                 "native_project": new_id(),
                 "native_thread": new_id(),
             }
-            workspace = self.server.root / "workspace" / binding["native_project"]
+            title, folder = _native_names(
+                self.journal.conversation_title(thread_id), binding["native_project"]
+            )
+            workspace = self.server.root / "workspace" / folder
             workspace.mkdir(mode=0o700)
             await client.call(
                 "projects.mutate",
@@ -51,7 +61,7 @@ class SubscriptionTurns:
                     "type": "project.create",
                     "projectId": binding["native_project"],
                     "commandId": new_id(),
-                    "title": "Nocturne",
+                    "title": title,
                     "workspaceRoot": str(workspace),
                 },
             )
@@ -87,7 +97,7 @@ class SubscriptionTurns:
             )
         send = asyncio.create_task(
             client.launch(
-                binding["native_project"], thread, message, text, source["tool"], model["id"]
+                binding["native_project"], thread, message, text, source["tool"], model["id"], title
             )
             if fresh
             else client.message(thread, message, text)

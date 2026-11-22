@@ -49,6 +49,19 @@ class HydratedTranscript:
     compaction_histories: Mapping[str, list[Any]] = field(default_factory=dict)
     repository: str | None = None
 
+    def conversation_title(self, fallback: str | None = None) -> str:
+        placeholder = "Restored conversation" if self.messages else "New thread"
+        for message in self.messages:
+            if message.get("role") != "user":
+                continue
+            content = message.get("content")
+            if isinstance(content, str) and content.strip():
+                if content.lstrip().startswith("/"):
+                    placeholder = "New thread"  # M3W5B-34: a slash command never names the thread.
+                    continue
+                return " ".join(content.split())[:80]
+        return placeholder if fallback is None else fallback
+
 
 @dataclass(frozen=True, slots=True)
 class JournalCloudRecord:
@@ -312,6 +325,11 @@ class TranscriptJournal:
             return None, None
         return transcript.project_key, transcript.current_location
 
+    def conversation_title(self, thread_id: str) -> str:
+        """Read this branch's catalog title without substituting a navigation placeholder."""
+        transcript = self._hydrate_file(self._filename_for_thread(thread_id))
+        return transcript.conversation_title(fallback="") if transcript else ""
+
     def hydrate_threads(self) -> tuple[HydratedTranscript, ...]:
         """Reconstruct every current transcript branch from durable journal rows."""
 
@@ -479,20 +497,9 @@ class TranscriptJournal:
             ):
                 archived = False
         times = [row.get("captured_at") for row in rows if isinstance(row.get("captured_at"), str)]
-        title = "Restored conversation" if transcript.messages else "New thread"
-        for message in transcript.messages:
-            if message.get("role") != "user":
-                continue
-            content = message.get("content")
-            if isinstance(content, str) and content.strip():
-                if content.lstrip().startswith("/"):
-                    title = "New thread"  # M3W5B-34: a slash command never names the thread.
-                    continue
-                title = " ".join(content.split())[:80]
-                break
         return TranscriptCatalogEntry(
             thread_id=transcript.thread_id,
-            title=title,
+            title=transcript.conversation_title(),
             created_at=self._browser_timestamp(times[0]),
             updated_at=self._browser_timestamp(times[-1]),
             project_key=transcript.project_key,

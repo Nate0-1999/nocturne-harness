@@ -178,7 +178,14 @@ class T3Client:
         )
 
     async def launch(
-        self, project: str, thread: str, message: str, text: str, instance: str, model: str
+        self,
+        project: str,
+        thread: str,
+        message: str,
+        text: str,
+        instance: str,
+        model: str,
+        title: str,
     ):
         return await self.call(
             "orchestration.launchThread",
@@ -186,7 +193,7 @@ class T3Client:
                 "commandId": new_id(),
                 "threadId": thread,
                 "projectId": project,
-                "title": "Nocturne",
+                "title": title,
                 "generateTitle": False,
                 "modelSelection": {"instanceId": instance, "model": model},
                 "runtimeMode": "approval-required",

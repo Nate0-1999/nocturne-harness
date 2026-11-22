@@ -199,8 +199,36 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
     assert journal.read_messages("thread-1")[-1]["content"] == text
     binding = journal.subscription_binding("thread-1")
     assert binding and binding["source"].endswith("/test-model")
+    project = next(
+        args.args[1] for args in client.call.await_args_list if args.args[0] == "projects.mutate"
+    )
+    title = journal.catalog()[0].title
+    assert project["title"] == client.launch.await_args.args[-1] == title
+    workspace = Path(project["workspaceRoot"])
+    assert workspace.parent == server.root / "workspace"
+    assert workspace.name.endswith("-" + binding["native_project"][:8])
+    assert workspace.stat().st_mode & 0o777 == 0o700
     assert all(
         value not in json.dumps(binding) for value in ("@", "account-one", "Private Account")
+    )
+
+
+@pytest.mark.parametrize(
+    ("title", "expected_title", "slug"),
+    [
+        ("", "Nocturne conversation", "conversation"),
+        ("../Tea & Cake/🍰?", "../Tea & Cake/🍰?", "tea-cake"),
+        ("🍰!", "🍰!", "conversation"),
+        ("A" * 60, "A" * 60, "a" * 40),
+    ],
+)
+def test_native_names_keep_title_and_use_safe_short_folder(title, expected_title, slug):
+    """A-095: native history needs a readable title without letting it choose a filesystem path."""
+    from harness.t3_turn import _native_names
+
+    assert _native_names(title, "8e4d2a1c-6a4a-41d1-ae92-b1de8cb863af") == (
+        expected_title,
+        f"nocturne-{slug}-8e4d2a1c",
     )
 
 
