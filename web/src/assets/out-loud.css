@@ -6,3 +6,5 @@
   min-width: 0;
 }
 .out-loud small { flex-basis: 100%; overflow-wrap: anywhere; }
+.composer .composer__utility > .out-loud { flex: 0 1 auto; }
+.out-loud .kit-button { max-width: 100%; white-space: normal; }

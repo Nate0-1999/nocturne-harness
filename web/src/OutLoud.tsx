@@ -233,7 +233,7 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
             listen()
           }
         }}>{playback !== 'idle' ? 'Interrupt and listen' : phase === 'listening' ? 'Stop listening' : 'Listen'}</Button>
-        <ReadingSpeed />
+        {playback === 'idle' && <ReadingSpeed />}
         <small role="status">{blocked ? 'Waiting for the conversation…'
           : playback === 'paused' ? 'Reading paused.' : playback === 'reading' ? 'Reading aloud…'
           : responding && phase === 'idle' ? 'Reply running. Tap Listen to dictate.' : status}</small>
