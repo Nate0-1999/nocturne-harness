@@ -13,7 +13,6 @@ from harness.run_protocol import TurnOutcome
 from harness.t3_client import TERMINAL, RunTransitions, T3Error, new_id
 from harness.t3_sources import resolve_offer
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -122,7 +121,7 @@ class SubscriptionTurns:
                     await client.dispatch(thread, "thread.archive")
                 except Exception as exc:
                     logger.warning(
-                        "Could not archive subscription thread %s (%s). It may still appear active.",
+                        "Could not archive subscription thread %s (%s). It may remain active.",
                         thread,
                         type(exc).__name__,
                     )

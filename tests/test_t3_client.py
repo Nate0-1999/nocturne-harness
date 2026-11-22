@@ -56,6 +56,97 @@ def test_recorded_interrupt_closes_once_even_after_replay():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("later_status,reason", [("completed", "end_turn"), ("failed", "error")])
+async def test_subscription_terminal_archives_once_and_reopens_before_next_message(
+    later_status, reason, monkeypatch, caplog
+):
+    """A-095: preserve resume after an interrupt and preserve the outcome if archive fails."""
+    import hashlib
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, Mock
+
+    from harness import t3_turn
+    from harness.t3_client import T3Client
+
+    frames = json.loads((Path(__file__).parent / "fixtures/t3/terminal-replay.json").read_text())
+    client = T3Client(23001)
+    client.environment_id = "environment"
+    model = "subscription:codex/account/model"
+    journal = Mock()
+    journal.subscription_binding.return_value = {
+        "source": model,
+        "environment": hashlib.sha256(b"environment").hexdigest(),
+        "native_thread": "thread",
+    }
+    runner = t3_turn.SubscriptionTurns(
+        None, SimpleNamespace(client=AsyncMock(return_value=client)), journal
+    )
+    monkeypatch.setattr(t3_turn, "resolve_offer", AsyncMock(return_value=(model, {}, {})))
+    commands = []
+    archived = False
+    runs = []
+    messages = []
+
+    async def call(method, args):
+        nonlocal archived
+        if method == "orchestration.getThreadProjection":
+            return {
+                "thread": {"archivedAt": "timestamp" if archived else None},
+                "runs": runs,
+                "messages": [],
+                "runtimeRequests": [],
+            }
+        assert method == "orchestration.dispatchCommand"
+        command = args["type"]
+        commands.append(command)
+        if command == "message.dispatch":
+            assert not archived
+            messages.append(args["messageId"])
+        elif command == "thread.unarchive":
+            assert archived
+            archived = False
+        elif command == "thread.archive":
+            assert runs[-1]["status"] in {"interrupted", "completed", "failed"}
+            if len(messages) == 2:
+                raise T3Error("archive rejected")
+            archived = True
+        return {"sequence": 0}
+
+    async def events(thread, after):
+        # The recorded handshake retained status and id. Reattach this submission's message id.
+        for frame in frames:
+            run = dict(frame["event"]["payload"], userMessageId=messages[-1])
+            if len(messages) == 2:
+                run.update(id="later-run", status=later_status)
+            runs[:] = [run]
+            yield {"sequence": frame["sequence"], "event": {"type": "run.updated", "payload": run}}
+
+    monkeypatch.setattr(client, "call", call)
+    monkeypatch.setattr(client, "events", events)
+    args = dict(
+        thread_id="local-thread",
+        prompt="Hello",
+        emit=AsyncMock(),
+        model_resolution=SimpleNamespace(model=model),
+        message_history=(),
+    )
+    assert (await runner.run(**args)).stop_reason.value == "cancelled"
+    outcome = await runner.run(**args)
+    assert outcome.stop_reason.value == reason
+    assert outcome.error_message == (
+        "The native turn failed." if later_status == "failed" else None
+    )
+    assert commands == [
+        "message.dispatch",
+        "thread.archive",
+        "thread.unarchive",
+        "message.dispatch",
+        "thread.archive",
+    ]
+    assert "Could not archive subscription thread" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_optional_server_starts_only_on_request_and_names_missing_install(tmp_path):
     """F256: ordinary conversations work without installing the optional model loop."""
     server = T3Server(tmp_path)
