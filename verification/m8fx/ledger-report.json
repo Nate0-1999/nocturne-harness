@@ -2,12 +2,12 @@
   "packet": "M8FX",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "ecb6cdea1916ea524ad264688eed2afae19e87f0533c0494603325334184e517",
+  "ledger_sha256": "eee5d9ad96468d200cf4c29f13e74c52ee57eccf8037bdb7296cc612eee049cd",
   "diffs": [
     {
       "repo": "harness",
-      "base": "5e1aed0dde6f55eb82241f9cba6cebcb553cf542",
-      "head": "ca58213d61336172f66b8ebdedcffab09a334362"
+      "base": "8f3fc1b536064c1d02fe1c61b62e26ccd2f66b8d",
+      "head": "710bb257a2707ed8381205d6f5875f89d08e2d68"
     }
   ],
   "unmapped": {
@@ -35,11 +35,15 @@
     "harness/verification/m8fx/FL-215.png": "M8FX verification evidence or handoff report; no product behavior.",
     "harness/verification/m8fx/SHA256SUMS": "M8FX verification evidence or handoff report; no product behavior.",
     "harness/verification/m8fx/ledger-report.json": "M8FX verification evidence or handoff report; no product behavior.",
+    "harness/web/dist/assets/index-DardbKK5.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-DrG4jNew.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-Focs3Icq.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-dQ6qrT_F.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/index.html": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-BErpX3EV.css": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-BPr6Tqxq.css": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-DHRu_Hhn.js": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-Yhk3qPjk.js": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
-    "harness/web/dist/index.html": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-BdPYq6E2.css": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-y92u6I21.css": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
     "harness/web/dist/assets/index-CsL5wxJB.js": "Generated and intermediate web bundles; Explorer source and live walk are covered by FL-126/199/201.",
