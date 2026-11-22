@@ -6,8 +6,8 @@
   "diffs": [
     {
       "repo": "harness",
-      "base": "c7a72e930e77c2908924ac8fe7548fc1ad7c8349",
-      "head": "3c2a8c7b987dc33b9e661ee66396d7a330216727"
+      "base": "8f3fc1b536064c1d02fe1c61b62e26ccd2f66b8d",
+      "head": "6b4c1a3692e0866ad4df75ae9ee5b2d7e6348213"
     }
   ],
   "unmapped": {
@@ -94,9 +94,11 @@
     "harness/verification/m8tb/FL-215.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/SHA256SUMS": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/ledger-report.json": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/web/dist/assets/index-DardbKK5.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-DeZrJD2B.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/index.html": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/dist/assets/index-DHRu_Hhn.js": "Packaged build of the existing model choice and its explicit subscription entries.",
-    "harness/web/dist/assets/index-DY41gOxg.js": "Packaged build of the existing model choice and its explicit subscription entries.",
-    "harness/web/dist/index.html": "Packaged build of the existing model choice and its explicit subscription entries."
+    "harness/web/dist/assets/index-DY41gOxg.js": "Packaged build of the existing model choice and its explicit subscription entries."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -134,7 +136,7 @@
       "verdict": "PASS",
       "screenshot": "FL-018.png",
       "flag": "",
-      "observed": "The first native turn waited on the selected fact before dispatch. The second turn ran without another gate."
+      "observed": "The first native turn waited on the selected fact before dispatch. The second turn ran without another gate. Claude Opus 5.5 also used the selected word after review (ultra/gate.png)."
     },
     "FL-039": {
       "label": "Agents make no memories until compaction; the explicit /remember command is the other way.",
@@ -233,7 +235,7 @@
       "verdict": "PASS",
       "screenshot": "FL-106.png",
       "flag": "",
-      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread."
+      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden)."
     },
     "FL-107": {
       "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
