@@ -1,3 +1,4 @@
+.work-viz__project select[aria-label="Farm look"]{min-width:calc(8ch + 40px)}
 .farm-explorer{min-height:0;max-height:540px;overflow:auto;padding-block:8px;font:var(--text-md) var(--data-font);color:var(--ink);background:var(--surface-deep)}
 .farm-explorer__row{display:flex;align-items:center;gap:8px;min-height:36px;padding-inline-end:12px;border-bottom:1px solid var(--line);cursor:pointer}
 .farm-explorer__row:hover,.farm-explorer__row[aria-selected=true]{background:var(--accent-soft)}
