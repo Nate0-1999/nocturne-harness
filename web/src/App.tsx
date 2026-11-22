@@ -32,6 +32,7 @@ import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { WorkVisualization } from './WorkVisualization'
+import { ProfilerModule } from './ProfilerModule'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
@@ -1859,6 +1860,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <JobsModule />
       ) : moduleId === 'security' ? (
         <SecurityModule />
+      ) : moduleId === 'profiler' ? (
+        <ProfilerModule />
       ) : moduleId === 'recipe' ? (
         <RecipeModule />
       ) : (
