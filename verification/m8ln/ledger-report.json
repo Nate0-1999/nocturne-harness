@@ -7,25 +7,26 @@
     {
       "repo": "harness",
       "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "d8a3bf6ba458a4e65d8c16f4e27eef38a8254d12"
+      "head": "aefe207b8b8c5ba26cca5b3e79d5efe9659e82f8"
     }
   ],
   "unmapped": {
     "harness/src/harness/__init__.py": "Paired package version.",
-    "harness/verification/m8ln/FL-009.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-069.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-170.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-186.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-187.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-190.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-191.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-192.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-193.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-194.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/FL-196.png": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/SHA256SUMS": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/impacted.json": "Packet verification receipt, its coverage declaration, or its integrity record.",
-    "harness/verification/m8ln/ledger-report.json": "Packet verification receipt, its coverage declaration, or its integrity record."
+    "harness/verification/m8ln/FL-009.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-069.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-170.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-186.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-187.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-190.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-191.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-192.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-193.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-194.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-196.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/SHA256SUMS": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/ledger-report.json": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/FL-195.png": "Packet evidence, its integrity record, or the generated list of affected rows.",
+    "harness/verification/m8ln/impacted.json": "Packet evidence, its integrity record, or the generated list of affected rows."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -35,8 +36,8 @@
       "protected": true,
       "verdict": "BLOCKED",
       "screenshot": "FL-069.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-187": {
       "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
@@ -45,7 +46,7 @@
       "verdict": "PASS",
       "screenshot": "FL-187.png",
       "flag": "",
-      "observed": "Git reports distinct Harness and Memory repository roots and distinct origins. See the captured command output."
+      "observed": "The two products have separate Git roots and remotes."
     },
     "FL-190": {
       "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
@@ -53,8 +54,8 @@
       "protected": true,
       "verdict": "BLOCKED",
       "screenshot": "FL-190.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-191": {
       "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
@@ -62,8 +63,8 @@
       "protected": true,
       "verdict": "BLOCKED",
       "screenshot": "FL-191.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-194": {
       "label": "The Pydantic toolset and skills as the tool layer.",
@@ -71,17 +72,26 @@
       "protected": true,
       "verdict": "BLOCKED",
       "screenshot": "FL-194.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
+    },
+    "FL-195": {
+      "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
+      "walk": "Compute the composer fix's impact with --paths and see attunement rows; push a branch touching socket.ts and observe the hook print rows and write impacted.json; observe a DONE handoff without screenshots fail CI, then verify complete evidence passes.",
+      "protected": true,
+      "verdict": "PASS",
+      "screenshot": "FL-195.png",
+      "flag": "",
+      "observed": "The socket pre-push hook listed protected rows and wrote impacted.json. Main-mode CI refused a DONE commit with missing evidence."
     },
     "FL-196": {
       "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
       "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
       "protected": true,
-      "verdict": "BLOCKED",
+      "verdict": "PASS",
       "screenshot": "FL-196.png",
-      "flag": "F258",
-      "observed": "Eight historical freeze refusals reproduced. The new checker and the requested eight historical passes remain unproven."
+      "flag": "",
+      "observed": "In disposable clones, removing a guard citation and changing a frozen axiom each failed its workflow check. Both passed after restoration."
     },
     "FL-009": {
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
@@ -89,8 +99,8 @@
       "protected": false,
       "verdict": "BLOCKED",
       "screenshot": "FL-009.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-170": {
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
@@ -98,8 +108,8 @@
       "protected": false,
       "verdict": "BLOCKED",
       "screenshot": "FL-170.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
@@ -107,8 +117,8 @@
       "protected": false,
       "verdict": "BLOCKED",
       "screenshot": "FL-186.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-192": {
       "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
@@ -116,8 +126,8 @@
       "protected": false,
       "verdict": "BLOCKED",
       "screenshot": "FL-192.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     },
     "FL-193": {
       "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
@@ -125,8 +135,8 @@
       "protected": false,
       "verdict": "BLOCKED",
       "screenshot": "FL-193.png",
-      "flag": "F258",
-      "observed": "Required by the paired dependency metadata. The product walk was not run. This packet allows no app or model run."
+      "flag": "F086",
+      "observed": "The paired Memory pin selected this row. The M8LN tool-only trial did not run the prescribed app walk."
     }
   },
   "not_run": {
@@ -315,7 +325,6 @@
     "FL-185": "outside diff",
     "FL-188": "unverified",
     "FL-189": "dropped",
-    "FL-195": "outside diff",
     "FL-198": "outside diff",
     "FL-199": "outside diff",
     "FL-200": "outside diff",
