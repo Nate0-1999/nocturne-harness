@@ -1501,6 +1501,10 @@ class RunLoop:
                 tool, _, model = resolution.model.removeprefix("subscription:").split("/", 2)
                 message = (
                     f"This conversation now uses {model} through {tool}. "
+                    "The first message to this tool includes earlier user and assistant text "
+                    "from the conversation history. The tool starts in an empty private folder "
+                    "inside your Nocturne home. Your project files stay in their own folder. "
+                    "The tool can read other paths if its own permissions allow it. "
                     "The tool controls its own actions outside Nocturne’s fence."
                 )
             elif previous.model == resolution.model:

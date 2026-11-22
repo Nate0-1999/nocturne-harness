@@ -2,7 +2,6 @@
 
 import asyncio
 import hashlib
-import re
 from contextlib import aclosing
 
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
@@ -11,10 +10,6 @@ from harness.envelope import StopReason
 from harness.run_protocol import TurnOutcome
 from harness.t3_client import TERMINAL, RunTransitions, T3Error, new_id
 from harness.t3_sources import resolve_offer
-
-
-def _public_text(text: str) -> str:
-    return re.sub(r"\S*@\S*", "[address withheld]", text)
 
 
 class SubscriptionTurns:
@@ -137,20 +132,16 @@ class NativeTurn:
             "orchestration.getThreadProjection", {"threadId": self.thread}
         )
 
-    async def update(self, msg, final=False):
+    async def update(self, msg):
         if msg["role"] != "assistant" or msg.get("runId") != self.run or not self.run:
             return
         text = msg["text"]
-        # An address may arrive in pieces. Release completed words while streaming.
-        if not final and msg.get("streaming"):
-            text = re.sub(r"\S+$", "", text)
-        clean = _public_text(text)
         prior = self.written.get(msg["id"], "")
-        if clean.startswith(prior) and clean != prior:
-            delta = clean[len(prior) :]
+        if text.startswith(prior) and text != prior:
+            delta = text[len(prior) :]
             await self.emit.text(delta)
             self.answer += delta
-            self.written[msg["id"]] = clean
+            self.written[msg["id"]] = text
 
     async def request(self, item):
         if item["status"] == "pending" and item["id"] not in self.declined:
@@ -167,7 +158,7 @@ class NativeTurn:
         for item in projection["runtimeRequests"]:
             await self.request(item)
         for msg in projection["messages"]:
-            await self.update(msg, final=run["status"] in TERMINAL)
+            await self.update(msg)
         return self.transitions.terminal({"type": "run.updated", "payload": run})
 
     async def observe(self, after):

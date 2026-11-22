@@ -92,7 +92,7 @@ def test_inventory_keeps_private_auth_and_untrusted_labels_out_of_source_rows():
         "message": account_email,
     }
     rows = project_sources([provider])
-    assert account_email not in json.dumps(rows) and "account-one" not in json.dumps(rows)
+    assert "@" not in json.dumps(rows) and "account-one" not in json.dumps(rows)
     assert rows[0]["availability"] == "available"
     assert rows[0]["models"][0]["availability"] == "limited"
     assert rows[0]["models"][0]["limited_until"] == "2026-11-22T23:00:00+00:00"
@@ -101,8 +101,8 @@ def test_inventory_keeps_private_auth_and_untrusted_labels_out_of_source_rows():
 
 
 @pytest.mark.asyncio
-async def test_native_stream_uses_only_completed_words_and_declines_once():
-    """A-095: a split account address and duplicate native request must stay out of the journal."""
+async def test_native_stream_emits_partial_words_and_declines_once():
+    """A-095: emit each new character promptly and decline a repeated native request once."""
     from unittest.mock import AsyncMock
 
     from harness.t3_turn import NativeTurn
@@ -111,13 +111,97 @@ async def test_native_stream_uses_only_completed_words_and_declines_once():
     turn = NativeTurn(client, "thread", "prompt", emit)
     turn.run = "run"
     message = {"id": "msg", "role": "assistant", "runId": "run", "streaming": True}
-    await turn.update({**message, "text": "Hi person"})
-    await turn.update({**message, "text": "Hi person" + "@" + "example.test now"}, final=True)
-    assert turn.answer == "Hi [address withheld] now"
+    await turn.update({**message, "text": "@sta"})
+    emit.text.assert_awaited_once_with("@sta")
+    await turn.update({**message, "text": "@staticmethod"})
+    await turn.update({**message, "text": "@staticmethod"})
+    assert [args.args[0] for args in emit.text.await_args_list] == ["@sta", "ticmethod"]
+    assert turn.answer == "@staticmethod"
     await turn.request({"id": "request", "status": "pending"})
     await turn.request({"id": "request", "status": "pending"})
     client.decline.assert_awaited_once_with("thread", "request")
     assert "declined" in emit.text.await_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tmp_path):
+    """A-095: source identity stays private while code and user-supplied addresses round-trip."""
+    from unittest.mock import AsyncMock
+
+    from test_run_loop import Ids, RecordingResolver, Sink, _wait_for_done_count, factory, ulid
+
+    from harness.model_policy import ThreadModelResolution
+    from harness.run_loop import RunLoop
+    from harness.t3_turn import SubscriptionTurns
+    from harness.transcript import TranscriptJournal
+
+    answer = "@staticmethod\n@scope/name\nreader@example.test"
+    provider = {
+        "instanceId": "codex",
+        "status": "ready",
+        "auth": {
+            "status": "authenticated",
+            "type": "chatgpt",
+            "workspaceId": "account-one",
+            "label": "Private Account",
+            "email": "account@example.test",
+        },
+        "models": [{"slug": "test-model"}],
+    }
+    server = T3Server(tmp_path)
+    (server.root / "workspace").mkdir(parents=True)
+    client = AsyncMock(environment_id="test-environment")
+    client.launch.return_value = {"sequence": 1}
+
+    async def call(method, params):
+        if method == "server.getConfig":
+            return {"providers": [provider]}
+        if method == "projects.mutate":
+            return {}
+        assert method == "orchestration.getThreadProjection"
+        return {
+            "runs": [
+                {
+                    "id": "run",
+                    "status": "completed",
+                    "userMessageId": client.launch.await_args.args[2],
+                }
+            ],
+            "runtimeRequests": [],
+            "messages": [{"id": "msg", "role": "assistant", "runId": "run", "text": answer}],
+        }
+
+    client.call.side_effect = call
+    server.client = AsyncMock(return_value=client)
+    resolution = ThreadModelResolution(
+        model="subscription:codex/test-model",
+        policy="pinned",
+        price_sorted=False,
+        context_tokens=8192,
+    )
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    loop = RunLoop(
+        SubscriptionTurns(None, server, journal),
+        factory(Ids()),
+        model_resolver=RecordingResolver({"thread-1": resolution}),
+        transcript_journal=journal,
+    )
+    sink = Sink()
+    try:
+        await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt=answer, sink=sink)
+        await _wait_for_done_count(sink, 1)
+    finally:
+        await loop.close()
+    text = "".join(
+        m.payload.text for m in sink.messages if getattr(m.payload, "kind", None) == "text"
+    )
+    assert text == "Codex controls its own actions outside Nocturne’s fence.\n\n" + answer
+    assert journal.read_messages("thread-1")[-1]["content"] == text
+    binding = journal.subscription_binding("thread-1")
+    assert binding and binding["source"].endswith("/test-model")
+    assert all(
+        value not in json.dumps(binding) for value in ("@", "account-one", "Private Account")
+    )
 
 
 @pytest.mark.asyncio
