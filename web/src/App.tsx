@@ -37,7 +37,7 @@ import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
 import { SecurityModule } from './SecurityModule'
 import { SymphonyDeck, latestDeckStacks, type DeckStack } from './SymphonyDeck'
-import { ModelChip, ModelDevice, useModelBrowser } from './ModelDevice'
+import { ModelDevice, ModelSwitch, useModelBrowser } from './ModelDevice'
 import { threadModelMark } from './modelBrowser'
 import { VitalsModule } from './VitalsModule'
 import { SpendStrip } from './SpendStrip'
@@ -2771,21 +2771,14 @@ function ChatModule() {
               })}
             />
           )}
-          <Button variant="bare"
-            type="button"
-            className="chat-header__model"
-            data-testid="active-model"
-            aria-label={`Active model: ${selectedThread?.resolvedModel ?? 'being chosen'}`}
-            data-tooltip="Open Model Device"
-            data-tooltip-detail="Browse, pin and switch models; set the thinking level."
-            onClick={() => selection.select({ kind: 'module', id: 'model_device' })}
-          >
-            <span aria-hidden="true">Model</span>
-            <span className="chat-header__model-value" data-testid="active-model-detail">
-              <ModelChip browser={browser} model={selectedThread?.resolvedModel ?? null} />
-            </span>
-          <span className="chat-header__model-action" aria-hidden="true">Open</span>
-          </Button>
+          <ModelSwitch
+            key={selectedThreadId}
+            browser={browser}
+            threadId={selectedThreadId}
+            model={selectedThread?.resolvedModel ?? null}
+            busy={activeRun !== null}
+            onOpenDevice={() => selection.select({ kind: 'module', id: 'model_device' })}
+          />
           <ToolInventory key={selectedThreadId} threadId={selectedThreadId} />
         </div>
       </header>
