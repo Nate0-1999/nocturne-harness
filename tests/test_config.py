@@ -4,8 +4,8 @@ from pydantic import ValidationError
 from harness.config import HarnessSettings
 
 
-def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) -> None:
-    """SPEC C.5 is defended by verifying that c5 defaults are local minimax with bounded runs
+def test_c5_defaults_are_gpt41_mini_with_bounded_runs_and_spine(monkeypatch) -> None:
+    """SPEC C.5 / M8DM is defended by verifying the gpt-4.1-mini default with bounded runs
     and spine; this prevents drift in the local runtime configuration contract.
     """
     for name in (
@@ -32,14 +32,14 @@ def test_c5_defaults_are_local_minimax_with_bounded_runs_and_spine(monkeypatch) 
         openrouter_api_key=None,
     )
 
-    assert settings.chat_model == "openrouter:minimax/minimax-m3"
+    assert settings.chat_model == "openrouter:openai/gpt-4.1-mini"
     assert settings.model_policy_chat is None
-    assert settings.effective_model_policy_chat == "pinned:openrouter:minimax/minimax-m3"
+    assert settings.effective_model_policy_chat == "pinned:openrouter:openai/gpt-4.1-mini"
     assert settings.spine_url == "http://localhost:8000"
     assert settings.principal_id == "local"
     assert settings.machine_id == "local-machine"
     assert settings.agent_id == "harness-agent"
-    assert settings.model_context_tokens == 1_000_000
+    assert settings.model_context_tokens == 1_047_576
     assert settings.run_request_limit == 40
     assert settings.run_total_tokens_limit == 500_000
     assert settings.label_max == 64

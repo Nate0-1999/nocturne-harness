@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -91,6 +92,14 @@ def observe_worker(
             files.setdefault(str(event.path), event.ts.isoformat())
     # A worker's turns are its model responses; each tool call happens at its response.
     responses = [message for message in messages if message.kind == "response"]
+    calls: dict = {}  # SD-098: each tool call with the time it took, for the profiler
+    for message in messages:
+        for part in message.parts:
+            if part.part_kind == "tool-call":
+                step = {"tool_name": part.tool_name, "args": part.args}
+                calls[part.tool_call_id] = _call(step, message.timestamp.timestamp())
+            elif part.part_kind == "tool-return" and part.tool_call_id in calls:
+                calls[part.tool_call_id]["end"] = part.timestamp.timestamp()
     value = {
         "id": assignment["origin_agent"],
         "thread_id": assignment["thread_id"],
@@ -108,6 +117,7 @@ def observe_worker(
             for part in response.parts
             if part.part_kind == "tool-call"
         ],
+        "calls": calls,
     }
     if all(previous.get(key) == value[key] for key in value):
         return
@@ -234,6 +244,7 @@ def work_observation(
     for path in sorted((home / "symphonies").glob("**/visualization.json")):
         try:
             value = json.loads(path.read_text())
+            value.pop("calls", None)  # the profiler's; the farm's feed and its history stay small
             meter_path = path.parent / "meter.json"
             meter = json.loads(meter_path.read_text()) if meter_path.exists() else {}
             # Judge seats share spend lineage but are distinct concurrent processes.
@@ -283,6 +294,297 @@ def work_observation(
             }
         )
     return {"agents": agents, "projects": _project_trees(roots, {} if trees is None else trees)}
+
+
+def _seconds(ts: str) -> float:
+    return datetime.fromisoformat(ts).timestamp()
+
+
+def _call(part: dict, at: float) -> dict:
+    """A tool call as a step: a skill load is named by its skill, a hand-off is its sub-agent."""
+    name, kind = part.get("tool_name") or "tool", "tool"
+    if name == "delegate_task":
+        kind = "agent"
+    elif name == "load_capability":
+        kind = "skill"
+        try:
+            args = part.get("args")
+            name = (json.loads(args) if isinstance(args, str) else args)["id"]
+        except (ValueError, TypeError, KeyError):
+            pass
+    return {"kind": kind, "name": name, "start": at, "end": None}
+
+
+def _history_worker(history: list, returned: float) -> dict:
+    """A sub-agent journaled before its steps were announced (A-093): its returned message list
+    carries a time on every request part and response."""
+    worker = {"start": returned, "end": returned, "task": "", "instructions": None, "tools": None}
+    calls = worker["calls"] = {}
+    for message in history:
+        for part in message.get("parts", []):
+            kind = part.get("part_kind")
+            if kind == "tool-call":
+                calls[part["tool_call_id"]] = _call(part, _seconds(message["timestamp"]))
+            elif kind == "tool-return" and part.get("tool_call_id") in calls:
+                calls[part["tool_call_id"]]["end"] = _seconds(part["timestamp"])
+            elif kind == "user-prompt" and not worker["task"]:
+                worker["task"] = str(part.get("content", ""))
+                worker["start"] = _seconds(part["timestamp"])
+                worker["instructions"] = message.get("instructions")
+    return worker
+
+
+def _profile_row(fold: dict, row: dict) -> None:
+    """SD-098: fold one journal row into the thread's runs. Every record carries its time."""
+    at = _seconds(row["captured_at"])
+    record = row.get("record_type")
+    if record == "message":
+        message = row.get("message") or {}
+        if message.get("role") == "user" and message.get("run_id"):
+            fold["tasks"][message["run_id"]] = str(message.get("content", ""))
+        run = fold["runs"].get(message.get("run_id"))
+        for step in message.get("events") or () if run is not None else ():
+            if step.get("event_kind") in {"symphony_started", "symphony_state"}:
+                # A Symphony works after its launch turn has returned; its state is rewritten
+                # into that turn's message, so its start and end are when the journal saw them.
+                mark = run["symphonies"].setdefault(step["symphony_id"], {"start": at, "end": None})
+                if mark["end"] is None and step.get("state", "running") != "running":
+                    mark["end"] = at
+        return
+    if record in {"worker_return", "worker_failure"}:  # A-090: a failed sub-agent also ends
+        run = fold["runs"].get(fold["open"])
+        if run is not None and row["worker_id"] not in run["workers"]:
+            run["workers"][row["worker_id"]] = _history_worker(row.get("history") or [], at)
+        return
+    event = row.get("event") or {}
+    payload = event.get("payload")
+    if record != "event" or not isinstance(payload, dict):
+        return
+    kind = event.get("type")
+    if kind == "run.started":
+        fold["open"] = payload["run_id"]
+        fold["runs"][payload["run_id"]] = {
+            "start": at,
+            "end": None,
+            "last": at,
+            "model": payload.get("resolved_model"),
+            "memory_end": None,
+            "memories": None,
+            "calls": {},
+            "workers": {},
+            "symphonies": {},
+        }
+        return
+    run = fold["runs"].get(payload.get("run_id"))
+    if run is None:
+        return
+    if kind == "gate.open":
+        run["memories"] = [
+            {key: card.get(key) for key in ("memory_id", "label", "body", "score")}
+            for card in payload.get("injected", [])
+        ]
+    elif kind == "gate.dismiss":
+        run["memory_end"] = at
+    elif kind == "run.done":
+        run["end"] = at
+    elif kind == "run.delta":
+        run["last"] = at
+        step = payload.get("event") or {}
+        part = step.get("part") or {}
+        worker = run["workers"].get(step.get("worker_id"))
+        if step.get("event_kind") == "function_tool_call":
+            run["calls"][part.get("tool_call_id")] = _call(part, at)
+        elif step.get("event_kind") == "function_tool_result":
+            if part.get("tool_call_id") in run["calls"]:
+                run["calls"][part["tool_call_id"]]["end"] = at
+        elif step.get("event_kind") == "worker_started":
+            run["workers"][step["worker_id"]] = {
+                "start": at,
+                "end": None,
+                "task": step.get("task", ""),
+                "instructions": step.get("instructions"),
+                "tools": step.get("tools"),
+                "calls": {},
+            }
+        elif worker is not None and step.get("event_kind") == "worker_step":
+            if step.get("state") == "started":
+                worker["calls"][step.get("call_id")] = _call({"tool_name": step.get("tool")}, at)
+            elif step.get("call_id") in worker["calls"]:
+                worker["calls"][step["call_id"]]["end"] = at
+        elif worker is not None and step.get("event_kind") in {"worker_return", "worker_failed"}:
+            worker["end"] = at
+
+
+def _steps(calls: dict, start: float, end: float | None, now: float) -> list[dict]:
+    """An agent's steps in time order: each tool or skill call as recorded, and wherever none
+    of its calls runs between its start and end, waiting on the model. An open end is still
+    running."""
+    steps, cursor = [], start
+    for call in sorted(calls.values(), key=lambda call: call["start"]):
+        finish = call["end"] if call["end"] is not None else end
+        if call["start"] > cursor:
+            steps.append({"kind": "model", "name": "model", "start": cursor, "end": call["start"]})
+        if call["kind"] != "agent":  # a hand-off is drawn as the sub-agent's own row
+            steps.append({**call, "end": finish})
+        cursor = max(cursor, now if finish is None else finish)
+    if (now if end is None else end) > cursor:
+        steps.append({"kind": "model", "name": "model", "start": cursor, "end": end})
+    return steps
+
+
+def _symphony_agent(home: Path, symphony_id: str, mark: dict, now: float) -> dict:
+    """A Symphony's workers and judges under each of its rounds, each from its own observation,
+    assignment, context and (once it has finished) message list under the home."""
+    root = home / "symphonies" / symphony_id
+    rounds: dict[str, list] = {}
+    for path in sorted(root.rglob("visualization.json")):
+        try:
+            seen = json.loads(path.read_text())
+            assignment = json.loads(path.with_name("assignment.json").read_text())
+            context = json.loads(path.with_name("context.json").read_text())
+            messages = path.with_name("messages.json")
+            history = json.loads(messages.read_text()) if messages.exists() else []
+        except (OSError, ValueError):
+            continue  # a worker is replacing a file; the next read has it
+        start = _seconds(seen["started_at"])
+        end = _seconds(seen["ts"]) if seen["state"] == "stopped" or mark["end"] else None
+        calls = seen.get("calls")
+        if calls is None:  # observed before its steps were kept: its message list has them
+            calls = _history_worker(history, start)["calls"]
+        injection = context.get("injection")
+        folder = path.parent.relative_to(root)
+        name = re.sub(r"^round-\d+-", "", assignment["attempt_id"]).replace("-", " ")
+        rounds.setdefault(folder.parts[0], []).append(
+            {
+                "id": str(folder),
+                "kind": "judge" if seen["stage"] == "judge" else "worker",
+                "label": name if seen["stage"] == "judge" else f"{name} · {seen['stage']}",
+                "start": start,
+                "end": end,
+                "steps": _steps(calls, start, end, now),
+                "given": {
+                    "task": assignment["brief"],
+                    "instructions": history[0].get("instructions") if history else None,
+                    "tools": None,
+                    "memories": None
+                    if injection is None
+                    else [
+                        {key: card.get(key) for key in ("memory_id", "label", "body", "score")}
+                        for card in injection["injected"]
+                    ],
+                },
+                "children": [],
+            }
+        )
+    return {
+        "id": symphony_id,
+        "kind": "symphony",
+        "label": "Symphony",
+        "start": mark["start"],
+        "end": mark["end"],
+        "steps": [],
+        "given": None,
+        "children": [
+            {
+                "id": f"{symphony_id}/{name}",
+                "kind": "round",
+                "label": name.replace("-", " "),
+                "start": min(child["start"] for child in children),
+                "end": None
+                if any(child["end"] is None for child in children)
+                else max(child["end"] for child in children),
+                "steps": [],
+                "given": None,
+                "children": sorted(children, key=lambda child: child["start"]),
+            }
+            for name, children in rounds.items()
+        ],
+    }
+
+
+def _profile_agent(home: Path, run_id: str, run: dict, task: str, now: float) -> dict:
+    """One run as its kickoff agent with its sub-agents and Symphonies beneath, for the
+    profiler."""
+    works = run["memory_end"] or run["start"]
+    steps = _steps(run["calls"], works, run["last"] if run["end"] is not None else None, now)
+    if run["memory_end"] is not None:
+        gate = {"kind": "memory", "name": "memory check", "start": run["start"], "end": works}
+        steps.insert(0, gate)
+    children = []
+    for number, (worker_id, worker) in enumerate(run["workers"].items(), 1):
+        end = worker["end"] if worker["end"] is not None else run["end"]
+        children.append(
+            {
+                "id": worker_id,
+                "kind": "sub_agent",
+                "label": f"Sub-agent {number}",
+                "start": worker["start"],
+                "end": end,
+                "steps": _steps(worker["calls"], worker["start"], end, now),
+                "given": {
+                    "task": worker["task"],
+                    "instructions": worker["instructions"],
+                    "tools": worker["tools"],
+                    "memories": None,
+                },
+                "children": [],
+            }
+        )
+    for symphony_id, mark in run["symphonies"].items():
+        children.append(_symphony_agent(home, symphony_id, mark, now))
+    return {
+        "id": run_id,
+        "kind": "kickoff",
+        "label": "Kickoff agent",
+        "model": run["model"],
+        "start": run["start"],
+        "end": run["end"],
+        "steps": steps,
+        "given": {"task": task, "instructions": None, "tools": None, "memories": run["memories"]},
+        "children": children,
+    }
+
+
+def agent_profile(
+    journal, home: Path, folds: dict, thread_id: str, run_id: str | None = None
+) -> dict:
+    """SD-098: one thread's runs for the profiler, read from its journal as work_observation
+    reads it: each append-only file from where the last read stopped."""
+    path = journal.path_for_thread(thread_id)
+    fold = folds.get(thread_id)
+    size = path.stat().st_size if path.exists() else 0
+    if fold is None or fold["offset"] > size:
+        fold = folds[thread_id] = {"offset": 0, "open": None, "runs": {}, "tasks": {}}
+    if size > fold["offset"]:
+        with path.open("rb") as handle:
+            handle.seek(fold["offset"])
+            chunk = handle.read()
+        complete = chunk[: chunk.rfind(b"\n") + 1]
+        fold["offset"] += len(complete)
+        for line in complete.splitlines():
+            row = json.loads(line)
+            if row.get("thread_id") == thread_id:
+                _profile_row(fold, row)
+    now = time.time()
+    runs, tasks = fold["runs"], fold["tasks"]
+    chosen = run_id if run_id in runs else next(reversed(runs), None)
+    return {
+        "now": now,
+        "runs": [
+            {
+                "id": key,
+                "start": run["start"],
+                "end": max([run["end"], *(mark["end"] for mark in run["symphonies"].values())])
+                if run["end"] and all(mark["end"] for mark in run["symphonies"].values())
+                else None,
+                "task": tasks.get(key, "")[:160],
+            }
+            for key, run in runs.items()
+        ],
+        "run": None
+        if chosen is None
+        else _profile_agent(home, chosen, runs[chosen], tasks.get(chosen, ""), now),
+    }
 
 
 def _encode(value) -> bytes:
@@ -662,6 +964,17 @@ def mount_visualization_routes(
             for project in result["projects"]
         ]
         return JSONResponse(result)  # already JSON: skip the per-node encoder on the loop
+
+    profiles: dict = {}
+    profile_lock = threading.Lock()
+
+    @app.get("/v1/profile")
+    async def profile_snapshot(thread_id: str, run_id: str | None = None):
+        def read():
+            with profile_lock:
+                return agent_profile(journal, home, profiles, thread_id, run_id)
+
+        return JSONResponse(await asyncio.to_thread(read))
 
     app.router.add_event_handler("startup", start)
     app.router.add_event_handler("shutdown", stop)
