@@ -1,3 +1,3 @@
 """NOCTURNE local harness and onboarding package."""
 
-__version__ = "0.1.105"
+__version__ = "0.1.106"

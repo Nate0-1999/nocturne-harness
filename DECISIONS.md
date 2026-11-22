@@ -4610,3 +4610,18 @@ given the bundle's tool lines or skills (its parent names the tool in the task),
 has no line of its own for a failed worker (web/ is M8OV's; how sub-agents are shown is SD-098).
 Pair 0.1.104, the next unused in releases, PyPI, open PRs, remote branches and the BOARD: first
 numbered 0.1.105 while M8OV held 0.1.104, renumbered when M8OV ended with no version.
+
+## M8MP — The header's Model box switches this conversation alone [P4]
+
+PRECEDENT: PLAN M8MP; SD-101; M3SK, M6MS; SPEC C.6 `/model`; ADR-023 (2), (3); A-034; report 324.
+Switching one conversation took typing `/model` and the full name, or a Model Device row, which
+also saves that model for new conversations (M3SK). The Model box now opens the owner's pinned
+models in place; one tap is the Model Device's conversation switch (the `model.slug` write) and
+no policy is saved. The last row opens the Model Device, unchanged.
+The list is in the conversation module, so that manifest binds `model.slug` alone (ADR-023 (2):
+the public write, no private path), and the host's bound-write refusal, which covered imported
+modules only, covers every manifest. Pins are read as the list opens, because the Model Device
+tells no other module when a pin changes. While a turn runs the rows wait, as rewind does.
+Not changed: the bridge labels every write `model_device` to the daemon, as it did for imported
+modules, so the daemon's module check never sees the writing module.
+Pair 0.1.106 was unused in PyPI, tags, remote branches, open PRs and the BOARD at selection.
