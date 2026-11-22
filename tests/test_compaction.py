@@ -1,5 +1,6 @@
 """SPEC D.2 101/144/153: the one memory creation event preserves live work."""
 
+import asyncio
 import json
 import re
 from dataclasses import replace
@@ -235,8 +236,18 @@ def _delegating_parent(parent_returns, json_args='{"task":"Report evidence"}'):
     return parent
 
 
-async def _delegate_turn(tmp_path, model, *, context_tokens=2000, deps=None):
-    agent = HarnessAgent(settings(), model=model)
+async def _delegate_turn(
+    tmp_path,
+    model,
+    *,
+    context_tokens=2000,
+    deps=None,
+    spend=None,
+    ends="end_turn",
+    stop=None,
+    **limits,
+):
+    agent = HarnessAgent(settings(**limits), model=model)
     deps = deps or context()
     journal = TranscriptJournal(tmp_path / "journal")
     journal.append_thread_context(str(deps.thread_id), "project-1")
@@ -248,18 +259,26 @@ async def _delegate_turn(tmp_path, model, *, context_tokens=2000, deps=None):
         machine_id="machine-1",
     )
     tracker = OverwhelmTracker(agent.return_share_bounds)
-    runner = PydanticAITurnRunner(agent, lambda _: deps, extraction=service, overwhelm=tracker)
-    emit = RecordingEmitter()
-    outcome = await runner.run(
-        thread_id=str(deps.thread_id),
-        prompt="Delegate the evidence.",
-        message_history=(),
-        emit=emit,
-        model_resolution=ThreadModelResolution(
-            model=settings().chat_model, context_tokens=context_tokens, policy="pinned"
-        ),
+    runner = PydanticAITurnRunner(
+        agent, lambda _: deps, spend, extraction=service, overwhelm=tracker
     )
-    assert outcome.stop_reason.value == "end_turn", outcome.error_message
+    emit = RecordingEmitter()
+    turn = asyncio.ensure_future(
+        runner.run(
+            thread_id=str(deps.thread_id),
+            prompt="Delegate the evidence.",
+            message_history=(),
+            emit=emit,
+            model_resolution=ThreadModelResolution(
+                model=settings().chat_model, context_tokens=context_tokens, policy="pinned"
+            ),
+        )
+    )
+    if stop is not None:  # the owner's Stop, pressed once the worker is at work
+        await stop.wait()
+        turn.cancel()
+    outcome = await turn
+    assert outcome.stop_reason.value == ends, outcome.error_message
     rows = [
         json.loads(line)
         for line in journal.path_for_thread(str(deps.thread_id)).read_text().splitlines()
@@ -296,6 +315,97 @@ async def test_a_sent_back_worker_cannot_write(tmp_path):
     worker_event = next(event for event in emit.events if event["event_kind"] == "worker_return")
     assert worker_event["send_backs"] == 1
     assert not (project / "bulk.txt").exists()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["provider", "stall", "folder"])
+async def test_a_failed_worker_answers_its_parent_and_the_run_goes_on(tmp_path, failure):
+    """F247 / A-090: a sub-agent that failed ended its parent's whole run ("Run ended: error").
+    It answers its parent with what failed and the run goes on; the failure is journaled with
+    the work the worker had done, and what it had spent is receipted."""
+    from pydantic_ai import ModelHTTPError
+
+    from harness.openrouter_runtime import ModelStalled
+    from harness.toolset_runtime import LazyStandardToolset
+    from tests.test_agent_runtime import RecordingSpend
+
+    def worker(messages, info):
+        if failure == "stall":
+            raise ModelStalled("openai/gpt-4.1-mini", quiet_seconds=60, waited_seconds=60)
+        if isinstance(messages[-1].parts[-1], ToolReturnPart):
+            raise ModelHTTPError(
+                500, "openai/gpt-4.1-mini", {"error": {"message": "Upstream fell"}}
+            )
+        return ModelResponse([ToolCallPart("ls", {"path": "."}, tool_call_id="look")])
+
+    deps = context()
+    if failure == "folder":  # the folder the parent stands in is gone when the worker starts
+        project = tmp_path / "project"
+        project.mkdir()
+        deps = context(
+            toolset=LazyStandardToolset(
+                cwd=project, workspace_root=project, agent_id="agent-1", machine_id="machine-1"
+            )
+        )
+        project.rmdir()
+    parent_returns, spend = [], RecordingSpend()
+    model = FunctionModel(function=worker, stream_function=_delegating_parent(parent_returns))
+    emit, rows, _snapshot = await _delegate_turn(tmp_path, model, deps=deps, spend=spend)
+
+    what = {
+        "provider": "the provider refused its request: Upstream fell",
+        "stall": "openai/gpt-4.1-mini stopped answering: nothing arrived for 1 min",
+        "folder": "No such file or directory",
+    }[failure]
+    (told,) = parent_returns
+    assert told.outcome == "failed"
+    assert told.content.startswith("The sub-agent failed and returned nothing. What failed: ")
+    assert what in told.content
+    assert told.content.endswith("Its work so far is kept in the journal.")
+    (record,) = [row for row in rows if row["record_type"].startswith("worker")]
+    assert record["record_type"] == "worker_failure" and what in record["result"]
+    (event,) = [event for event in emit.events if event["event_kind"].startswith("worker")]
+    assert event["event_kind"] == "worker_failed" and event["reason"] == record["result"]
+    worker_receipts = [
+        event
+        for request in spend.requests
+        for event in request.events
+        if event.origin_agent != "agent-1"
+    ]
+    if failure == "provider":  # one answered request before the provider fell
+        assert [part["part_kind"] for part in record["history"][-1]["parts"]] == ["tool-return"]
+        assert worker_receipts and {e.origin_agent for e in worker_receipts} == {
+            f"agent-1/{record['worker_id']}"
+        }
+    else:
+        assert not worker_receipts
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("stop", ["cancel", "limit"])
+async def test_an_owners_stop_inside_a_worker_still_ends_the_run(tmp_path, stop):
+    """A-090: only a worker's own failure is answered. A cancel, and the run's request limit
+    reached inside the worker, end the run as before; neither is journaled as a failure."""
+    at_work = asyncio.Event()
+
+    async def worker(messages, info):
+        if stop == "cancel":
+            at_work.set()
+            await asyncio.sleep(60)
+        return ModelResponse(
+            [ToolCallPart("ls", {"path": "."}, tool_call_id=f"ls-{len(messages)}")]
+        )
+
+    model = FunctionModel(function=worker, stream_function=_delegating_parent([]))
+    emit, rows, _snapshot = await _delegate_turn(
+        tmp_path,
+        model,
+        ends="cancelled" if stop == "cancel" else "budget_exceeded",
+        stop=at_work if stop == "cancel" else None,
+        run_request_limit=4,
+    )
+    assert not [row for row in rows if row["record_type"].startswith("worker")]
+    assert not [event for event in emit.events if event["event_kind"].startswith("worker")]
 
 
 def _last_prompt(messages):
