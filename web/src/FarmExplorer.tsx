@@ -1,10 +1,23 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { CircleUserRound } from 'lucide-react'
 import { ActionIcon, Button } from './kit'
-import { agentColor, parentPath, type DirectoryEntry, type WorkAgent, type WorkProject } from './visualization'
+import { agentColor, type WorkAgent, type WorkProject } from './visualization'
+import { explorerPresence, explorerRows, type ExplorerRow as Row } from './explorerTree'
 import './assets/farm-explorer.css'
 
-type Row = { id: string; node: DirectoryEntry; level: number; parent: string | null; root: string }
+function showNames(group: HTMLSpanElement) {
+  const tip = group.querySelector<HTMLElement>('[popover]')!
+  const rect = group.getBoundingClientRect()
+  tip.style.left = `${Math.max(12, rect.right - Math.min(280, window.innerWidth - 24))}px`
+  const above = window.innerHeight - rect.bottom < 200 && rect.top > window.innerHeight - rect.bottom
+  tip.style.top = above ? 'auto' : `${rect.bottom + 8}px`
+  tip.style.bottom = above ? `${window.innerHeight - rect.top + 8}px` : 'auto'
+  tip.showPopover()
+}
+
+function hideNames(group: HTMLSpanElement) {
+  group.querySelector<HTMLElement>('[popover]')!.hidePopover()
+}
 
 /** SD-102: the Farm's recorded tree and presence, with the same path selection as a cell. */
 export function FarmExplorer({ projects, agents, selectedPath, pickPath }: {
@@ -14,43 +27,8 @@ export function FarmExplorer({ projects, agents, selectedPath, pickPath }: {
   const [focused, setFocused] = useState<string | null>(null)
   const tree = useRef<HTMLDivElement>(null)
   const isOpen = (row: Row) => opened[row.id] ?? row.node.path === '.'
-  const rows = useMemo(() => {
-    const result: Row[] = []
-    for (const project of projects) {
-      const children = new Map<string, DirectoryEntry[]>()
-      for (const node of project.nodes) {
-        if (node.path === '.') continue
-        const parent = parentPath(node.path)
-        if (!children.has(parent)) children.set(parent, [])
-        children.get(parent)!.push(node)
-      }
-      for (const siblings of children.values()) siblings.sort((a, b) =>
-        Number(b.kind === 'directory') - Number(a.kind === 'directory') || a.path.localeCompare(b.path))
-      const visit = (node: DirectoryEntry, level: number, parent: string | null) => {
-        const id = `${project.root}${node.path === '.' ? '' : `/${node.path}`}`
-        const row = { id, node, level, parent, root: project.root }
-        result.push(row)
-        if (node.kind === 'directory' && (opened[id] ?? node.path === '.')) {
-          for (const child of children.get(node.path) ?? []) visit(child, level + 1, id)
-        }
-      }
-      const root = project.nodes.find((node) => node.path === '.')
-      if (root) visit(root, 1, null)
-    }
-    return result
-  }, [projects, opened])
-  const badges = useMemo(() => {
-    const paths = new Map<string, { agent: WorkAgent; touched: boolean }[]>()
-    const add = (path: string, agent: WorkAgent, touched: boolean) => {
-      if (!paths.has(path)) paths.set(path, [])
-      paths.get(path)!.push({ agent, touched })
-    }
-    for (const agent of agents) {
-      add(agent.location, agent, false)
-      for (const touch of agent.touched_files ?? []) if (touch.path !== agent.location) add(touch.path, agent, true)
-    }
-    return paths
-  }, [agents])
+  const rows = useMemo(() => explorerRows(projects, opened), [projects, opened])
+  const badges = useMemo(() => explorerPresence(agents), [agents])
   const tabStop = rows.some((row) => row.id === focused) ? focused : rows[0]?.id
   const toggle = (row: Row) => setOpened((current) => ({ ...current, [row.id]: !isOpen(row) }))
   const move = (id: string | undefined) => {
@@ -59,6 +37,7 @@ export function FarmExplorer({ projects, agents, selectedPath, pickPath }: {
     element?.focus()
   }
   const keyDown = (event: KeyboardEvent<HTMLDivElement>, row: Row, index: number) => {
+    if (event.target !== event.currentTarget) return
     if (!['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft', 'Home', 'End', 'Enter', ' '].includes(event.key)) return
     event.preventDefault()
     switch (event.key) {
@@ -90,11 +69,19 @@ export function FarmExplorer({ projects, agents, selectedPath, pickPath }: {
       <ActionIcon action="open" />
       <span className="farm-explorer__name">{row.node.path === '.' ? row.root : row.node.path.split('/').at(-1)}</span>
       <span className="farm-explorer__kind">{row.node.kind === 'directory' ? '' : row.node.kind === 'link' ? 'Link' : `${row.node.bytes.toLocaleString()} B`}</span>
-      <span className="farm-explorer__agents">{(badges.get(row.id) ?? []).map(({ agent, touched }) =>
+      {badges.has(row.id) && <span className="farm-explorer__agents" tabIndex={0} aria-label={badges.get(row.id)!.names}
+        onMouseEnter={(event) => showNames(event.currentTarget)}
+        onMouseLeave={(event) => { if (!event.currentTarget.contains(document.activeElement)) hideNames(event.currentTarget) }}
+        onFocus={(event) => showNames(event.currentTarget)}
+        onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) hideNames(event.currentTarget) }}>
+        {badges.get(row.id)!.visible.map(({ agent, touched }) =>
         <span key={agent.id} style={{ color: agentColor(agent.id) }} title={`${agent.label} · ${touched ? 'touched this file' : agent.state}`}>
           <CircleUserRound className="kit-icon" aria-hidden="true" />
           <span className="visually-hidden">{agent.label}{touched ? ' · touched' : ''}</span>
-        </span>)}</span>
+        </span>)}
+        {badges.get(row.id)!.remaining > 0 && <span>+{badges.get(row.id)!.remaining}</span>}
+        <span className="farm-explorer__names" popover="manual" role="tooltip" tabIndex={0}>{badges.get(row.id)!.names}</span>
+      </span>}
     </div>)}
   </div>
 }
