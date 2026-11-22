@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } fro
 import { useRackSnapshot } from './rack'
 import './assets/out-loud.css'
 import { Button } from './kit'
+import { ReadingSpeed } from './ReplyReader'
+import { reader, storedRate } from './speechReader'
 
 // Web Speech's recognition types are not yet included in TypeScript's DOM library.
 interface Recognition extends EventTarget {
@@ -33,7 +35,7 @@ function subscribePreference(listener: () => void) {
 }
 
 /** PLAN M3OU / SD-048, SD-063: speech uses the ordinary composer and send rule. */
-export function OutLoud({ field, response, responseId, blocked, onDraft, onSend, replaceDraft = false, responding = false }: {
+export function OutLoud({ field, response, responseId, blocked, onDraft, onSend, replaceDraft = false, responding }: {
   field: RefObject<HTMLTextAreaElement | null>
   response: string
   responseId: string | null
@@ -44,16 +46,22 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
   responding?: boolean
 }) {
   const supported = SpeechRecognition !== undefined && 'speechSynthesis' in globalThis
-  const { preferenceScope } = useRackSnapshot()
+  const { preferenceScope, selectedThreadId, threads } = useRackSnapshot()
+  const thread = selectedThreadId ? threads[selectedThreadId] : undefined
+  const chatReply = responding === undefined ? undefined : thread?.messages.filter(message => message.role === 'assistant').at(-1)
+  const replyId = responding === undefined ? (responseId && `deck:${responseId}`)
+    : chatReply && `chat:${chatReply.run_id ?? chatReply.message_id}`
+  const replyText = chatReply?.content ?? response
+  const incoming = responding && thread?.activeRun?.run_id !== chatReply?.run_id
+  const playback = useSyncExternalStore(reader.subscribe, reader.phase)
   const preferenceKey = preferenceScope && !preferenceScope.endsWith(':unbound')
     ? `nocturne.out-loud:${preferenceScope}` : null
   const preferred = useSyncExternalStore(subscribePreference,
     () => preferenceKey !== null && localStorage.getItem(preferenceKey) === 'true', () => false)
   const enabled = supported && preferred
-  const [phase, setPhase] = useState<'idle' | 'speaking' | 'listening'>('idle')
+  const [phase, setPhase] = useState<'idle' | 'listening'>('idle')
   const [status, setStatus] = useState('')
   const recognition = useRef<Recognition | null>(null)
-  const utterance = useRef<SpeechSynthesisUtterance | null>(null)
   const sendFrame = useRef<number | null>(null)
   const spoken = useRef<string | null>(null)
   const onDraftRef = useRef(onDraft)
@@ -75,17 +83,13 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
       current.onaudiostart = current.onend = current.onresult = current.onerror = null
       current.abort()
     }
-    if (utterance.current !== null) {
-      utterance.current.onstart = utterance.current.onend = utterance.current.onerror = null
-      utterance.current = null
-      speechSynthesis.cancel()
-    }
   }
 
   function listen() {
     stop()
     const input = field.current
     if (!SpeechRecognition || blocked || input === null) return
+    reader.interrupt()
     const before = replaceDraft ? '' : input.value.slice(0, input.selectionStart)
     const after = replaceDraft ? '' : input.value.slice(input.selectionEnd)
     const current = new SpeechRecognition()
@@ -155,6 +159,7 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
     const input = field.current
     const pauseForTyping = () => {
       stop()
+      reader.interrupt()
       setPhase('idle')
       setStatus('Dictation paused while editing. Tap Listen to resume.')
     }
@@ -162,35 +167,49 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
     return () => input?.removeEventListener('input', pauseForTyping)
   }, [field])
 
-  function read() {
-    stop()
-    const speech = new SpeechSynthesisUtterance(response)
-    utterance.current = speech
-    speech.lang = document.documentElement.lang || navigator.language
-    speech.onstart = () => { setPhase('speaking'); setStatus('Reading aloud…') }
-    speech.onend = () => { utterance.current = null; listen() }
-    speech.onerror = (event) => {
-      utterance.current = null
-      setPhase('idle')
-      setStatus(event.error === 'not-allowed'
-        ? 'Tap Read aloud to allow playback in this browser.'
-        : 'Playback stopped. Tap Read aloud to retry.')
+  useEffect(() => {
+    if (!enabled || blocked) return
+    const beforeReading = () => { stop(); setPhase('idle'); setStatus('') }
+    const afterReading = () => { if (!responding) listen() }
+    addEventListener('out-loud-reading', beforeReading)
+    addEventListener('out-loud-finished', afterReading)
+    return () => {
+      removeEventListener('out-loud-reading', beforeReading)
+      removeEventListener('out-loud-finished', afterReading)
     }
-    speechSynthesis.speak(speech)
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, blocked, responding, replyId])
 
   useEffect(() => {
-    if (!enabled || !supported || blocked || responding) return
-    if (responseId !== null && response.trim() && spoken.current !== responseId) {
-      spoken.current = responseId
-      read()
-    } else {
-      listen()
+    if (!enabled || blocked) return
+    const resume = spoken.current === replyId && replyId && !responding
+      ? requestAnimationFrame(listen) : null
+    return () => {
+      if (resume !== null) cancelAnimationFrame(resume)
+      stop()
+      if (replyId) reader.stop(replyId)
     }
-    return stop
-    // Callbacks belong to this response; draft edits must not restart the microphone.
+    // Resume dictation when returning to an already-read reply.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, supported, blocked, responding, responseId, response])
+  }, [enabled, blocked, replyId])
+
+  useEffect(() => {
+    if (!enabled || blocked) return
+    if (incoming) { stop(); return }
+    if (replyId && replyText.trim()) {
+      if (spoken.current !== replyId) {
+        spoken.current = replyId
+        reader.start(replyId, replyText, !responding, storedRate(preferenceScope))
+      } else {
+        reader.update(replyId, replyText, !responding)
+      }
+    } else if (!responding && !reader.active()) {
+      const frame = requestAnimationFrame(listen)
+      return () => cancelAnimationFrame(frame)
+    }
+    // Draft edits must not reopen the microphone.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, blocked, responding, incoming, replyId, replyText, preferenceScope])
 
   return (
     <div className="out-loud" data-testid="out-loud">
@@ -213,9 +232,10 @@ export function OutLoud({ field, response, responseId, blocked, onDraft, onSend,
           } else {
             listen()
           }
-        }}>{phase === 'speaking' ? 'Interrupt and listen' : phase === 'listening' ? 'Stop listening' : 'Listen'}</Button>
-        {response.trim() && <Button action="speak" type="button" disabled={blocked} onClick={read}>Read aloud</Button>}
+        }}>{playback !== 'idle' ? 'Interrupt and listen' : phase === 'listening' ? 'Stop listening' : 'Listen'}</Button>
+        <ReadingSpeed />
         <small role="status">{blocked ? 'Waiting for the conversation…'
+          : playback === 'paused' ? 'Reading paused.' : playback === 'reading' ? 'Reading aloud…'
           : responding && phase === 'idle' ? 'Reply running. Tap Listen to dictate.' : status}</small>
       </>}
     </div>
