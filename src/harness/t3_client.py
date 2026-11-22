@@ -12,7 +12,8 @@ import httpx
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
 
-VERSION = "0.1.11"
+from harness.t3_install import VERSION
+
 TERMINAL = {"completed", "failed", "interrupted", "cancelled"}
 # Even with application DEBUG logging the RPC upgrade URL and headers are private.
 _socket_log = logging.Logger("private-t3-socket")

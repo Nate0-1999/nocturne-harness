@@ -23,6 +23,7 @@ def test_parser_exposes_onboarding_and_lifecycle_commands() -> None:
         "open",
         "backup",
         "restore",
+        "t3",
         "seed",
         "doctor",
         "palace",

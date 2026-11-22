@@ -78,3 +78,30 @@ async def test_native_stream_uses_only_completed_words_and_declines_once():
     await turn.request({"id": "request", "status": "pending"})
     client.decline.assert_awaited_once_with("thread", "request")
     assert "declined" in emit.text.await_args.args[0]
+
+
+@pytest.mark.asyncio
+async def test_replaced_runtime_cannot_execute_just_because_its_filename_exists(tmp_path):
+    """A-095: a missing installation receipt must prevent startup before executing the file."""
+    server = T3Server(tmp_path)
+    server.binary.parent.mkdir(parents=True)
+    server.binary.write_text("unverified")
+    with pytest.raises(T3Error, match="failed verification"):
+        await server.client()
+
+
+def test_failed_archive_digest_prevents_installation(tmp_path, monkeypatch):
+    """A-095: a corrupt download must not become an executable subscription server."""
+    import httpx
+
+    from harness import t3_install
+
+    client = httpx.Client(
+        transport=httpx.MockTransport(lambda _: httpx.Response(200, content=b"bad"))
+    )
+    monkeypatch.setattr(
+        t3_install.httpx, "stream", lambda method, url, **kwargs: client.stream(method, url)
+    )
+    with client, pytest.raises(t3_install.InstallError, match="integrity check"):
+        t3_install.install(tmp_path)
+    assert not (tmp_path / "t3" / "install" / t3_install.VERSION).exists()

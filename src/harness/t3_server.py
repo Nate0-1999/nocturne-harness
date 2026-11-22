@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from harness.t3_client import VERSION, T3Client, T3Error
+from harness.t3_install import InstallError, verify_install
 
 
 def _native_tools() -> dict:
@@ -68,6 +69,10 @@ class T3Server:
         self._client = None
         self._owned: dict[int, str] = {}
 
+    @property
+    def running(self) -> bool:
+        return self._process is not None and self._process.returncode is None
+
     async def client(self) -> T3Client:
         async with self._lock:
             if self._process and self._process.returncode is None and self._client:
@@ -75,6 +80,10 @@ class T3Server:
             await self._stop()
             if not self.binary.is_file():
                 raise T3Error(f"T3 {VERSION} is missing. Run nocturne t3 install.")
+            try:
+                await asyncio.to_thread(verify_install, self.binary.parent)
+            except InstallError as exc:
+                raise T3Error(str(exc)) from None
             try:
                 async with asyncio.timeout(90):
                     self._client = await self._start()
@@ -123,7 +132,12 @@ class T3Server:
                 port = sock.getsockname()[1]
             if port > 20000:
                 break
+        # uvloop cannot pass umask to subprocess_exec. The shell exec preserves the PID.
         proc = await asyncio.create_subprocess_exec(
+            "/bin/sh",
+            "-c",
+            'umask 077; exec "$@"',
+            "nocturne-t3",
             self.binary,
             "serve",
             "--host",
@@ -134,7 +148,6 @@ class T3Server:
             cwd=work,
             env=env,
             start_new_session=True,
-            umask=0o077,
             stdin=subprocess.DEVNULL,
             stdout=asyncio.subprocess.PIPE,
             stderr=subprocess.STDOUT,
