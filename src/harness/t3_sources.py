@@ -103,3 +103,19 @@ async def sources(server):
     except (TimeoutError, OSError):
         raise T3Error("The local T3 server is unavailable.") from None
     return project_sources(config["providers"])
+
+
+def offers(rows):
+    for source in rows:
+        if source["availability"] == "available":
+            for model in source["models"]:
+                if model["availability"] == "available":
+                    key = f"subscription:{source['tool']}/{source['account']}/{model['id']}"
+                    yield key, source, model
+
+
+async def resolve_offer(server, requested):
+    for key, source, model in offers(await sources(server)):
+        if requested in (key, f"subscription:{source['tool']}/{model['id']}"):
+            return key, source, model
+    raise T3Error("This tool, account and model are unavailable on the signed-in subscription.")

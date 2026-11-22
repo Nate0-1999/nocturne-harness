@@ -58,3 +58,23 @@ def test_inventory_keeps_private_auth_and_untrusted_labels_out_of_source_rows():
     assert rows[0]["models"][0]["limited_until"] == "2026-11-22T23:00:00+00:00"
     provider["auth"]["type"] = "apiKey"
     assert project_sources([provider])[0]["availability"] == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_native_stream_uses_only_completed_words_and_declines_once():
+    """A-095: a split account address and duplicate native request must stay out of the journal."""
+    from unittest.mock import AsyncMock
+
+    from harness.t3_turn import NativeTurn
+
+    client, emit = AsyncMock(), AsyncMock()
+    turn = NativeTurn(client, "thread", "prompt", emit)
+    turn.run = "run"
+    message = {"id": "msg", "role": "assistant", "runId": "run", "streaming": True}
+    await turn.update({**message, "text": "Hi person"})
+    await turn.update({**message, "text": "Hi person" + "@" + "example.test now"}, final=True)
+    assert turn.answer == "Hi [address withheld] now"
+    await turn.request({"id": "request", "status": "pending"})
+    await turn.request({"id": "request", "status": "pending"})
+    client.decline.assert_awaited_once_with("thread", "request")
+    assert "declined" in emit.text.await_args.args[0]

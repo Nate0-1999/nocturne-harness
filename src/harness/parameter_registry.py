@@ -209,8 +209,8 @@ def _validate_value(descriptor: ParameterDescriptor, value: object) -> Parameter
     if descriptor.type == "model":
         if (
             not isinstance(value, str)
-            or not value.startswith("openrouter:")
-            or not value.removeprefix("openrouter:")
+            or not value.startswith(("openrouter:", "subscription:"))
+            or not value.partition(":")[2]
             or value != value.strip()
         ):
             raise ParameterWriteViolation("invalid")

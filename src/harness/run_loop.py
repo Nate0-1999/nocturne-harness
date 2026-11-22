@@ -1497,7 +1497,13 @@ class RunLoop:
                 event["sacrificed_cached_prefix_tokens"],
                 event["context_tokens"],
             )
-            if previous.model == resolution.model:
+            if resolution.model.startswith("subscription:"):
+                tool, _, model = resolution.model.removeprefix("subscription:").split("/", 2)
+                message = (
+                    f"This conversation now uses {model} through {tool}. "
+                    "The tool controls its own actions outside Nocturne’s fence."
+                )
+            elif previous.model == resolution.model:
                 message = (
                     f"Model re-resolved to {resolution.model} in a new stickiness epoch. "
                     f"Context window: {resolution.context_tokens} tokens."

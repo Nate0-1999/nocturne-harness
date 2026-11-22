@@ -222,6 +222,10 @@ export function ModelDevice() {
     if (threadId === null || !editable || configuration.model === null) return
     // Switch first: a refused switch leaves both this conversation and the agent policy as they were.
     if (configuration.model !== resolved && !(await write('model.slug', configuration.model))) return
+    if (configuration.model.startsWith('subscription:')) {
+      await loadBrowser()
+      return
+    }
     try {
       await events.dispatch({ type: 'policies.save', role: 'chat', policy: configuration.policy })
       if (configuration.model.startsWith('local:')) {
@@ -382,7 +386,8 @@ export function ModelDevice() {
                   className="model-row__pick"
                   data-model={item.model}
                   data-tooltip={item.model}
-                  data-tooltip-detail={current ? 'This conversation uses it now.' : 'Use it here and for new conversations, until you change it.'}
+                  data-tooltip-detail={current ? 'This conversation uses it now.' : item.model.startsWith('subscription:')
+                    ? 'Use this subscription for this conversation.' : 'Use it here and for new conversations, until you change it.'}
                   disabled={!editable || current}
                   onClick={() => { void configure({ policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model' }) }}
                 >

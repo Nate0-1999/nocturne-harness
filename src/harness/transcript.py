@@ -618,6 +618,22 @@ class TranscriptJournal:
                 },
             )
 
+    def bind_subscription(self, thread_id: str, binding: dict[str, str]) -> None:
+        """A-095: persist native identities before a prompt can be accepted remotely."""
+        with self._lock:
+            self._append(thread_id, {"version": 1, "record_type": "subscription", **binding})
+
+    def subscription_binding(self, thread_id: str) -> dict | None:
+        with self._lock:
+            if not self.path_for_thread(thread_id).exists():
+                return None
+            rows = self._read_file_rows(self._filename_for_thread(thread_id))
+            for raw in reversed(rows):
+                row = json.loads(raw)
+                if row.get("record_type") == "subscription":
+                    return row
+        return None
+
     def append_compaction_record(self, thread_id: str, record: dict[str, Any]) -> None:
         """v2.133: a compaction's original span beside the facts drawn from it."""
         with self._lock:
