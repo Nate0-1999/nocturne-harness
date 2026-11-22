@@ -2,26 +2,18 @@
   "packet": "M8MP",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "ac9fb9bfc15dd277ff0f55c7b37808b231bf91e71514525f3a97bffbd4793dd2",
+  "ledger_sha256": "e140535c59e0dfb27c3bd88de6be01104e43d92c6526116f3979dbfe068c9ded",
   "diffs": [
     {
       "repo": "harness",
-      "base": "5e1aed0dde6f55eb82241f9cba6cebcb553cf542",
-      "head": "0e1d29ffd8e6a3ac55824a8ec44476d4631f13f5"
+      "base": "c7a72e930e77c2908924ac8fe7548fc1ad7c8349",
+      "head": "8c578914de63054f197e3e23367250b2af92a92b"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "M8MP decision journal; no product behavior.",
     "harness/src/harness/__init__.py": "Lockstep package metadata, version 0.1.106; API contract remains 0.1.92.",
     "harness/verification/m2ux1/browser_check.mjs": "The standing UI canon's step that opens the Model Device now taps the list's last row; FL-202 carries the walk.",
-    "harness/web/dist/assets/index-BPr6Tqxq.css": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
-    "harness/web/dist/assets/index-DHRu_Hhn.js": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
-    "harness/web/dist/assets/index-DardbKK5.js": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
-    "harness/web/dist/assets/index-DrG4jNew.css": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
-    "harness/web/dist/index.html": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
-    "harness/web/tests/rackBridge.test.mjs": "Tests that pin this packet's behavior (the conversation binds the model alone, the header list writes only the model, the box's tip and click word).",
-    "harness/web/tests/templateConformanceII.test.mjs": "Tests that pin this packet's behavior (the conversation binds the model alone, the header list writes only the model, the box's tip and click word).",
-    "harness/web/dist/assets/index-C1DmpBBs.js": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
     "harness/verification/m8mp/FL-009.png": "M8MP evidence, report or handoff state; no product behavior.",
     "harness/verification/m8mp/FL-061.png": "M8MP evidence, report or handoff state; no product behavior.",
     "harness/verification/m8mp/FL-069.png": "M8MP evidence, report or handoff state; no product behavior.",
@@ -68,8 +60,16 @@
     "harness/verification/m8mp/FL-206.png": "M8MP evidence, report or handoff state; no product behavior.",
     "harness/verification/m8mp/FL-213.png": "M8MP evidence, report or handoff state; no product behavior.",
     "harness/verification/m8mp/FL-215.png": "M8MP evidence, report or handoff state; no product behavior.",
+    "harness/verification/m8mp/SHA256SUMS": "M8MP evidence, report or handoff state; no product behavior.",
     "harness/verification/m8mp/ledger-report.json": "M8MP evidence, report or handoff state; no product behavior.",
-    "harness/verification/m8mp/SHA256SUMS": "M8MP evidence, report or handoff state; no product behavior."
+    "harness/web/dist/assets/index-BPr6Tqxq.css": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
+    "harness/web/dist/assets/index-DHRu_Hhn.js": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
+    "harness/web/dist/assets/index-DardbKK5.js": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
+    "harness/web/dist/assets/index-DrG4jNew.css": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
+    "harness/web/dist/index.html": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk.",
+    "harness/web/tests/rackBridge.test.mjs": "Tests that pin this packet's behavior (the conversation binds the model alone, the header list writes only the model, the box's tip and click word).",
+    "harness/web/tests/templateConformanceII.test.mjs": "Tests that pin this packet's behavior (the conversation binds the model alone, the header list writes only the model, the box's tip and click word).",
+    "harness/web/dist/assets/index-C1DmpBBs.js": "Built web assets; FL-106, FL-113, FL-158, FL-202 and FL-206 carry the display walk."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
