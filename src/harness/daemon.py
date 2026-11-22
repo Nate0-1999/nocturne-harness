@@ -123,7 +123,9 @@ from harness.spine_client import (
 )
 from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
+from harness.t3_client import T3Error
 from harness.t3_server import T3Server
+from harness.t3_sources import sources
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import Crossings
@@ -1548,6 +1550,13 @@ def create_dev_app(
             if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
                 model_resolver.set_policy(body.policy)
             return {"policies": role_policies}
+
+        @app.get("/v1/subscription-sources")
+        async def subscription_sources():
+            try:
+                return {"sources": await sources(t3)}
+            except T3Error as exc:
+                raise HTTPException(503, str(exc)) from None
 
         @app.get("/v1/models")
         async def model_browser(thread_id: str | None = None):
