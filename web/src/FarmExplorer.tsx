@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { CircleUserRound } from 'lucide-react'
 import { ActionIcon, Button } from './kit'
 import { agentColor, parentPath, type DirectoryEntry, type WorkAgent, type WorkProject } from './visualization'
 import './assets/farm-explorer.css'
@@ -91,7 +92,8 @@ export function FarmExplorer({ projects, agents, selectedPath, pickPath }: {
       <span className="farm-explorer__kind">{row.node.kind === 'directory' ? '' : row.node.kind === 'link' ? 'Link' : `${row.node.bytes.toLocaleString()} B`}</span>
       <span className="farm-explorer__agents">{(badges.get(row.id) ?? []).map(({ agent, touched }) =>
         <span key={agent.id} style={{ color: agentColor(agent.id) }} title={`${agent.label} · ${touched ? 'touched this file' : agent.state}`}>
-          {agent.label}{touched ? ' · touched' : ''}
+          <CircleUserRound className="kit-icon" aria-hidden="true" />
+          <span className="visually-hidden">{agent.label}{touched ? ' · touched' : ''}</span>
         </span>)}</span>
     </div>)}
   </div>
