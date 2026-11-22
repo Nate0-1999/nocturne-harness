@@ -6,8 +6,8 @@
   "diffs": [
     {
       "repo": "harness",
-      "base": "0286ddfcde175be3288136eeafc74ab95fe11768",
-      "head": "34b7e42e1bbbc389dd2734f80c9c784c104a0e16"
+      "base": "fd7d362abf3f6e81b99339aa1f3edb58ef07a70e",
+      "head": "81b7d6eb5b657136c9111b5e416e2822b5dffb37"
     }
   ],
   "unmapped": {
@@ -94,11 +94,13 @@
     "harness/verification/m8tb/FL-215.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/SHA256SUMS": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/ledger-report.json": "Packet evidence for the gate, with no product runtime effect.",
-    "harness/web/dist/assets/index-Cn2vpb76.js": "Built web bundle for the integrated model picker and subscription controls.",
-    "harness/web/dist/assets/index-dQ6qrT_F.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-3ngYJf41.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-qXEKqPYg.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/index.html": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/dist/assets/index-DHRu_Hhn.js": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/dist/assets/index-DY41gOxg.js": "Packaged build of the existing model choice and its explicit subscription entries.",
+    "harness/web/dist/assets/index-Cn2vpb76.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-dQ6qrT_F.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-DardbKK5.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-DeZrJD2B.js": "Built web bundle for the integrated model picker and subscription controls."
   },
@@ -237,7 +239,7 @@
       "verdict": "PASS",
       "screenshot": "FL-106.png",
       "flag": "",
-      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden). The answer fidelity rewalk showed the /model history and folder disclosure, then preserved a decorator, package scope and owner-supplied example address in both stream and journal (Garden answer/reply.png and answer/walk.txt)."
+      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden). The answer fidelity rewalk showed the /model history and folder disclosure, then preserved a decorator, package scope and owner-supplied example address in both stream and journal (Garden answer/reply.png and answer/walk.txt). The two new subscription conversations also kept their Nocturne titles in native history (Garden titles/walk.txt and titles/codex-list.txt)."
     },
     "FL-107": {
       "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
