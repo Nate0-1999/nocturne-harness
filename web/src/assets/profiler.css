@@ -1,0 +1,51 @@
+/* SD-098: the profiler. Bars are flat fills from the theme's tokens; a kind is told by its color,
+   by the bar's name and tip, and by the key in the header. */
+.profiler-instrument { box-sizing: border-box; display: flex; flex-direction: column; height: 100vh; background: var(--surface-deep); color: var(--ink); }
+.profiler-instrument [role=alert] { margin: 0; padding: var(--space-3) var(--space-5); color: var(--danger); }
+.profiler-instrument ol { margin: 0; padding: 0; list-style: none; }
+.profiler-instrument .kit-empty { min-height: 0; padding: var(--space-4) var(--space-5); }
+
+.profiler-chart { flex: 1 1 auto; min-height: 5rem; padding: var(--space-3) var(--space-5); overflow-y: auto; }
+.profiler-row { display: grid; grid-template-columns: minmax(11rem, 30%) 1fr; align-items: center; gap: var(--space-3); min-height: 1.5rem; }
+.profiler-name { display: flex; align-items: center; gap: var(--space-1); min-width: 0; padding-left: calc(var(--depth) * var(--space-3)); }
+.profiler-name > .kit-button--icon-only { flex: none; min-width: 0; padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.profiler-name > .kit-button--icon-only:hover, .profiler-name > .kit-button--icon-only:focus-visible { color: var(--accent); }
+.profiler-agent { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; padding: var(--space-1) 0; border: 0; background: none; color: var(--ink); font: var(--text-sm) var(--data-font); text-align: left; cursor: pointer; }
+.profiler-agent strong { overflow: hidden; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.profiler-agent span { flex: none; color: var(--muted); }
+.profiler-agent:hover strong, .profiler-agent:focus-visible strong, .profiler-agent[data-chosen] strong { color: var(--accent); }
+.profiler-agent:disabled { cursor: default; }
+
+.profiler-track { position: relative; height: 1.25rem; border-left: 1px solid var(--line); }
+.profiler-bar { position: absolute; top: 1px; bottom: 1px; box-sizing: border-box; min-width: 2px; overflow: hidden; padding: 0 var(--space-1); color: var(--ground); font: var(--text-xs)/1.125rem var(--data-font); white-space: nowrap; }
+.profiler-bar[data-kind=agent] { border: 1px solid var(--line-strong); background: var(--surface-raised); color: var(--ink); }
+.profiler-bar[data-kind=model], .profiler-key[data-kind=model]::before { background: var(--dim); }
+.profiler-bar[data-kind=model] { padding-left: var(--space-2); }
+.profiler-bar[data-kind=tool], .profiler-key[data-kind=tool]::before { background: var(--accent); }
+.profiler-bar[data-kind=skill], .profiler-key[data-kind=skill]::before { background: var(--accent-secondary); }
+.profiler-bar[data-kind=memory], .profiler-key[data-kind=memory]::before { background: var(--ink); }
+/* A sliver of work is never hidden under the wait beside it. */
+.profiler-bar:not([data-kind=model]) { z-index: 1; }
+.profiler-key::before { content: ''; width: .625rem; height: .625rem; }
+[data-running] > .profiler-row .profiler-bar[data-kind=agent] { border-right-style: dashed; }
+
+.profiler-given { flex: 0 1 60%; min-height: 0; overflow-y: auto; border-top: 1px solid var(--line); }
+.profiler-given dl { margin: 0; padding: var(--space-3) var(--space-5); }
+.profiler-given dt { margin-top: var(--space-3); color: var(--muted); font: var(--text-xs) var(--data-font); letter-spacing: .08em; text-transform: uppercase; }
+.profiler-given dd { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-1) 0 0; font-size: var(--text-md); }
+.profiler-given dd.profiler-text { display: block; max-height: 12rem; overflow: auto; font-family: var(--data-font); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.profiler-instrument .profiler-runs { min-height: 0; padding: 0 var(--space-5) var(--space-4); overflow-y: auto; }
+.profiler-runs li { border-bottom: 1px solid var(--line); }
+.profiler-runs button { display: grid; grid-template-columns: 6rem 4.5rem 1fr; gap: var(--space-3); width: 100%; padding: var(--space-2) 0; border: 0; background: none; color: var(--ink); font: var(--text-md) var(--data-font); text-align: left; cursor: pointer; }
+.profiler-runs time, .profiler-runs span { color: var(--muted); }
+.profiler-runs strong { overflow: hidden; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.profiler-runs button:hover strong, .profiler-runs button:focus-visible strong { color: var(--accent); }
+
+/* At phone width a row's name sits above its bar. */
+@media (max-width: 520px) {
+  .profiler-row { grid-template-columns: 1fr; gap: 0; }
+  .profiler-name:empty { display: none; }
+  .profiler-runs button { grid-template-columns: 5.5rem 1fr; }
+  .profiler-runs strong { grid-column: 1 / -1; }
+}

@@ -41,6 +41,7 @@ test('the module template enumerates the complete mounted stage and refuses a pa
     'recipe',
     'jobs',
     'security',
+    'profiler',
   ])
 
   const manifests = Object.fromEntries(STAGE_RACK_MODULE_IDS.map((id) => [

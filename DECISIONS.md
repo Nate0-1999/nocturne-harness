@@ -4594,3 +4594,23 @@ way. `workflow new` no longer writes `memory_scope: "none"` (M7WB's workaround).
 scoped test once hid F138; the scoped run now meets the real Palace in `tests/contract`.
 A run's scope is its folder: a fact remembered in another project is not given to it.
 Pair 0.1.103 was unused in releases, PyPI, open PRs and the BOARD at selection (M8MF holds 0.1.102).
+
+## M8PF — A profiler of agents at work (P2, P3)
+
+PRECEDENT: PLAN M8PF; SD-098, SD-097; A-093; A-090 (draft M8SA); ADR-008, ADR-018; D.2 153;
+FL-198; reports 230, 322. The journal already timed every step of a conversation's agent and
+kept a sub-agent's whole message list at its return; nothing was recorded while a sub-agent
+worked. One projection (`agent_profile`, beside the farm's in `visualization.py`) reads a
+thread's journal from where its last read stopped: a tool or skill call is a step as long as
+it took, and wherever none of an agent's calls runs it waits on its model, so no new timing is
+recorded for the conversation's agent. A sub-agent's start and tool steps are announced by a
+capability on its own run (`WorkerStepsCapability`), not by a stream handler: a handler would
+have turned its model requests into streamed ones. A run journaled before this reads its
+sub-agents' steps from their returned message lists. A Symphony's workers keep their tool
+steps in their own observation file; the farm's feed drops them. The route is `/v1/profile`,
+apart from the farm's feed, which by ADR-018 carries no content: what an agent was given is
+content, served only when asked for one thread. Not recorded, and said so in the view: the
+conversation agent's instructions and tool list, memories given without a gate, a Symphony
+worker's tool list. The module follows the selected conversation.
+Pair 0.1.108 was unused in releases, PyPI, open PRs and the BOARD at selection (M8SA, M8DM,
+M8MP and M8FX hold 0.1.104 to 0.1.107).

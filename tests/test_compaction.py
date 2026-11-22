@@ -298,6 +298,48 @@ async def test_a_sent_back_worker_cannot_write(tmp_path):
     assert not (project / "bulk.txt").exists()
 
 
+@pytest.mark.asyncio
+async def test_a_sub_agent_announces_its_start_and_each_tool_step_before_it_returns(tmp_path):
+    """SD-098 / A-093: nothing was announced while a sub-agent worked, so a run's profile could
+    not show it until it had returned. Its start, with the task, instructions and tools its
+    first request carries, and each tool step reach the run's events before its return."""
+    from harness.toolset import open_standard_toolset
+
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "note.txt").write_text("evidence\n")
+    toolset = await open_standard_toolset(cwd=project, workspace_root=project)
+
+    def worker(messages, info):
+        if isinstance(messages[-1].parts[-1], ToolReturnPart):
+            return ModelResponse([TextPart("read it")])
+        return ModelResponse([ToolCallPart("read", {"path": "note.txt"}, tool_call_id="r1")])
+
+    try:
+        model = FunctionModel(function=worker, stream_function=_delegating_parent([]))
+        emit, _rows, _snapshot = await _delegate_turn(
+            tmp_path, model, deps=context(toolset=toolset)
+        )
+    finally:
+        await toolset.close()
+
+    announced = [event for event in emit.events if event["event_kind"].startswith("worker_")]
+    assert [event["event_kind"] for event in announced] == [
+        "worker_started",
+        "worker_step",
+        "worker_step",
+        "worker_return",
+    ]
+    started, call, result, returned = announced
+    assert len({event["worker_id"] for event in announced}) == 1
+    assert started["task"] == "Report evidence"
+    assert started["instructions"].startswith("Complete only the delegated task.")
+    assert "read" in started["tools"] and "delegate_task" not in started["tools"]
+    assert (call["tool"], call["call_id"], call["state"]) == ("read", "r1", "started")
+    assert (result["tool"], result["call_id"], result["state"]) == ("read", "r1", "finished")
+    assert returned["returned_bytes"] == len("read it")
+
+
 def _last_prompt(messages):
     return next(
         part.content

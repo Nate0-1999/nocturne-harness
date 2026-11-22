@@ -72,6 +72,7 @@ from harness.pydantic_ai_adapter import (
     FinishWhatWasAsked,
     PendingSteering,
     TurnBudgetNotice,
+    WorkerStepsCapability,
 )
 from harness.pydantic_harness_adapter import (
     CompactionPolicy,
@@ -419,6 +420,7 @@ class PydanticAITurnRunner:
 
             async def delegate(task: str, share_percent: float | None = None) -> str:
                 worker_id = generate_ulid()
+                steps = WorkerStepsCapability(emit.event, worker_id, task)  # A-093
                 worker_share = bounds.share(limit_tokens, share_percent)
                 location = context.toolset.location() if context.toolset is not None else None
                 toolset = (
@@ -458,6 +460,7 @@ class PydanticAITurnRunner:
                             usage=run_usage,
                             usage_limits=self._agent.usage_limits,
                             message_history=list(history) or None,
+                            capabilities=[steps],
                         )
                         full = result.output
                         self._extraction._journal.append_worker_return(

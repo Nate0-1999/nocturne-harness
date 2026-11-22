@@ -245,6 +245,7 @@ _RACK_MODULE_IDS = frozenset(
         "recipe",
         "jobs",
         "security",
+        "profiler",
     }
 )
 _RACK_FRAME_CSP = "; ".join(

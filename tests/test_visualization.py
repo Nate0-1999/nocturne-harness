@@ -488,3 +488,121 @@ def test_a_slow_palace_read_never_holds_the_local_observation(tmp_path):
             assert time.monotonic() < deadline
             time.sleep(0.1)
         assert client.get("/v1/visualization").json()["palace"] == {"nodes": ["arrived"]}
+
+
+def test_a_run_profiles_as_its_agents_with_timed_steps(tmp_path):
+    """SD-098 / A-093 / ADR-018: a run is its kickoff agent with its sub-agents beneath; a tool
+    or skill call is a step as long as it took, calls that overlap stay separate, and where no
+    call runs the agent waits on its model. An open end is still running."""
+    import json
+    from types import SimpleNamespace
+
+    from harness.visualization import agent_profile
+
+    def at(second):
+        return f"2026-11-22T09:00:{second:06.3f}+00:00"
+
+    def delta(second, **event):
+        payload = {"run_id": "run-1", "kind": "event", "event": event}
+        return {"captured_at": at(second), "record_type": "event", "thread_id": "thread",
+                "event": {"type": "run.delta", "payload": payload}}  # fmt: skip
+
+    def envelope(second, kind, **payload):
+        return {"captured_at": at(second), "record_type": "event", "thread_id": "thread",
+                "event": {"type": kind, "payload": {"run_id": "run-1", **payload}}}  # fmt: skip
+
+    def tool(second, kind, call_id, name, args=None):
+        part = {"tool_name": name, "tool_call_id": call_id, "args": args}
+        return delta(second, event_kind=kind, part=part)
+
+    card = {"memory_id": "m-1", "label": "Tally", "body": "Count lines.", "score": 0.9, "x": 1}
+    rows = [
+        {
+            "captured_at": at(0),
+            "record_type": "message",
+            "thread_id": "thread",
+            "message": {"role": "user", "run_id": "run-1", "content": "Tally the project."},
+        },  # fmt: skip
+        envelope(0, "run.started", resolved_model="model-a"),
+        envelope(0.2, "gate.open", injected=[card], near_misses=[]),
+        envelope(1, "gate.dismiss"),
+        tool(2, "function_tool_call", "c1", "load_capability", '{"id":"tally-report"}'),
+        tool(2.5, "function_tool_result", "c1", "load_capability"),
+        tool(4, "function_tool_call", "c2", "ls"),
+        tool(4.5, "function_tool_call", "c3", "read"),
+        tool(5, "function_tool_result", "c2", "ls"),
+        tool(6, "function_tool_result", "c3", "read"),
+        tool(7, "function_tool_call", "c4", "delegate_task"),
+        delta(
+            7.1,
+            event_kind="worker_started",
+            worker_id="w-1",
+            task="Count notes.",
+            instructions="Complete only the delegated task.",
+            tools=["read", "bash"],
+        ),  # fmt: skip
+        delta(
+            8, event_kind="worker_step", worker_id="w-1", tool="bash", call_id="b1", state="started"
+        ),  # fmt: skip
+    ]
+    transcript = tmp_path / "thread.jsonl"
+    transcript.write_text("".join(json.dumps(row) + "\n" for row in rows))
+    journal = SimpleNamespace(path_for_thread=lambda _id: transcript)
+    folds: dict = {}
+
+    def spans(agent, start):
+        return [
+            (step["kind"], step["name"], round(step["start"] - start, 3),
+             None if step["end"] is None else round(step["end"] - start, 3))
+            for step in agent["steps"]
+        ]  # fmt: skip
+
+    live = agent_profile(journal, tmp_path, folds, "thread")
+    run = live["run"]
+    start = run["start"]
+    assert run["end"] is None and live["runs"][0]["task"] == "Tally the project."
+    assert run["given"]["memories"] == [
+        {"memory_id": "m-1", "label": "Tally", "body": "Count lines.", "score": 0.9}
+    ]
+    assert spans(run, start) == [
+        ("memory", "memory check", 0, 1),
+        ("model", "model", 1, 2),
+        ("skill", "tally-report", 2, 2.5),
+        ("model", "model", 2.5, 4),
+        ("tool", "ls", 4, 5),
+        ("tool", "read", 4.5, 6),
+        ("model", "model", 6, 7),
+    ]
+    (worker,) = run["children"]
+    assert worker["end"] is None and worker["given"] == {
+        "task": "Count notes.",
+        "instructions": "Complete only the delegated task.",
+        "tools": ["read", "bash"],
+        "memories": None,
+    }
+    assert spans(worker, start) == [("model", "model", 7.1, 8), ("tool", "bash", 8, None)]
+
+    more = [
+        delta(
+            9,
+            event_kind="worker_step",
+            worker_id="w-1",
+            tool="bash",
+            call_id="b1",
+            state="finished",
+        ),  # fmt: skip
+        delta(10, event_kind="worker_return", worker_id="w-1"),
+        tool(10, "function_tool_result", "c4", "delegate_task"),
+        delta(12, kind="text"),
+        envelope(12.5, "run.done", stop_reason="end_turn"),
+    ]
+    with transcript.open("a") as handle:
+        handle.writelines(json.dumps(row) + "\n" for row in more)
+    finished = agent_profile(journal, tmp_path, folds, "thread")["run"]
+    assert finished["end"] - start == 12.5
+    assert spans(finished, start)[-1] == ("model", "model", 10, 12)
+    assert spans(finished["children"][0], start) == [
+        ("model", "model", 7.1, 8),
+        ("tool", "bash", 8, 9),
+        ("model", "model", 9, 10),
+    ]
