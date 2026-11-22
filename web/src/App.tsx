@@ -16,6 +16,7 @@ import {
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
+import { ReplyReader } from './ReplyReader'
 import { failureMessage, RequestFailure, serverMessage } from './requestFailure'
 import { OutLoud } from './OutLoud'
 import { browserScreenshotDataUrl, elideBinaryPayload, toolCallLines } from './runEventDisplay'
@@ -3808,7 +3809,11 @@ function MessageRow({
         </section>
       )}
       {message.content ? (
-        <AssistantMarkdown content={message.content} />
+        <>
+          <AssistantMarkdown content={message.content} />
+          <ReplyReader id={`chat:${message.run_id}`} text={message.content}
+            finished={!message.partial || message.run_id !== activeRunId} />
+        </>
       ) : activeRunId === message.run_id && (
         <p className="message__content message__content--quiet">Working…</p>
       )}
