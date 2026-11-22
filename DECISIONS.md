@@ -4625,3 +4625,14 @@ tells no other module when a pin changes. While a turn runs the rows wait, as re
 Not changed: the bridge labels every write `model_device` to the daemon, as it did for imported
 modules, so the daemon's module check never sees the writing module.
 Pair 0.1.106 was unused in PyPI, tags, remote branches, open PRs and the BOARD at selection.
+
+## M8FX — Read the Farm as folders (P2.1)
+
+PRECEDENT: SD-102; PLAN M8FX; ADR-018 clauses 2, 3 and 5; M3VZ, M3LV.
+Explorer is the parallel DOM rendering allowed by clause 5, selected beside the
+unchanged Burrows renderer. It reads the same recorded trees and agent locations,
+shows each project/worktree root, and publishes the same path selection. Recorded
+file touches say "touched"; they do not claim that an agent is still editing there.
+The look is kept in browser storage, as the module's scope is; folders fold locally.
+No file action or new trace behavior. Pair 0.1.107 was absent from PyPI, release
+tags and all fetched branch versions; the open peers reserve 0.1.104–106 and 108.
