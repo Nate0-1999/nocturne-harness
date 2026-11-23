@@ -1134,11 +1134,14 @@ button.rack-module__resize-handle--nw {
 }
 
 .model-browser ul {
-  max-height: 24rem;
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
+}
+
+.model-browser > ul {
+  max-height: 24rem;
+  overflow-y: auto;
 }
 
 .model-row {
@@ -3958,7 +3961,6 @@ details:not([open]) > .agent-policy-settings { display: none; } /* closed means 
   font-size: var(--text-sm);
 }
 .subscription-models summary span { margin-left: .75rem; text-transform: none; letter-spacing: normal; }
-.subscription-models ul { max-height: 8rem; }
 .subscription-pick {
   display: flex;
   flex-wrap: wrap;
@@ -3985,7 +3987,6 @@ details:not([open]) > .agent-policy-settings { display: none; } /* closed means 
 @media (max-width: 47.99rem) {
   .model-device__truth strong { flex-basis: auto; }
   .model-panel { gap: .75rem; }
-  .subscription-models ul { max-height: 7rem; }
   .subscription-pick { min-height: 2.75rem; }
   .model-browser__tools { grid-template-columns: minmax(0, 1fr) auto; }
   .model-browser__tools > span { grid-column: 1 / -1; }
