@@ -5775,30 +5775,6 @@ reflectedLight.indirectSpecular *= vGloss;`).replace(`#include <opaque_fragment>
       "wizard_mode": "#0d0905"
     },
     {
-      "art_deco": "rgb(56 215 255 / 4%)",
-      "art_deco_light": "rgb(56 215 255 / 4%)",
-      "bellagio": "rgb(56 215 255 / 4%)",
-      "bellagio_light": "rgb(56 215 255 / 4%)",
-      "gold_lines": "rgb(150 104 44 / 4%)",
-      "neo_noir": "rgb(56 215 255 / 4%)",
-      "seraph_dressed": "rgb(93 140 242 / 4%)",
-      "technomancer": "rgb(56 215 255 / 4%)",
-      "variable": "--seam-c0397dffbbf0",
-      "wizard_mode": "rgb(56 215 255 / 4%)"
-    },
-    {
-      "art_deco": "rgb(4 10 15 / 92%)",
-      "art_deco_light": "rgb(4 10 15 / 92%)",
-      "bellagio": "rgb(4 10 15 / 92%)",
-      "bellagio_light": "rgb(4 10 15 / 92%)",
-      "gold_lines": "rgb(215 224 238 / 92%)",
-      "neo_noir": "rgb(4 10 15 / 92%)",
-      "seraph_dressed": "rgb(5 6 15 / 92%)",
-      "technomancer": "rgb(4 10 15 / 92%)",
-      "variable": "--seam-7b3561f9e742",
-      "wizard_mode": "rgb(4 10 15 / 92%)"
-    },
-    {
       "art_deco": "rgb(0 0 0 / 55%)",
       "art_deco_light": "rgb(0 0 0 / 55%)",
       "bellagio": "rgb(0 0 0 / 55%)",
