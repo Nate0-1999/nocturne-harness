@@ -407,11 +407,14 @@ class CompletionRouter:
     async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
         if model.startswith("subscription:") and self.subscription_server is not None:
             try:
-                key, _, _ = await resolve_offer(self.subscription_server, model)
+                key, _, offered = await resolve_offer(self.subscription_server, model)
             except T3Error as exc:
                 raise NamedModelResolutionError(str(exc)) from None
             # T3 publishes no window. Use the configured Nocturne memory budget internally.
-            return ModelRoute(key, self.settings.model_context_tokens), datetime.now(UTC)
+            levels = (offered.get("thinking") or {}).get("levels", [])
+            return ModelRoute(
+                key, self.settings.model_context_tokens, effort_levels=tuple(levels)
+            ), datetime.now(UTC)
         if model.startswith("local:"):
             return await self.local.load_named_route(model)
         remote = self.remote_catalog

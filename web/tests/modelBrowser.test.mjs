@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { browseOrder, chipParts, modelMark, policyInForce, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
+import { browseOrder, chipParts, modelMark, policyInForce, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -13,6 +13,22 @@ const models = [
   model('top', '57', '4', 200_000),
   model('unscored', null, '0.05', null),
 ]
+
+/** A-095: sorting or searching a broker catalog must preserve the owner's plan choices. */
+test('subscription groups and names survive every broker sort and search', () => {
+  const codex = 'subscription:codex/ref/astra'
+  const claude = 'subscription:claudeAgent/ref/opus'
+  const browser = { models: [{ model: codex }, ...models, { model: claude }], subscriptions: [
+    { tool: 'codex', availability: 'available' }, { tool: 'claudeAgent', availability: 'available' },
+  ], chat_policy: 'elbow', configurations: [] }
+  for (const sort of ['rank', 'price', 'context']) {
+    assert.deepEqual(browseOrder(browser.models, [], 'absent', sort), [])
+    assert.deepEqual(subscriptionGroups(browser).map(s => s.models.map(m => m.model)), [[codex], [claude]])
+  }
+  assert.equal(modelMark(browser, claude, 'high'), 'Claude Code · opus')
+  assert.equal(modelMark(null, codex, 'low'), 'Codex · astra')
+  assert.equal(subscriptionState({ tool: 'claudeAgent', availability: 'signed_out' }), 'Signed out · claude auth login')
+})
 
 /** A-020: rank is a display order the owner can re-sort and pin over, never routing. */
 test('pins sit on top, then rank, price or context orders the rest', () => {

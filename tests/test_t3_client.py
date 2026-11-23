@@ -88,8 +88,12 @@ async def test_terminal_archives_only_the_bound_codex_thread(
     runner = t3_turn.SubscriptionTurns(
         None, SimpleNamespace(client=AsyncMock(return_value=client)), journal
     )
+    option, level, wire_value = (
+        ("reasoningEffort", "ultra", "ultra") if tool == "codex" else ("thinking", "off", False)
+    )
+    offer = {"id": "model", "thinking": {"id": option, "levels": [level]}}
     monkeypatch.setattr(
-        t3_turn, "resolve_offer", AsyncMock(return_value=(model, {"tool": tool}, {}))
+        t3_turn, "resolve_offer", AsyncMock(return_value=(model, {"tool": tool}, offer))
     )
     commands = []
     runs = []
@@ -116,6 +120,11 @@ async def test_terminal_archives_only_the_bound_codex_thread(
         command = args["type"]
         commands.append(command)
         if command == "message.dispatch":
+            assert args["modelSelection"] == {
+                "instanceId": tool,
+                "model": "model",
+                "options": [{"id": option, "value": wire_value}],
+            }
             messages.append(args["messageId"])
         else:
             assert command == "provider-session.detach" and args["providerSessionId"] == "writer"
@@ -162,7 +171,9 @@ async def test_terminal_archives_only_the_bound_codex_thread(
         thread_id="local-thread",
         prompt="Hello",
         emit=AsyncMock(),
-        model_resolution=SimpleNamespace(model=model),
+        model_resolution=SimpleNamespace(
+            model=model, request_parameters=SimpleNamespace(effort=level)
+        ),
         message_history=(),
     )
     assert (await runner.run(**args)).stop_reason.value == "cancelled"

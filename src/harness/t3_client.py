@@ -226,7 +226,9 @@ class T3Client:
                 proc.kill()
                 await proc.wait()
 
-    async def message(self, thread: str, message: str, text: str, *, archived: bool = False):
+    async def message(
+        self, thread: str, message: str, text: str, selection: dict, *, archived: bool = False
+    ):
         if archived:
             # Threads written by the earlier T3-archive build still need reopening.
             await self.dispatch(thread, "thread.unarchive")
@@ -239,6 +241,7 @@ class T3Client:
             text=text,
             attachments=[],
             dispatchMode={"type": "start_immediately"},
+            modelSelection=selection,
         )
 
     async def interrupt(self, thread: str, run: str):
@@ -255,8 +258,7 @@ class T3Client:
         thread: str,
         message: str,
         text: str,
-        instance: str,
-        model: str,
+        selection: dict,
         title: str,
     ):
         return await self.call(
@@ -267,7 +269,7 @@ class T3Client:
                 "projectId": project,
                 "title": title,
                 "generateTitle": False,
-                "modelSelection": {"instanceId": instance, "model": model},
+                "modelSelection": selection,
                 "runtimeMode": "approval-required",
                 "interactionMode": "default",
                 "workspaceStrategy": {"type": "root"},

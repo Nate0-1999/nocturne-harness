@@ -42,6 +42,22 @@ def _instant(value):
     return None
 
 
+def _thinking(model):
+    for option in (model.get("capabilities") or {}).get("optionDescriptors", []):
+        key = option.get("id")
+        if key == "thinking" and option.get("type") == "boolean":
+            return {"id": key, "levels": ["on", "off"]}
+        if key in ("reasoningEffort", "effort") and option.get("type") == "select":
+            levels = [
+                choice["id"]
+                for choice in option["options"]
+                if re.fullmatch(r"[a-z0-9_-]+", choice["id"]) and choice["id"] != "default"
+            ]
+            if levels:
+                return {"id": key, "levels": levels}
+    return None
+
+
 def project_sources(providers: list[dict]) -> list[dict]:
     observed = {p.get("instanceId"): p for p in providers}
     rows = []
@@ -85,6 +101,7 @@ def project_sources(providers: list[dict]) -> list[dict]:
                 {
                     "id": slug,
                     "name": slug,
+                    "thinking": _thinking(model),
                     "default": model.get("isDefault") is True,
                     "availability": model_state,
                     "limited_until": max(

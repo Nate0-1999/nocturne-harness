@@ -142,6 +142,7 @@ class ParameterRegistry:
         module_id: str,
         parameter_id: str,
         value: object,
+        effort_levels: tuple[str, ...] | None = None,
     ) -> ParameterValue:
         descriptor = self._descriptors.get(parameter_id)
         if descriptor is None:
@@ -150,6 +151,8 @@ class ParameterRegistry:
             raise ParameterWriteViolation("unbound")
         if descriptor.authority == "law-bound":
             raise ParameterWriteViolation("law_bound")
+        if parameter_id == "model.effort" and effort_levels is not None:
+            descriptor = descriptor.model_copy(update={"options": effort_levels})
         return _validate_value(descriptor, value)
 
     def ensure_thread(self, thread_id: str, values: dict[str, ParameterValue]) -> None:

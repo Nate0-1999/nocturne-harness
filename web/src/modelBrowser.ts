@@ -9,6 +9,7 @@ export interface ListedModel {
   completion_price: string | null
   score: string | null
   reasoning: boolean
+  effort_levels?: string[]
   /** SD-079: the request parameters the source says it takes; null when unpublished. */
   parameters?: string[] | null
 }
@@ -20,6 +21,7 @@ export interface Configuration {
 }
 
 export interface ModelBrowser {
+  subscriptions?: { tool: string, name: string, availability: string, limited_until: string | null }[]
   local?: { url: string | null, model: string | null, when_offline: boolean }
   models: ListedModel[]
   configurations: Configuration[]
@@ -30,6 +32,24 @@ export interface ModelBrowser {
 }
 
 export type SortKey = 'rank' | 'price' | 'context'
+
+export function subscriptionGroups(browser: ModelBrowser | null) {
+  if (!browser) return []
+  return (browser.subscriptions ?? []).map(source => ({
+    ...source,
+    models: browser.models.filter(item => item.model.startsWith(`subscription:${source.tool}/`)),
+  }))
+}
+
+export function subscriptionState(source: NonNullable<ModelBrowser['subscriptions']>[number]): string {
+  switch (source.availability) {
+    case 'available': return 'Available'
+    case 'signed_out': return `Signed out · ${source.tool === 'codex' ? 'codex login' : 'claude auth login'}`
+    case 'limited': return source.limited_until ? `Limited until ${new Date(source.limited_until).toLocaleString()}` : 'Limited · reset time unknown'
+    case 'missing': return 'Not installed'
+    default: return 'Unknown'
+  }
+}
 
 export function parseBrowser(value: unknown): ModelBrowser {
   if (!isRecord(value) || !Array.isArray(value.models) || !Array.isArray(value.configurations) || !Array.isArray(value.pins)) {
@@ -46,6 +66,7 @@ export function browseOrder(models: ListedModel[], pins: string[], search: strin
     ? number(item.prompt_price, Infinity)
     : sort === 'context' ? -(item.context_tokens ?? -1) : -number(item.score, -Infinity)
   return models
+    .filter((item) => !item.model.startsWith('subscription:'))
     .filter((item) => needle === '' || item.name.toLowerCase().includes(needle) || item.model.toLowerCase().includes(needle))
     .sort((left, right) => Number(pins.includes(right.model)) - Number(pins.includes(left.model))
       || key(left) - key(right) || left.name.localeCompare(right.name))
@@ -136,6 +157,7 @@ export function modelMark(
   // SD-077: before the first answer a conversation names what it will start on.
   const inForce = browser === null ? null : policyInForce(browser, model)
   const shown = model ?? inForce?.model ?? null
+  if (shown?.startsWith('subscription:')) return modelLabel(shown)
   const entry = browser?.models.find((item) => item.model === shown)
   const parts = chipParts(shown, entry, effort)
   const mark = full ? parts : parts.slice(0, entry?.reasoning ? 2 : 1)

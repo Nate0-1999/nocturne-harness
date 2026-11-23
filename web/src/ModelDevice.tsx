@@ -7,7 +7,7 @@ import { formatHumanCount } from './humanNumbers'
 import { failureMessage, serverMessage } from './requestFailure'
 import {
   browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
-  policyInForce, policyName, shortName, strategyMeaning, strategyName, takesParameter, type Configuration, type ModelBrowser, type SortKey,
+  policyInForce, policyName, shortName, strategyMeaning, strategyName, subscriptionGroups, subscriptionState, takesParameter, type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
 type ParameterValue = string | number | null
@@ -86,6 +86,7 @@ export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
   const box = useRef<HTMLButtonElement>(null)
   const listed = fresh ?? browser
   const inUse = model ?? listed?.current?.model ?? null
+  const choices = [...new Set([...(inUse?.startsWith('subscription:') ? [inUse] : []), ...(listed?.pins ?? [])])]
 
   useEffect(() => {
     if (!open) return
@@ -135,7 +136,7 @@ export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
         ref={box}
         className="chat-header__model"
         data-testid="active-model"
-        aria-label={`Active model: ${model ?? 'being chosen'}`}
+        aria-label={`Active model: ${inUse ? modelLabel(inUse) : 'being chosen'}`}
         aria-expanded={open}
         data-tooltip="Switch model"
         data-tooltip-detail="Your pinned models, for this conversation only; the last row opens the Model Device."
@@ -150,7 +151,7 @@ export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
       {open && (
         <section className="model-switch__list" aria-label="Pinned models" data-testid="model-switch">
           <ul>
-            {(listed?.pins ?? []).map((pin) => {
+            {choices.map((pin) => {
               const entry = listed?.models.find((item) => item.model === pin)
               const current = pin === inUse
               return (
@@ -160,21 +161,21 @@ export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
                     className="model-switch__row"
                     data-model={pin}
                     aria-current={current || undefined}
-                    data-tooltip={pin}
+                    data-tooltip={modelLabel(pin)}
                     data-tooltip-detail={current ? 'This conversation uses it now.'
                       : busy ? 'Wait for the answer to finish.' : 'Use it in this conversation only.'}
                     disabled={current || busy || threadId === null}
                     onClick={() => { void pick(pin) }}
                   >
                     <span className="model-switch__name">{entry === undefined ? modelLabel(pin) : shortName(entry.name)}</span>
-                    <span>{current ? 'In use' : entry === undefined ? '—' : formatPrice(entry)}</span>
+                    <span>{current ? 'In use' : pin.startsWith('subscription:') ? 'Included with your plan' : entry === undefined ? '—' : formatPrice(entry)}</span>
                   </Button>
                 </li>
               )
             })}
           </ul>
           {status !== '' && <p role="status">{status}</p>}
-          {listed !== null && listed.pins.length === 0 && <p>Pin models in the Model Device to list them here.</p>}
+          {listed !== null && choices.length === 0 && <p>Pin models in the Model Device to list them here.</p>}
           <Button variant="bare"
             type="button"
             className="model-switch__row"
@@ -305,6 +306,9 @@ export function ModelDevice() {
   const effort = descriptors.find((item) => item.id === 'model.effort')
   const resolved = view?.resolved_model ?? null
   const inUse = browser?.models.find((item) => item.model === resolved)
+  const subscription = resolved?.startsWith('subscription:') === true
+  const StrategyRail = subscription ? 'details' : 'section'
+  const groups = subscriptionGroups(browser)
   // SD-079: only the parameters the model in use takes, per the source's catalog.
   const numeric = useMemo(
     () => descriptors.filter((item) => (item.type === 'number' || item.type === 'integer')
@@ -387,10 +391,13 @@ export function ModelDevice() {
               onChange={(event) => { void write(effort.id, event.target.value || null) }}
             >
               <option value="">Default</option>
-              {effort.options.map((option) => <option key={option} value={option}>{option}</option>)}
+              {(inUse.effort_levels ?? effort.options).map((option) => <option key={option} value={option}>
+                {subscription ? option === 'xhigh' ? 'Extra high' : option[0].toUpperCase() + option.slice(1) : option}
+              </option>)}
             </Select>
           </label>
         )}
+        {subscription && browser && !inUse?.reasoning && <p>{inUse ? 'This tool uses its own thinking setting.' : 'Thinking options are unavailable.'}</p>}
         {numeric.length > 0 && (
           <Button
             type="button"
@@ -402,15 +409,18 @@ export function ModelDevice() {
             Parameters
           </Button>
         )}
-        {threadId !== null && browser !== null && <p className="model-summary" data-testid="model-summary">{summary}</p>}
+        {!subscription && threadId !== null && browser !== null && <p className="model-summary" data-testid="model-summary">{summary}</p>}
         <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
       </div>
 
-      <div className="model-panel">
+      <div className={subscription ? 'model-panel model-panel--subscription' : 'model-panel'}>
       {/* FL-206: the strategies rail — each one's meaning and the model it picks now; the one in
           force is marked; picking one is the same act as before (policies.save for the chat role). */}
+      <div className="model-rail">
+      {subscription && <p className="model-subscription-choice">You chose your subscription for this conversation.</p>}
       {browser !== null && browser.configurations.length > 0 && (
-        <section className="model-configs" aria-label="Strategies">
+        <StrategyRail className="model-configs" aria-label="Strategies">
+          {subscription && <summary title="Show broker strategies">Broker strategies</summary>}
           <div className="model-row--head" aria-hidden="true"><span>Strategy</span><span>Picks now</span></div>
           {browser.configurations.map((configuration) => {
             const entry = browser.models.find((item) => item.model === configuration.model)
@@ -420,7 +430,7 @@ export function ModelDevice() {
                 type="button"
                 key={configuration.policy}
                 className="model-config"
-                aria-pressed={configuration.policy === browser.chat_policy}
+                aria-pressed={!subscription && configuration.policy === browser.chat_policy}
                 data-testid={`model-config-${configuration.policy.split(':')[0]}`}
                 data-tooltip={policyName(configuration.policy)}
                 data-tooltip-detail={`Use it here and for new conversations; ${configuration.reason}.`}
@@ -442,7 +452,7 @@ export function ModelDevice() {
               variant="bare"
               type="button"
               className="model-config"
-              aria-pressed={browser.local.when_offline}
+              aria-pressed={!subscription && browser.local.when_offline}
               data-testid="model-config-local_when_offline"
               data-tooltip="Local when offline"
               data-tooltip-detail="Switch on or off. Only while OpenRouter cannot be reached; a reachable refusal never switches."
@@ -462,16 +472,39 @@ export function ModelDevice() {
               <span className="model-config__price">{localPick === undefined ? '—' : formatPrice(localPick)}</span>
             </Button>
           )}
-        </section>
+        </StrategyRail>
       )}
 
+      </div>
       <section className="model-browser" aria-label="Models">
+        {groups.length > 0 && <section className="subscription-models" aria-label="Your subscriptions">
+          <h3>Your subscriptions</h3>
+          {groups.map(source => <details key={source.tool} open>
+            <summary title={`Show or hide ${source.name} models`}><strong>{source.name}</strong><span>{subscriptionState(source)}</span></summary>
+            {source.models.length > 0 && <ul aria-label={source.name}>
+              {source.models.map(item => <li key={item.model} className="model-row">
+                <Button variant="bare" type="button" className="subscription-pick" data-model={item.model}
+                  data-tooltip={modelLabel(item.model)} data-tooltip-detail="Use this plan for this conversation."
+                  aria-current={item.model === resolved || undefined} disabled={!editable || item.model === resolved}
+                  onClick={() => { void configure({policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model'}) }}>
+                  <span>{item.model.split('/').slice(2).join('/')}</span><small>Included with your plan</small>
+                </Button>
+                <Button type="button" iconOnly action={pins.includes(item.model) ? 'unpin' : 'pin'}
+                  aria-pressed={pins.includes(item.model)} data-tooltip={pins.includes(item.model) ? 'Unpin' : 'Pin model'}
+                  data-tooltip-detail="Show this model in the conversation header."
+                  onClick={() => { void pin(item.model, !pins.includes(item.model)) }}>
+                  {pins.includes(item.model) ? 'Unpin' : 'Pin'}
+                </Button>
+              </li>)}
+            </ul>}
+          </details>)}
+        </section>}
         <div className="model-browser__tools">
           <TextField
             type="search"
             aria-label="Search models"
             data-tooltip-detail="Filter by name or id."
-            placeholder="Search models"
+            placeholder={groups.length ? 'Search broker models' : 'Search models'}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             spellCheck={false}

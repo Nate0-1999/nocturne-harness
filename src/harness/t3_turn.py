@@ -44,6 +44,18 @@ class SubscriptionTurns:
             raise T3Error("The subscription route accepts text only.")
         key, source, model = await resolve_offer(self.server, model_resolution.model)
         client = await self.server.client()
+        selection = {"instanceId": source["tool"], "model": model["id"]}
+        effort = model_resolution.request_parameters.effort
+        if effort is not None:
+            thinking = model.get("thinking") or {}
+            if effort not in thinking.get("levels", []):
+                raise T3Error("This model no longer offers the selected thinking level.")
+            selection["options"] = [
+                {
+                    "id": thinking["id"],
+                    "value": effort == "on" if thinking["id"] == "thinking" else effort,
+                }
+            ]
         binding = self.journal.subscription_binding(thread_id)
         fresh = binding is None or binding["source"] != key
         if fresh:
@@ -99,12 +111,10 @@ class SubscriptionTurns:
                 f"{source['name']} controls its own actions outside Nocturne’s fence.\n\n"
             )
         send = asyncio.create_task(
-            client.launch(
-                binding["native_project"], thread, message, text, source["tool"], model["id"], title
-            )
+            client.launch(binding["native_project"], thread, message, text, selection, title)
             if fresh
             else client.message(
-                thread, message, text, archived=prior["thread"]["archivedAt"] is not None
+                thread, message, text, selection, archived=prior["thread"]["archivedAt"] is not None
             )
         )
         try:

@@ -125,7 +125,7 @@ from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.t3_client import T3Error
 from harness.t3_server import T3Server
-from harness.t3_sources import offers, sources
+from harness.t3_sources import offers, project_sources, sources
 from harness.t3_turn import SubscriptionTurns
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
@@ -1594,7 +1594,11 @@ def create_dev_app(
                     browser = await browse_models(
                         catalog,
                         chat_policy=role_policies["chat"],
-                        current_model=None if current is None else current["model"],
+                        current_model=(
+                            None
+                            if current is None or current["model"].startswith("subscription:")
+                            else current["model"]
+                        ),
                         fallback_model=configured.chat_model,
                         burn=await measured_token_burn(owned_spine),
                     )
@@ -1608,7 +1612,11 @@ def create_dev_app(
                 try:
                     native = await sources(t3)
                 except T3Error:
-                    native = []
+                    native = project_sources([])
+                browser["subscriptions"] = [
+                    {k: source[k] for k in ("tool", "name", "availability", "limited_until")}
+                    for source in native
+                ]
                 for key, source, model in offers(native):
                     browser["models"].append(
                         {
@@ -1618,8 +1626,9 @@ def create_dev_app(
                             "prompt_price": None,
                             "completion_price": None,
                             "score": None,
-                            "reasoning": None,
-                            "parameters": None,
+                            "reasoning": bool(model.get("thinking")),
+                            "effort_levels": (model.get("thinking") or {}).get("levels", []),
+                            "parameters": [],
                         }
                     )
             return {
