@@ -70,7 +70,8 @@ try {
 
   // 3. Pin one: it sits on top and stays there after the search is cleared and the list reloads.
   await device.getByRole('searchbox', { name: 'Search models' }).fill('gpt-4.1-mini')
-  await row(device, pinTarget).getByRole('button', { name: 'Pin to top' }).click()
+  await row(device, pinTarget).hover()
+  await row(device, pinTarget).getByRole('button', { name: 'Pin model' }).click()
   await device.getByRole('searchbox', { name: 'Search models' }).fill('')
   await waitUntil(async () => (await firstRowModel(device)) === pinTarget)
   const pins = (await fetchJson(`${baseUrl}/v1/models`)).pins

@@ -614,6 +614,18 @@
   }
 }
 
+@media (max-width: 30rem) {
+  .model-switch__row[data-model^="subscription:"] {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .125rem;
+    padding-block: .375rem;
+  }
+  .model-switch__row[data-model^="subscription:"] .model-switch__name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
 .chat-header h1 {
   max-width: 42rem;
   margin: 0;
