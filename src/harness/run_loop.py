@@ -2432,6 +2432,13 @@ class RunLoop:
         # WALL owner files / D.2 082: stop acceptance when the journal cannot persist.
         raise RuntimeError("transcript capture failed; run loop is now unavailable") from exc
 
+    async def model_context(self, thread_id: str) -> int:
+        resolution = await self._resolution_for_thread(thread_id)
+        if resolution is None:
+            # WALL money / F259: a missing context size cannot set the model's working budget.
+            raise ModelCatalogUnavailable("This conversation has no model context yet.")
+        return resolution.context_tokens
+
     async def _resolution_for_thread(
         self,
         thread_id: str,
@@ -2447,9 +2454,9 @@ class RunLoop:
             return None
         if hydrated_model is not None:
             resolve_hydrated = getattr(self._model_resolver, "resolve_hydrated", None)
+            if resolve_hydrated is not None:
+                return await resolve_hydrated(thread_id, hydrated_model)
             try:
-                if resolve_hydrated is not None:
-                    return await resolve_hydrated(thread_id, hydrated_model)
                 return await self._model_resolver.resolve_named(thread_id, hydrated_model)
             except (ModelCatalogUnavailable, NamedModelResolutionError):
                 fallback = await self._model_resolver.resolve(thread_id)

@@ -986,6 +986,18 @@ button.rack-module__resize-handle--nw {
 
 .model-device__truth { flex-wrap: wrap; }
 
+.model-strategy-readout { display: grid; gap: .25rem; padding: .75rem 0; }
+.model-strategy-readout small { color: var(--muted); }
+.model-strategy-readout strong { color: var(--accent); overflow-wrap: anywhere; }
+.model-strategy-readout p, .model-bans p { margin: 0; }
+.model-switch__list .model-strategy-readout { padding-inline: .75rem; }
+.model-switch__outage { display: block; white-space: normal; }
+.model-bans { margin-block: 1rem; }
+.model-bans h3 { margin: 0; }
+.model-bans > div { display: flex; align-items: center; gap: .75rem; padding-block: .35rem; }
+.model-bans select { min-width: 0; max-width: 100%; flex: 1; }
+.model-bans button { flex: none; }
+
 .model-device__truth strong {
   flex: 1 1 16rem;
   color: var(--accent);
@@ -1198,6 +1210,9 @@ button.rack-module__resize-handle--nw {
   .model-device__history {
     grid-template-columns: 1fr;
   }
+
+  .model-device__truth { gap: .5rem; margin-block: .5rem; }
+  .model-device__truth strong { flex: none; }
 
   .model-row--head { display: none; }
 

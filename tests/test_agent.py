@@ -176,7 +176,8 @@ def settings(**overrides: Any) -> HarnessSettings:
         "anthropic_api_key": None,
         "openai_api_key": None,
         "openrouter_api_key": None,
-        "chat_model": "openrouter:minimax/minimax-m3",
+        "chat_model": "openrouter:fixture/chat",
+        "model_context_tokens": 32_000,
         "run_request_limit": 40,
         "run_total_tokens_limit": 500_000,
         "label_max": 64,
@@ -299,11 +300,18 @@ def structured_sequence_model(
 
 
 @pytest.mark.asyncio
-async def test_background_memory_jobs_follow_the_live_chat_policy() -> None:
+async def test_background_memory_jobs_follow_the_live_chat_policy(monkeypatch) -> None:
     """F196 / FL-154: archive, comparison and seed requests must not escape the role pin."""
     configured = settings(model_policy_chat="pinned:openai:chosen")
     calls = []
     agent = HarnessAgent(configured)
+    from harness.model_policy import ModelRoute
+
+    async def listed(model):
+        return ModelRoute(model, 32_000), datetime.now(UTC)
+
+    monkeypatch.setattr(agent._router, "parse_named_model", lambda model: model)
+    monkeypatch.setattr(agent._router, "load_named_route", listed)
     agent._models_by_name["openai:chosen"] = structured_sequence_model(
         [
             {"working_summary": "A project fact.", "open_loops": [], "candidates": []},
@@ -419,6 +427,15 @@ def test_resolve_model_uses_pydantic_provider_registry_for_other_model_strings(
 
     assert resolved.provider is not None
     assert resolved.provider.name == "ollama"
+
+
+def test_model_helper_without_an_explicit_selection_refuses_to_spend():
+    """SPEC C.5: a synchronous model helper must never guess where to send data."""
+    agent = HarnessAgent(settings(chat_model=None))
+    with pytest.raises(
+        ValueError, match="No model has been selected. Connect to the model catalog."
+    ):
+        agent.model_for()
 
 
 def test_resolve_model_rejects_a_string_unknown_to_pydantic_ai() -> None:

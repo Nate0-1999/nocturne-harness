@@ -157,6 +157,7 @@ async def run(assignment_path: Path) -> None:
     resolver = ModelPolicyResolver(
         policy=assignment["model_policy"],
         static_model=settings.chat_model,
+        choices=settings.model_choices,
         static_context_tokens=settings.model_context_tokens,
         catalog=router.catalog,
         # FL-152: a sub-agent's budget policy prices models at the same measured burn.

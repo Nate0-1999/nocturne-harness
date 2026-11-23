@@ -105,6 +105,7 @@ export type RackAction =
   | { type: 'models.load'; thread_id: string | null }
   | { type: 'models.local'; url: string | null; model: string | null; when_offline: boolean }
   | { type: 'models.pin'; model: string; pinned: boolean }
+  | { type: 'models.ban'; target: string; banned: boolean }
   | { type: 'policies.save'; role: string; policy: string }
   | { type: 'prompt.interject'; run_id: string; prompt: string }
   | { type: 'boundary.decide'; run_id: string; decision: 'allowed_once' | 'allowed_thread' | 'denied' }
@@ -257,7 +258,7 @@ export type RackActionResult<Action extends RackAction> =
       ? number
     : Action['type'] extends 'thread.select' | 'thread.rename_project' | 'thread.bind_workspace' | 'draft.update'
       ? void
-      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'prompt.interject' | 'boundary.decide' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'spend.reconcile' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
+      : Action['type'] extends 'policies.load' | 'policies.save' | 'models.load' | 'models.pin' | 'models.ban' | 'prompt.interject' | 'boundary.decide' | 'symphony.context' | 'symphony.memory' | 'spend.invoice' | 'spend.reconcile' | 'thread.archive' | 'thread.rewind' | 'thread.compactions' | 'queue.load' | 'curation.load' | 'local_copy.load' | 'local_copy.dismiss' | 'queue.decide' | 'queue.feedback' | 'seed.jump-start.load' | 'seed.upload' | 'queue.batch.decide' | 'parameter.write' | 'scorer.simulate' | 'scorer.force' | 'scorer.retrain' | 'scorer.audition' | 'scorer.activate'
         ? JsonValue
         : Action['type'] extends 'rack.scope.get' | 'rack.scope.set'
           ? RackScope
@@ -439,7 +440,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'control',
     slot: 'overlay',
     streams: ['parameter.change', 'parameter.refused', 'model.change'],
-    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin', 'models.local',
+    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin', 'models.ban', 'models.local',
       'policies.save'],
     bindings: [
       'model.slug', 'model.temperature', 'model.top_p', 'model.top_k',
@@ -657,6 +658,11 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson('/v1/model-pins', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ model: action.model, pinned: action.pinned }),
+        }) as Promise<RackActionResult<Action>>
+      case 'models.ban':
+        return fetchJson('/v1/model-bans', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target: action.target, banned: action.banned }),
         }) as Promise<RackActionResult<Action>>
       case 'models.local':
         return fetchJson('/v1/local-model', {

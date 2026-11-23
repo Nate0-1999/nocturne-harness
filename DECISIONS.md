@@ -4662,3 +4662,11 @@ The reader parses the same GFM as the rendered reply and holds the unfinished se
 until more text or the end arrives. A rate change cancels the active utterance and
 resumes at its last reported word, or from the sentence start on engines without word events.
 Playback speed uses the existing home/principal preference scope.
+
+## M8DL — Best value for new conversations (P4)
+
+PRECEDENT: SD-100, M3SK, M6MS, F259 and draft A-098. A home that set nothing uses the
+elbow over eligible models. If the owner's pin is banned, new conversations use the elbow
+until the ban is lifted. Established conversations retain their model. The settings show
+when the pick changed separately from the catalog date used for a saved pick. In the six
+retained observations the elbow picked six different models. Report 336 records the walk.

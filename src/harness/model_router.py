@@ -152,10 +152,9 @@ class DirectCompletionAdapter:
     def catalog_available(self) -> bool:
         """M3G single-key mode: an OpenAI-compatible source lists its own models (FL-202)."""
 
-        return (
-            self._settings.chat_model.split(":", 1)[0] in _OPENAI_PROVIDERS
-            and self._settings.openai_api_key is not None
-        )
+        return (self._settings.chat_model or "openai").split(":", 1)[
+            0
+        ] in _OPENAI_PROVIDERS and self._settings.openai_api_key is not None
 
     def accepts(self, model: str) -> bool:
         return not model.startswith(("openrouter:", "local:"))
@@ -216,6 +215,10 @@ class DirectCompletionAdapter:
             for entry in catalog.listing:
                 if entry.model_id == model_id:
                     context = entry.context_tokens or self._settings.model_context_tokens
+                    if context is None:
+                        raise ModelCatalogUnavailable(
+                            "The source has not published this model's context size."
+                        )
                     return ModelRoute(
                         model_id=model_id,
                         context_tokens=context,
@@ -225,10 +228,10 @@ class DirectCompletionAdapter:
         raise NamedModelResolutionError(f"unknown model: {model_id}")
 
     def qualify_model(self, model_id: str) -> str:
-        return f"{self._settings.chat_model.split(':', 1)[0]}:{model_id}"
+        return f"{(self._settings.chat_model or 'openai').split(':', 1)[0]}:{model_id}"
 
     def parse_named_model(self, model: str) -> str:
-        provider = self._settings.chat_model.split(":", 1)[0]
+        provider = (self._settings.chat_model or "openai").split(":", 1)[0]
         if not isinstance(model, str) or not model.startswith(f"{provider}:"):
             raise NamedModelResolutionError(f"model must be a {provider}:<model-id> string")
         return model.removeprefix(f"{provider}:")
@@ -419,7 +422,22 @@ class CompletionRouter:
             if model and not model.startswith("local:"):
                 model = f"local:{model}"
             if not model and catalog.listing:
-                model = catalog.listing[0].model_id
+                model = next(
+                    (
+                        entry.model_id
+                        for entry in catalog.listing
+                        if not self.settings.model_choices.excluded(
+                            self.settings.model_choices.bans(), entry.model_id
+                        )
+                    ),
+                    None,
+                )
+            if model and self.settings.model_choices.excluded(
+                self.settings.model_choices.bans(), model
+            ):
+                raise ModelConfigurationError(
+                    "The offline model is banned. Lift its ban in model settings."
+                )
             if model is None:
                 raise ModelConfigurationError(
                     "OpenRouter is unreachable and no local model is running."

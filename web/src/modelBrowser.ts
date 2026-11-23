@@ -2,6 +2,7 @@ import { formatHumanCount, formatHumanUsd } from './humanNumbers.ts'
 
 /** FL-202: one source model as the browser lists it; prices are USD per million tokens. */
 export interface ListedModel {
+  banned_by?: string | null
   model: string
   name: string
   context_tokens: number | null
@@ -25,8 +26,12 @@ export interface ModelBrowser {
   configurations: Configuration[]
   pins: string[]
   chat_policy: string
+  requested_policy?: string
   current: { model: string, effort: string | null, policy?: string | null } | null
   unavailable?: string
+  using_saved_pick?: boolean
+  bans?: Record<string, string>
+  last_pick?: { model: string, checked: string, changed: string } | null
 }
 
 export type SortKey = 'rank' | 'price' | 'context'
@@ -78,7 +83,7 @@ export function strategyMeaning(policy: string): string {
   switch (kind) {
     case 'pinned': return 'Keeps one model until you change it.'
     case 'max': return 'The highest score in the catalog, whatever it costs.'
-    case 'elbow': return 'Where paying more stops buying much more intelligence.'
+    case 'elbow': return 'Finds the best value before higher prices bring only small gains.'
     case 'floor': return `The cheapest model scoring at least ${value}.`
     case 'slope': return `The last frontier step worth $${value}/M per point.`
     case 'budget': return `The smartest model the measured hourly burn buys for $${value} an hour.`

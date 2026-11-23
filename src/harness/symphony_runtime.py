@@ -102,10 +102,11 @@ def _graft(graft_root: Path, commits: list[str]) -> str:
 class SymphonyExecution:
     """One execution seam; the existing conductor remains the search authority."""
 
-    def __init__(self, *, settings, home: Path, context_factory):
+    def __init__(self, *, settings, home: Path, context_factory, model_context):
         self.settings = settings
         self.home = home
         self.context_factory = context_factory
+        self.model_context = model_context
         self.live = {}
 
     def preflight(self, thread_id: str) -> Path:
@@ -374,7 +375,7 @@ class SymphonyExecution:
                         ),
                         search_spend_reader=lambda *_: cost(),
                         result_share=bounds_from(self.settings).share(
-                            int(self.settings.model_context_tokens * 0.8)
+                            int((await self.model_context(stack.thread_id)) * 0.8)
                         ),
                     )
                     conductor.claim(
