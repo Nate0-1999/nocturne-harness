@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "dd50a1769fb9646b3b351a7685314b3da73bd667"
+      "head": "d50a709983d0bd659e16e90e3df87cbbc369c4a9"
     }
   ],
   "unmapped": {
@@ -20,6 +20,7 @@
     "harness/src/harness/t3_turn.py": "Journal-bound subscription dispatch after memory selection (SD-103, FL-017/018/106).",
     "harness/tests/fixtures/t3/terminal-replay.json": "Regression coverage for package versions, install integrity, source privacy and terminal replay.",
     "harness/tests/test_cli.py": "Regression coverage for package versions, install integrity, source privacy and terminal replay.",
+    "harness/tests/test_parameter_registry.py": "Tests the reported subscription thinking levels and broker validation.",
     "harness/tests/test_t3_client.py": "Regression coverage for package versions, install integrity, source privacy and terminal replay.",
     "harness/verification/m8tb/FL-007.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-008.png": "Packet evidence for the gate, with no product runtime effect.",
@@ -95,17 +96,27 @@
     "harness/verification/m8tb/FL-215.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/SHA256SUMS": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/ledger-report.json": "Packet evidence for the gate, with no product runtime effect.",
-    "harness/web/dist/assets/index-BAL1a2Zb.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-C9C6ezyI.css": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-CcfVwa7i.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-CxLfYhog.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-D9MMvuB8.css": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/index.html": "Packaged build of the existing model choice and its explicit subscription entries.",
+    "harness/web/tests/modelBrowser.test.mjs": "Tests model grouping, broker filters, state and consistent subscription names.",
     "harness/web/dist/assets/index-DHRu_Hhn.js": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/dist/assets/index-DY41gOxg.js": "Packaged build of the existing model choice and its explicit subscription entries.",
+    "harness/web/dist/assets/index-BAL1a2Zb.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-3ngYJf41.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-qXEKqPYg.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-Cn2vpb76.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-dQ6qrT_F.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-DardbKK5.js": "Built web bundle for the integrated model picker and subscription controls.",
-    "harness/web/dist/assets/index-DeZrJD2B.js": "Built web bundle for the integrated model picker and subscription controls."
+    "harness/web/dist/assets/index-DeZrJD2B.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/verification/m8tb/FL-203.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
+    "harness/verification/m8tb/FL-148.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
+    "harness/verification/m8tb/FL-143.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
+    "harness/verification/m8tb/FL-146.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
+    "harness/verification/m8tb/FL-147.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
+    "harness/verification/m8tb/FL-145.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -251,7 +262,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-107.png",
       "flag": "F086",
-      "observed": "The Model Device selected a subscription for one thread and retained the pinned broker default. The wider parameter, policy, price or spending gesture in this row was not exercised. Required walk: Open the parameters dialog from the Model Device: it is compact and shows only the parameters the model in use supports (from the source's catalog); change temperature and the next turn's request carries the new value; switch to a model without top k and that control is gone. The attached capture is packet context only (broker/model-choice.png)."
+      "observed": "The thinking selector wrote the two validated native levels into the journal and both tools received them. Broker temperature and top-k controls were not exercised. Required walk: Open the parameters dialog from the Model Device: it is compact and shows only the parameters the model in use supports (from the source's catalog); change temperature and the next turn's request carries the new value; switch to a model without top k and that control is gone. The attached capture is packet context only (settings/after/phone-claudeAgent-thinking.png)."
     },
     "FL-110": {
       "label": "Global or current on every module; current modules switch together with the work.",
@@ -342,6 +353,33 @@
       "screenshot": "FL-132.png",
       "flag": "F086",
       "observed": "Only the packet’s conversation, model selection and memory review were exercised. The separate module or lifecycle gesture in this row was not walked. Required walk: Click the time-order control; new roots highlight and the side panels move to the longest-waiting response. The attached capture is packet context only (broker/broker-table.png)."
+    },
+    "FL-143": {
+      "label": "Neo-noir as the default style, with other configurations easily uploadable.",
+      "walk": "Open a fresh install; NEO-NOIR is the style, and another configuration can be uploaded and selected.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-143.png",
+      "flag": "F086",
+      "observed": "Captured the default Neo-Noir and all six other built-in themes. A separate uploaded theme was not exercised. Required walk: Open a fresh install; NEO-NOIR is the style, and another configuration can be uploaded and selected. The attached capture is packet context only (settings/themes/theme-neo-noir.png)."
+    },
+    "FL-145": {
+      "label": "Two alternate themes derived from your reference picture (Seraph Dressed, Gold Lines) added beside the current color scheme.",
+      "walk": "Switch to Gold Lines; the interface takes on the picture's colors and the original scheme remains selectable.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-145.png",
+      "flag": "F086",
+      "observed": "Opened the packaged Model Device in Gold Lines and Neo-Noir and verified their theme ids. Switching back through the settings menu against the palette reference was not walked. Required walk: Switch to Gold Lines; the interface takes on the picture's colors and the original scheme remains selectable. The attached capture is packet context only (settings/themes/theme-gold-lines.png)."
+    },
+    "FL-146": {
+      "label": "The reference picture's exact colors are pulled out and applied to the Harness algorithmically in the picture's proportions, possibly by assigning colors to parts of the module templates.",
+      "walk": "Put a themed screen beside the reference picture; the same exact colors appear in the picture's proportions.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-146.png",
+      "flag": "F086",
+      "observed": "Captured all seven built-in themes. The required side-by-side comparison with the reference picture and its color proportions was not performed. Required walk: Put a themed screen beside the reference picture; the same exact colors appear in the picture's proportions. The attached capture is packet context only (settings/themes/theme-gold-lines.png)."
     },
     "FL-151": {
       "label": "KV-cache optimization, usage accounting, and sticky sessions on one provider for cache benefits.",
@@ -521,7 +559,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-202.png",
       "flag": "F086",
-      "observed": "The Model Device selected a subscription for one thread and retained the pinned broker default. The wider parameter, policy, price or spending gesture in this row was not exercised. Required walk: Open the model chip on a conversation: the source's models are listed ranked with price and context window; pin one and it stays on top; pick another and the thread switches to it and stays on it — new conversations start on it too, until you change it, and the chip says so; set the thinking level beside it; pick a standard configuration (pinned, max, elbow, floor) and see what it selects now; switching back from a model to a policy is one click. The attached capture is packet context only (broker/model-choice.png)."
+      "observed": "Opened both plan groups at 1440 and 390 pixels, set native thinking and confirmed broker search and three sorts kept all 24 plan choices. The scored broker configurations and global default sequence were not walked. Required walk: Open the model chip on a conversation: the source's models are listed ranked with price and context window; pin one and it stays on top; pick another and the thread switches to it and stays on it — new conversations start on it too, until you change it, and the chip says so; set the thinking level beside it; pick a standard configuration (pinned, max, elbow, floor) and see what it selects now; switching back from a model to a policy is one click. The attached capture is packet context only (settings/after/phone-available.png)."
     },
     "FL-007": {
       "label": "Every memory links to the full conversation it came from, so an agent can reach more than just the memory when needed.",
@@ -585,6 +623,24 @@
       "screenshot": "FL-123.png",
       "flag": "F086",
       "observed": "Only the packet’s conversation, model selection and memory review were exercised. The separate module or lifecycle gesture in this row was not walked. Required walk: Open the module library; the farm, the roots and the palace are three separate modules, each a three.js scene driven by real data, each looking the part (v2.119). The attached capture is packet context only (broker/broker-table.png)."
+    },
+    "FL-147": {
+      "label": "Wizard Mode and Technomancer themes with our own glyph scripts, runes appearing and disappearing.",
+      "walk": "Switch to Wizard Mode, then Technomancer: the glyph scripts appear and disappear in the module frames, and every module's name reads whole in its header — the glyphs never crowd or cut the name (owner, 2026-10-04); on the Stage, the scripts run down the background behind the modules like the matrix screens, never over a data surface (owner, 2026-10-04).",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-147.png",
+      "flag": "F086",
+      "observed": "Captured Wizard Mode and Technomancer in the Model Device. The animated Stage and each module header were not walked. Required walk: Switch to Wizard Mode, then Technomancer: the glyph scripts appear and disappear in the module frames, and every module's name reads whole in its header — the glyphs never crowd or cut the name (owner, 2026-10-04); on the Stage, the scripts run down the background behind the modules like the matrix screens, never over a data surface (owner, 2026-10-04). The attached capture is packet context only (settings/themes/theme-wizard-mode.png)."
+    },
+    "FL-148": {
+      "label": "Liquid, shiny, white chrome on borders, not on buttons.",
+      "walk": "Switch to Seraph Dressed; borders show liquid white chrome and buttons do not.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-148.png",
+      "flag": "F086",
+      "observed": "Captured the Model Device in Seraph Dressed. The prescribed chrome comparison on borders and buttons was not separately verified. Required walk: Switch to Seraph Dressed; borders show liquid white chrome and buttons do not. The attached capture is packet context only (settings/themes/theme-seraph-dressed.png)."
     },
     "FL-152": {
       "label": "Cost routing: lowest cost above an intelligence threshold, or a spend rate per hour buying the most intelligence that burn allows.",
@@ -703,6 +759,15 @@
       "flag": "F086",
       "observed": "This disposable local installation exercises neither owner/cloud lifecycle nor remote stage and promotion. The owner’s infrastructure and settings were outside the walk. Required walk: Run the new-palace command with a name; a fresh empty palace answers by that name; point the app at it, save a memory, then drop it whole; the owner's main palace is untouched throughout. The attached capture is packet context only (broker/broker-table.png)."
     },
+    "FL-203": {
+      "label": "Two more themes, each chosen by the owner from real-app candidates: Bellagio Lobby Ceiling (Chihuly's glass flowers over cream) and Art Deco (black and gold, stepped sunbursts, chevrons).",
+      "walk": "Pick Bellagio Lobby Ceiling in settings, then Art Deco: every module and both faces wear the theme; the frames, grids and glyph strips carry its motif; the one icon size and type scale hold; the chosen candidate matches the owner's pick.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-203.png",
+      "flag": "F086",
+      "observed": "Checked the Model Device in Bellagio and Art Deco and corrected their panel contrast. Both faces of every module and the motif reference were not walked. Required walk: Pick Bellagio Lobby Ceiling in settings, then Art Deco: every module and both faces wear the theme; the frames, grids and glyph strips carry its motif; the one icon size and type scale hold; the chosen candidate matches the owner's pick. The attached capture is packet context only (settings/themes/theme-bellagio.png)."
+    },
     "FL-206": {
       "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
       "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way.",
@@ -710,7 +775,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-206.png",
       "flag": "F086",
-      "observed": "The Model Device selected a subscription for one thread and retained the pinned broker default. The wider parameter, policy, price or spending gesture in this row was not exercised. Required walk: Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way. The attached capture is packet context only (broker/model-choice.png)."
+      "observed": "Both subscription conversations named the owner's explicit choice. The broker Elbow, Floor and Budget picks, spend module and new-thread sequence were not walked. Required walk: Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way. The attached capture is packet context only (settings/after/desktop-claudeAgent-thinking.png)."
     },
     "FL-207": {
       "label": "A workflow is a folder — the bundle: its recipe, its skills, its tools and the names of its keys — that checks, packs to one archive with a digest, and saves as a job carrying that digest.",
@@ -868,12 +933,7 @@
     "FL-140": "horizon",
     "FL-141": "outside diff",
     "FL-142": "outside diff",
-    "FL-143": "outside diff",
     "FL-144": "outside diff",
-    "FL-145": "outside diff",
-    "FL-146": "outside diff",
-    "FL-147": "outside diff",
-    "FL-148": "outside diff",
     "FL-149": "outside diff",
     "FL-150": "unverified",
     "FL-155": "outside diff",
@@ -895,7 +955,6 @@
     "FL-195": "outside diff",
     "FL-198": "outside diff",
     "FL-199": "outside diff",
-    "FL-203": "outside diff",
     "FL-204": "horizon",
     "FL-205": "outside diff",
     "FL-209": "outside diff",
