@@ -2,12 +2,12 @@
   "packet": "M8DL",
   "mode": "builder",
   "discretion": "A screenshot proves the walk ran, not that it shows the claim. The reviewer judges the visible claim and source mapping; rendered-state assertions grow row by row in the agent tests. No-feature-impact reasons are declarations for review, not proof.",
-  "ledger_sha256": "60c908363dab7d2c7972ec3a6954e8cfc7d1a0b7d7f8851084bb0fb0a5c8ec10",
+  "ledger_sha256": "4c26d261f02e6b413ffa82f24cf0839c1085f0a0aa7c9b99436e51738d1a170a",
   "diffs": [
     {
       "repo": "harness",
       "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "d746807938fd5581bb6e571ef5a3e553eb66c34a"
+      "head": "a1a6cdbd9e4cca2a011b662d82aac6d1fca52866"
     }
   ],
   "unmapped": {
@@ -99,12 +99,16 @@
     "harness/verification/m8dl/FL-215.png": "Packet evidence, verification driver or hash manifest.",
     "harness/verification/m8dl/SHA256SUMS": "Packet evidence, verification driver or hash manifest.",
     "harness/verification/m8dl/ledger-report.json": "Packet evidence, verification driver or hash manifest.",
-    "harness/web/dist/assets/index-BJWymrlJ.js": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
+    "harness/web/dist/assets/index-BPuuuTS-.js": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/assets/index-C9C6ezyI.css": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/assets/index-CxLfYhog.js": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/assets/index-DWLjn1EB.css": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/index.html": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
-    "harness/verification/m8dl/impacted.json": "Packet evidence, verification driver or hash manifest."
+    "harness/web/tests/modelBrowser.test.mjs": "Test assertions or explicitly supplied verification model. No production routing originates here.",
+    "harness/verification/m8dl/impacted.json": "Packet evidence, verification driver or hash manifest.",
+    "harness/verification/m8dl/FL-161.png": "Packet evidence, verification driver or hash manifest.",
+    "harness/verification/m8dl/FL-199.png": "Packet evidence, verification driver or hash manifest.",
+    "harness/verification/m8dl/FL-159.png": "Packet evidence, verification driver or hash manifest."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -405,6 +409,15 @@
       "flag": "F086",
       "observed": "Two paid models appeared on successive conversations after a ban. Switching the same thread with the slash command and checking a table or a direct-provider key was not repeated."
     },
+    "FL-159": {
+      "label": "The spend module: a row per thread expanding to models, columns input / KV cache / reasoning / output / total / spend per hour, other costs as their own rows, scopable to a thread or stack.",
+      "walk": "Press the plus on one thread row in the spend module; it opens to that thread's models with the columns input, KV cache, reasoning, output, total and spend per hour, with an everything-else row beneath.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-159.png",
+      "flag": "F086",
+      "observed": "Expanded the paid thread in Spend and saw model, input, KV cache, reasoning, output, total and hourly cost. This home recorded only conversation spend, so a populated other-work row was not walked."
+    },
     "FL-171": {
       "label": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
       "walk": "Toggle \"Back up conversation transcripts to cloud?\" in the settings menu; the backup line changes, and the same question is asked at first startup.",
@@ -503,6 +516,15 @@
       "screenshot": "FL-196.png",
       "flag": "F086",
       "observed": "The correct ledger, Rules, citation and test-motivation checks ran. The packet was restricted to its assigned branch and protected law. No deliberately failing hosted push or axiom edit was performed."
+    },
+    "FL-199": {
+      "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
+      "walk": "Open any module; every common action (send, stop, add, remove, delete, refresh, open, settings, play, pause) has its icon from the one set in the theme's ink; primary buttons pair it with a word; row actions show the icon alone with a tip; an unusual action still reads as a word.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-199.png",
+      "flag": "F086",
+      "observed": "Used the standard expand and refresh controls in Spend at phone and desktop widths. The packet did not repeat the all-module common-action icon audit."
     },
     "FL-201": {
       "label": "One scale across modules: an icon reused anywhere is one size, text of one role is one size and one font, and a box belongs only to an icon that is a button.",
@@ -657,6 +679,15 @@
       "flag": "",
       "observed": "Fresh and upgraded conversations paid Muse Ember. The detailed readout named the 0.420 offset, next model and marginal cost. A model ban moved the next conversation to Haiku. The saved pick started a conversation with the catalog endpoint disconnected. A cold home returned model_unavailable before run.started."
     },
+    "FL-161": {
+      "label": "Constitution: a cache-efficiency view showing that cache-sticky routing pays off (gate-day).",
+      "walk": "Open the cache-efficiency view for a thread; it shows cached tokens against fresh tokens across the thread's messages.",
+      "protected": false,
+      "verdict": "PASS",
+      "screenshot": "FL-161.png",
+      "flag": "",
+      "observed": "Viewed the earlier paid thread’s cache-efficiency table after restart. The real message had 2,941 fresh tokens, zero cached and zero cache writes, matching the expanded totals."
+    },
     "FL-168": {
       "label": "A restore popup that asks whether to roll back these memories and lists them.",
       "walk": "Press restore; a popup asks whether to roll back and lists the memories that would come back.",
@@ -733,10 +764,10 @@
       "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
       "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way.",
       "protected": false,
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "screenshot": "FL-206.png",
-      "flag": "F218",
-      "observed": "The header, thread list and conversation legend showed Elbow and Claude Haiku 5.5. After restart the expanded paid Spend row named the correct model and price but omitted Elbow. Floor and Budget were checked on the rail and new-thread selection. See Garden after/legend-results.json."
+      "flag": "",
+      "observed": "The header, thread list and configuration legend showed Elbow in the initial walk. The review traced the fourth surface across restart. Expanded Spend showed Elbow beside Muse Ember and its original charge on both desktop and phone, for a pre-fix receipt and a newly billed turn. The embedding row stayed unlabelled. Floor and Budget were previously checked on the rail and new-thread selection. See Garden after/provenance-fixed-restart-source.json."
     },
     "FL-207": {
       "label": "A workflow is a folder — the bundle: its recipe, its skills, its tools and the names of its keys — that checks, packs to one archive with a digest, and saves as a job carrying that digest.",
@@ -895,10 +926,8 @@
     "FL-150": "unverified",
     "FL-155": "outside diff",
     "FL-156": "outside diff",
-    "FL-159": "outside diff",
     "FL-197": "outside diff",
     "FL-160": "outside diff",
-    "FL-161": "outside diff",
     "FL-162": "outside diff",
     "FL-163": "outside diff",
     "FL-164": "outside diff",
@@ -916,7 +945,6 @@
     "FL-188": "unverified",
     "FL-189": "dropped",
     "FL-198": "outside diff",
-    "FL-199": "outside diff",
     "FL-200": "outside diff",
     "FL-203": "outside diff",
     "FL-204": "horizon",
