@@ -15,7 +15,7 @@ const models = [
   model('unscored', null, '0.05', null),
 ]
 
-/** SD-115: hide only the unpinned glyph at rest, preserving its cell and accessible button. */
+/** P2 / SD-115: keep the pinned state visible and the unpinned button reachable by touch or keyboard. */
 test('model pins reveal on row hover, keyboard focus and a touch hold', async () => {
   const css = await readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8')
   const pin = String.raw`\.kit-button--pin\[aria-pressed="false"\]`
