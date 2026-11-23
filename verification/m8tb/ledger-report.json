@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "d50a709983d0bd659e16e90e3df87cbbc369c4a9"
+      "head": "f1c9d36cef694fdf7f93a0880039fabb571a5e7e"
     }
   ],
   "unmapped": {
@@ -55,6 +55,11 @@
     "harness/verification/m8tb/FL-124.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-130.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-132.png": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/verification/m8tb/FL-143.png": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/verification/m8tb/FL-145.png": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/verification/m8tb/FL-146.png": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/verification/m8tb/FL-147.png": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/verification/m8tb/FL-148.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-151.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-152.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-153.png": "Packet evidence for the gate, with no product runtime effect.",
@@ -88,6 +93,7 @@
     "harness/verification/m8tb/FL-200.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-201.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-202.png": "Packet evidence for the gate, with no product runtime effect.",
+    "harness/verification/m8tb/FL-203.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-206.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-207.png": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/FL-208.png": "Packet evidence for the gate, with no product runtime effect.",
@@ -104,19 +110,16 @@
     "harness/web/tests/modelBrowser.test.mjs": "Tests model grouping, broker filters, state and consistent subscription names.",
     "harness/web/dist/assets/index-DHRu_Hhn.js": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/dist/assets/index-DY41gOxg.js": "Packaged build of the existing model choice and its explicit subscription entries.",
-    "harness/web/dist/assets/index-BAL1a2Zb.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-5HS4KXTV.css": "Generated web bundle in the packet's build history.",
+    "harness/web/dist/assets/index-BNHvg6k4.js": "Generated web bundle in the packet's build history.",
+    "harness/web/dist/assets/index-BAL1a2Zb.js": "Generated web bundle in the packet's build history.",
+    "harness/web/dist/assets/index-DwnfBomb.js": "Generated web bundle in the packet's build history.",
     "harness/web/dist/assets/index-3ngYJf41.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-qXEKqPYg.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-Cn2vpb76.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-dQ6qrT_F.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-DardbKK5.js": "Built web bundle for the integrated model picker and subscription controls.",
-    "harness/web/dist/assets/index-DeZrJD2B.js": "Built web bundle for the integrated model picker and subscription controls.",
-    "harness/verification/m8tb/FL-203.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
-    "harness/verification/m8tb/FL-148.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
-    "harness/verification/m8tb/FL-143.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
-    "harness/verification/m8tb/FL-146.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
-    "harness/verification/m8tb/FL-147.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect.",
-    "harness/verification/m8tb/FL-145.png": "Packet-owned walk, row verdict or integrity evidence, with no product runtime effect."
+    "harness/web/dist/assets/index-DeZrJD2B.js": "Built web bundle for the integrated model picker and subscription controls."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
