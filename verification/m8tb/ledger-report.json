@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "f1c9d36cef694fdf7f93a0880039fabb571a5e7e"
+      "head": "730ff7fe16b17565d7bdcf7d4970545843aa5d71"
     }
   ],
   "unmapped": {
@@ -103,13 +103,15 @@
     "harness/verification/m8tb/SHA256SUMS": "Packet evidence for the gate, with no product runtime effect.",
     "harness/verification/m8tb/ledger-report.json": "Packet evidence for the gate, with no product runtime effect.",
     "harness/web/dist/assets/index-C9C6ezyI.css": "Built web bundle for the integrated model picker and subscription controls.",
-    "harness/web/dist/assets/index-CcfVwa7i.js": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/assets/index-CxLfYhog.js": "Built web bundle for the integrated model picker and subscription controls.",
-    "harness/web/dist/assets/index-D9MMvuB8.css": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-d6kOAz7z.js": "Built web bundle for the integrated model picker and subscription controls.",
+    "harness/web/dist/assets/index-sCIXEKYF.css": "Built web bundle for the integrated model picker and subscription controls.",
     "harness/web/dist/index.html": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/tests/modelBrowser.test.mjs": "Tests model grouping, broker filters, state and consistent subscription names.",
     "harness/web/dist/assets/index-DHRu_Hhn.js": "Packaged build of the existing model choice and its explicit subscription entries.",
     "harness/web/dist/assets/index-DY41gOxg.js": "Packaged build of the existing model choice and its explicit subscription entries.",
+    "harness/web/dist/assets/index-CcfVwa7i.js": "Generated web bundle in the packet's build history.",
+    "harness/web/dist/assets/index-D9MMvuB8.css": "Generated web bundle in the packet's build history.",
     "harness/web/dist/assets/index-5HS4KXTV.css": "Generated web bundle in the packet's build history.",
     "harness/web/dist/assets/index-BNHvg6k4.js": "Generated web bundle in the packet's build history.",
     "harness/web/dist/assets/index-BAL1a2Zb.js": "Generated web bundle in the packet's build history.",
