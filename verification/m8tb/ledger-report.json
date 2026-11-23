@@ -7,10 +7,11 @@
     {
       "repo": "harness",
       "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "b3c8a0e57d50178a48c27495d897d72091fd87ca"
+      "head": "dd50a1769fb9646b3b351a7685314b3da73bd667"
     }
   ],
   "unmapped": {
+    "harness/DECISIONS.md": "Documents the gate-approved Codex native archive exception.",
     "harness/src/harness/__init__.py": "Version twin for Nocturne 0.1.110 and its published schema.",
     "harness/src/harness/t3_client.py": "T3 protocol, native model messages, interrupts and replay (SD-103, FL-017/106).",
     "harness/src/harness/t3_install.py": "Pinned optional package installation and integrity verification (SD-103).",
@@ -241,7 +242,7 @@
       "verdict": "PASS",
       "screenshot": "FL-106.png",
       "flag": "",
-      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden). The answer fidelity rewalk showed the /model history and folder disclosure, then preserved a decorator, package scope and owner-supplied example address in both stream and journal (Garden answer/reply.png and answer/walk.txt). The two new subscription conversations also kept their Nocturne titles in native history (Garden titles/walk.txt and titles/codex-list.txt). Four further turns confirmed T3 archive and resume across restart. Both native histories still listed the sessions. The separate direct Codex archive moved only the owner check to its archived listing (Garden archive/walk.txt and archive/owner-check.txt)."
+      "observed": "The slash command selected Codex in the conversation. A native reply rendered a Markdown table on the resumed thread. The Claude /model walk also returned a rendered table after restart (ultra/table.png in Garden). The answer fidelity rewalk showed the /model history and folder disclosure, then preserved a decorator, package scope and owner-supplied example address in both stream and journal (Garden answer/reply.png and answer/walk.txt). The two new subscription conversations also kept their Nocturne titles in native history (Garden titles/walk.txt and titles/codex-list.txt). Four further turns confirmed T3 archive and resume across restart. Both native histories still listed the sessions. The separate direct Codex archive moved only the owner check to its archived listing (Garden archive/walk.txt and archive/owner-check.txt). In the corrected Codex walk the product archived its own native thread after both turns, with the same id returning to active during the second turn after restart (Garden native-archive/turns.txt)."
     },
     "FL-107": {
       "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
