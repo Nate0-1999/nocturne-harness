@@ -369,7 +369,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'visualizer',
     slot: 'strip',
     streams: [],
-    actions: ['spend.invoice', 'spend.reconcile', 'rack.scope.get', 'rack.scope.set'],
+    actions: ['spend.invoice', 'spend.reconcile', 'models.load', 'rack.scope.get', 'rack.scope.set'],
     bounds: stageGridBounds(VITALS_RACK_BOUNDS.preferred),
     movable: true,
     law_bound: false,

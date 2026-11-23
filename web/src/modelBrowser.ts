@@ -118,6 +118,19 @@ export function modelLabel(model: string | null): string {
   return model === null ? '—' : model.slice(model.indexOf(':') + 1)
 }
 
+/** FL-206: Spend names the strategy in force only beside the matching conversation model. */
+export function spendModelLabel(
+  browser: Pick<ModelBrowser, 'chat_policy' | 'configurations'> | null,
+  thread: { model?: string | null, policy?: string | null } | undefined,
+  billed: string | null,
+): string {
+  if (billed === null) return 'Model not reported'
+  if (thread?.model == null || modelLabel(thread.model) !== billed) return billed
+  const active = browser && policyInForce(browser, thread.model)
+  const strategy = strategyName(active?.policy ?? thread.policy)
+  return strategy === null ? billed : `${strategy} · ${billed}`
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
