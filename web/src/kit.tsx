@@ -10,7 +10,7 @@ import type {
 import {
   Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ban, Check, ChevronDown, ChevronUp,
   ChevronsUpDown, CircleStop, Eye, FolderOpen, GripVertical, Maximize, MessageSquare, Mic, Minimize, Paperclip,
-  Pause, Pencil, Pin, PinOff, Play, Plus, RotateCcw, Save, Search, Send, Settings,
+  Pause, Pencil, Pin, Play, Plus, RotateCcw, Save, Search, Send, Settings,
   Square, SquareCheck, Trash2, Undo2, Upload, Volume2, X, ZoomIn, ZoomOut,
 } from 'lucide-react'
 
@@ -25,7 +25,7 @@ const ACTION_ICONS = {
   open: FolderOpen, thread: MessageSquare, settings: Settings, run: Play, pause: Pause, search: Search,
   close: X, expand: ChevronDown, collapse: ChevronUp, fit: Maximize, minimize: Minimize,
   save: Save, restore: Undo2, back: ArrowLeft, next: ArrowRight, up: ArrowUp,
-  latest: ArrowDown, edit: Pencil, pin: Pin, unpin: PinOff, archive: Archive,
+  latest: ArrowDown, edit: Pencil, pin: Pin, unpin: Pin, archive: Archive,
   attach: Paperclip, import: Upload, preview: Eye, listen: Mic, speak: Volume2,
   approve: Check, deny: Ban, move: GripVertical, zoomIn: ZoomIn, zoomOut: ZoomOut,
 } as const
@@ -72,7 +72,8 @@ export function Button({ variant = 'quiet', className, action, iconOnly = false,
   return <button
     aria-label={iconOnly ? rest['data-tooltip'] : undefined}
     className={join(variant !== 'bare' && 'kit-button', variant !== 'bare' && `kit-button--${variant}`,
-      (action !== undefined || pressed !== undefined) && 'kit-button--icon', iconOnly && 'kit-button--icon-only', className) || undefined}
+      (action !== undefined || pressed !== undefined) && 'kit-button--icon', iconOnly && 'kit-button--icon-only',
+      iconOnly && (action === 'pin' || action === 'unpin') && 'kit-button--pin', className) || undefined}
     {...rest}
   >
     {action && <ActionIcon action={action} />}

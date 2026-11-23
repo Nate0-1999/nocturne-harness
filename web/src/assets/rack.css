@@ -3943,6 +3943,20 @@ details:not([open]) > .agent-policy-settings { display: none; } /* closed means 
 .subscription-models {
   margin-bottom: 1.25rem;
 }
+.model-pin-hint { display: none; }
+.model-row .kit-button--pin[aria-pressed="false"] { opacity: 0; pointer-events: none; }
+.model-row:is(:has(:focus-visible), [data-show-pin]) .kit-button--pin[aria-pressed="false"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+@media (any-hover: hover) {
+  .model-row:hover .kit-button--pin[aria-pressed="false"] { opacity: 1; pointer-events: auto; }
+}
+@media (any-pointer: coarse) {
+  .model-pin-hint { display: block; grid-column: 1 / -1; margin: 0 0 .5rem; color: var(--muted); }
+  .model-row { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .model-row button[data-model]:disabled { pointer-events: none; }
+}
 .subscription-models h3 {
   margin: 0 0 .5rem;
   font-family: var(--display-font);

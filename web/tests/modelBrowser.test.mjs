@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 import { browseOrder, chipParts, modelMark, policyInForce, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
@@ -13,6 +14,16 @@ const models = [
   model('top', '57', '4', 200_000),
   model('unscored', null, '0.05', null),
 ]
+
+/** SD-115: hide only the unpinned glyph at rest, preserving its cell and accessible button. */
+test('model pins reveal on row hover, keyboard focus and a touch hold', async () => {
+  const css = await readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8')
+  const pin = String.raw`\.kit-button--pin\[aria-pressed="false"\]`
+  assert.match(css, new RegExp(String.raw`\.model-row ${pin} \{\s*opacity: 0; pointer-events: none;\s*\}`))
+  for (const row of [String.raw`\.model-row:hover`, String.raw`\.model-row:is\(:has\(:focus-visible\), \[data-show-pin\]\)`]) {
+    assert.match(css, new RegExp(String.raw`${row} ${pin} \{\s*opacity: 1;\s*pointer-events: auto;`))
+  }
+})
 
 /** A-095: sorting or searching a broker catalog must preserve the owner's plan choices. */
 test('subscription groups and names survive every broker sort and search', () => {

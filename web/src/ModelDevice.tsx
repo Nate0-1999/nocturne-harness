@@ -5,6 +5,7 @@ import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
 import { failureMessage, serverMessage } from './requestFailure'
+import { attachModelPinHold } from './modelPinHold'
 import {
   browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
   policyInForce, policyName, shortName, strategyMeaning, strategyName, subscriptionGroups, subscriptionState, takesParameter, type Configuration, type ModelBrowser, type SortKey,
@@ -476,9 +477,10 @@ export function ModelDevice() {
       )}
 
       </div>
-      <section className="model-browser" aria-label="Models">
+      <section ref={attachModelPinHold} className="model-browser" aria-label="Models">
         {groups.length > 0 && <section className="subscription-models" aria-label="Your subscriptions">
           <h3>Your subscriptions</h3>
+          <p className="model-pin-hint">Press and hold a model to pin it.</p>
           {groups.map(source => <details key={source.tool} open>
             <summary title={`Show or hide ${source.name} models`}><strong>{source.name}</strong><span>{subscriptionState(source)}</span></summary>
             {source.models.length > 0 && <ul aria-label={source.name}>
@@ -499,6 +501,7 @@ export function ModelDevice() {
             </ul>}
           </details>)}
         </section>}
+        {groups.length === 0 && <p className="model-pin-hint">Press and hold a model to pin it.</p>}
         <div className="model-browser__tools">
           <TextField
             type="search"
@@ -560,7 +563,7 @@ export function ModelDevice() {
                   iconOnly
                   action={pinned ? 'unpin' : 'pin'}
                   aria-pressed={pinned}
-                  data-tooltip={pinned ? 'Unpin' : 'Pin to top'}
+                  data-tooltip={pinned ? 'Unpin' : 'Pin model'}
                   data-tooltip-detail={pinned ? 'Return it to its ranked place.' : 'Keep it at the top of this list.'}
                   onClick={() => { void pin(item.model, !pinned) }}
                 >
