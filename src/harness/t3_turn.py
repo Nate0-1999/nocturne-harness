@@ -116,14 +116,14 @@ class SubscriptionTurns:
             await observer.stop()
             raise
         finally:
-            if observer.transitions.finished:
+            if observer.transitions.finished and source["tool"] == "codex":
                 try:
-                    await client.dispatch(thread, "thread.archive")
+                    await client.archive_codex(thread, message)
                 except Exception as exc:
                     logger.warning(
-                        "Could not archive subscription thread %s (%s). It may remain active.",
+                        "Could not archive native Codex thread for %s (%s). It may remain active.",
                         thread,
-                        type(exc).__name__,
+                        str(exc) if isinstance(exc, T3Error) else type(exc).__name__,
                     )
         history = tuple(message_history)
         if status == "completed":

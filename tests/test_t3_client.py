@@ -56,9 +56,16 @@ def test_recorded_interrupt_closes_once_even_after_replay():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("later_status,reason", [("completed", "end_turn"), ("failed", "error")])
-async def test_subscription_terminal_archives_once_and_reopens_before_next_message(
-    later_status, reason, monkeypatch, caplog
+@pytest.mark.parametrize(
+    "tool,later_status,reason",
+    [
+        ("codex", "completed", "end_turn"),
+        ("codex", "failed", "error"),
+        ("claudeAgent", "completed", "end_turn"),
+    ],
+)
+async def test_terminal_archives_only_the_bound_codex_thread(
+    tool, later_status, reason, monkeypatch, caplog
 ):
     """A-095: preserve resume after an interrupt and preserve the outcome if archive fails."""
     import hashlib
@@ -69,9 +76,9 @@ async def test_subscription_terminal_archives_once_and_reopens_before_next_messa
     from harness.t3_client import T3Client
 
     frames = json.loads((Path(__file__).parent / "fixtures/t3/terminal-replay.json").read_text())
-    client = T3Client(23001)
+    client = T3Client(23001, codex_binary="codex", native_env={"TMPDIR": "/unused"})
     client.environment_id = "environment"
-    model = "subscription:codex/account/model"
+    model = f"subscription:{tool}/account/model"
     journal = Mock()
     journal.subscription_binding.return_value = {
         "source": model,
@@ -81,17 +88,26 @@ async def test_subscription_terminal_archives_once_and_reopens_before_next_messa
     runner = t3_turn.SubscriptionTurns(
         None, SimpleNamespace(client=AsyncMock(return_value=client)), journal
     )
-    monkeypatch.setattr(t3_turn, "resolve_offer", AsyncMock(return_value=(model, {}, {})))
+    monkeypatch.setattr(
+        t3_turn, "resolve_offer", AsyncMock(return_value=(model, {"tool": tool}, {}))
+    )
     commands = []
-    archived = False
     runs = []
     messages = []
 
     async def call(method, args):
-        nonlocal archived
         if method == "orchestration.getThreadProjection":
             return {
-                "thread": {"archivedAt": "timestamp" if archived else None},
+                "thread": {"archivedAt": None},
+                "providerThreads": [
+                    {
+                        "id": pid,
+                        "providerSessionId": "writer",
+                        "appThreadId": "thread",
+                        "nativeThreadRef": {"driver": tool, "nativeId": nid},
+                    }
+                    for pid, nid in (("other-provider", "unrelated"), ("provider", "bound-native"))
+                ],
                 "runs": runs,
                 "messages": [],
                 "runtimeRequests": [],
@@ -100,22 +116,40 @@ async def test_subscription_terminal_archives_once_and_reopens_before_next_messa
         command = args["type"]
         commands.append(command)
         if command == "message.dispatch":
-            assert not archived
             messages.append(args["messageId"])
-        elif command == "thread.unarchive":
-            assert archived
-            archived = False
-        elif command == "thread.archive":
-            assert runs[-1]["status"] in {"interrupted", "completed", "failed"}
-            if len(messages) == 2:
-                raise T3Error("archive rejected")
-            archived = True
+        else:
+            assert command == "provider-session.detach" and args["providerSessionId"] == "writer"
         return {"sequence": 0}
+
+    async def spawn(*argv, **options):
+        assert argv[:4] == ("codex", "app-server", "--listen", "stdio://")
+        proc = Mock(wait=AsyncMock())
+        proc.stdin.drain = AsyncMock()
+        proc.stdout.readline = AsyncMock(
+            side_effect=[
+                b'{"id":1,"result":{}}\n',
+                b'{"id":2,"result":{}}\n'
+                if len(messages) == 1
+                else b'{"id":2,"error":{"code":-1}}\n',
+            ]
+        )
+
+        def write(raw):
+            frame = json.loads(raw)
+            if frame["method"] == "thread/archive":
+                assert frame["params"] == {"threadId": "bound-native"}
+                assert runs[-1]["status"] in {"interrupted", "completed", "failed"}
+            commands.append(frame["method"])
+
+        proc.stdin.write.side_effect = write
+        return proc
 
     async def events(thread, after):
         # The recorded handshake retained status and id. Reattach this submission's message id.
         for frame in frames:
-            run = dict(frame["event"]["payload"], userMessageId=messages[-1])
+            run = dict(
+                frame["event"]["payload"], userMessageId=messages[-1], providerThreadId="provider"
+            )
             if len(messages) == 2:
                 run.update(id="later-run", status=later_status)
             runs[:] = [run]
@@ -123,6 +157,7 @@ async def test_subscription_terminal_archives_once_and_reopens_before_next_messa
 
     monkeypatch.setattr(client, "call", call)
     monkeypatch.setattr(client, "events", events)
+    monkeypatch.setattr(t3_turn.asyncio, "create_subprocess_exec", spawn)
     args = dict(
         thread_id="local-thread",
         prompt="Hello",
@@ -136,14 +171,11 @@ async def test_subscription_terminal_archives_once_and_reopens_before_next_messa
     assert outcome.error_message == (
         "The native turn failed." if later_status == "failed" else None
     )
-    assert commands == [
-        "message.dispatch",
-        "thread.archive",
-        "thread.unarchive",
-        "message.dispatch",
-        "thread.archive",
-    ]
-    assert "Could not archive subscription thread" in caplog.text
+    expected = ["message.dispatch"]
+    if tool == "codex":
+        expected += ["provider-session.detach", "initialize", "initialized", "thread/archive"]
+    assert commands == expected * 2
+    assert ("Could not archive native Codex thread" in caplog.text) == (tool == "codex")
 
 
 @pytest.mark.asyncio

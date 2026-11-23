@@ -12,6 +12,7 @@ import httpx
 from websockets.asyncio.client import connect
 from websockets.exceptions import WebSocketException
 
+from harness import __version__
 from harness.t3_install import VERSION
 
 TERMINAL = {"completed", "failed", "interrupted", "cancelled"}
@@ -45,11 +46,13 @@ class RunTransitions:
 
 
 class T3Client:
-    def __init__(self, port: int):
+    def __init__(self, port: int, *, codex_binary=None, native_env=None):
         self.origin = f"http://127.0.0.1:{port}"
         self.socket = f"ws://127.0.0.1:{port}/ws"
         self.session = ""
         self.environment_id = ""
+        self.codex_binary = codex_binary
+        self.native_env = native_env
 
     async def _http(self, path: str, *, form=None, authorized=False):
         headers = {"Authorization": f"Bearer {self.session}"} if authorized else {}
@@ -157,8 +160,75 @@ class T3Client:
             },
         )
 
+    async def archive_codex(self, thread: str, message: str):
+        projection = await self.call("orchestration.getThreadProjection", {"threadId": thread})
+        run = next(r for r in projection["runs"] if r["userMessageId"] == message)
+        for provider in projection["providerThreads"]:
+            ref = provider["nativeThreadRef"] or {}
+            if (
+                provider["id"] == run["providerThreadId"]
+                and provider["appThreadId"] == thread
+                and ref.get("driver") == "codex"
+                and ref.get("nativeId")
+            ):
+                if session := provider["providerSessionId"]:
+                    await self.dispatch(
+                        thread, "provider-session.detach", providerSessionId=session
+                    )
+                await self._archive_native(ref["nativeId"])
+                return
+        raise T3Error("The confirmed run has no native Codex thread reference.")
+
+    async def _archive_native(self, native_id: str):
+        # Ordinary T3 detaches only unsubscribe. Codex owns the active history.
+        if not self.codex_binary or not self.native_env:
+            raise T3Error("The local Codex app-server is unavailable.")
+        proc = await asyncio.create_subprocess_exec(
+            self.codex_binary,
+            "app-server",
+            "--listen",
+            "stdio://",
+            "-c",
+            "analytics.enabled=false",
+            cwd=self.native_env["TMPDIR"],
+            env=self.native_env,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+
+        async def send(frame):
+            proc.stdin.write(json.dumps(frame).encode() + b"\n")
+            await proc.stdin.drain()
+
+        async def request(rid, method, params):
+            await send({"id": rid, "method": method, "params": params})
+            while raw := await proc.stdout.readline():
+                frame = json.loads(raw)
+                if frame.get("id") == rid:
+                    if "result" in frame:
+                        return
+                    break
+            raise T3Error(f"Codex did not confirm {method}.")
+
+        try:
+            async with asyncio.timeout(15):
+                await request(
+                    1, "initialize", {"clientInfo": {"name": "nocturne", "version": __version__}}
+                )
+                await send({"method": "initialized"})
+                await request(2, "thread/archive", {"threadId": native_id})
+        finally:
+            proc.stdin.close()
+            try:
+                await asyncio.wait_for(proc.wait(), 3)
+            except TimeoutError:
+                proc.kill()
+                await proc.wait()
+
     async def message(self, thread: str, message: str, text: str, *, archived: bool = False):
         if archived:
+            # Threads written by the earlier T3-archive build still need reopening.
             await self.dispatch(thread, "thread.unarchive")
         return await self.dispatch(
             thread,

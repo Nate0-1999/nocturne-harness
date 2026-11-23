@@ -175,7 +175,11 @@ class T3Server:
                     code.set_exception(T3Error("T3 exited before local authentication."))
 
         self._reader = asyncio.create_task(drain())
-        client = T3Client(port)
+        client = T3Client(
+            port,
+            codex_binary=settings["providerInstances"]["codex"]["config"]["binaryPath"],
+            native_env={k: env[k] for k in ("HOME", "USER", "PATH", "TMPDIR") if k in env},
+        )
         await client.authenticate(await code)
         return client
 
