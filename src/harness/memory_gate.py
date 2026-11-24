@@ -7,15 +7,17 @@ from datetime import datetime
 from typing import Protocol, cast
 from uuid import UUID
 
-from pydantic_ai.messages import BinaryContent
+from pydantic_ai.messages import BinaryContent, ModelResponse
 
 from harness.citation import cited_memory_ids
 from harness.commands import browser_open_web_command, remember_command_text
+from harness.envelope import StopReason
 from harness.memory_outbox import MemoryOutbox
 from harness.memory_panel import ThreadMemoryContextRegistry, ThreadMemorySnapshot
 from harness.model_policy import ThreadModelResolution
 from harness.palace_mirror import PalaceMirror
 from harness.progressive_prompt import render_workspace_context, workspace_location_path
+from harness.receipt_queue import SpendReceiptQueue
 from harness.run_protocol import (
     DynamicSystemInstructions,
     ImageSystemInstructionTurnRunner,
@@ -23,6 +25,7 @@ from harness.run_protocol import (
     SystemInstructionTurnRunner,
     TurnOutcome,
 )
+from harness.spend import covered_turn_receipt
 from harness.spine_client import (
     FeedbackRequest,
     FeedbackResponse,
@@ -220,6 +223,7 @@ class MemoryGateTurnRunner:
         delete_memory: DeleteMemory | None = None,
         mirror: PalaceMirror | None = None,
         outbox: MemoryOutbox | None = None,
+        receipt_queue: SpendReceiptQueue | None = None,
     ) -> None:
         self._delegate = delegate
         self._spine = spine
@@ -230,6 +234,7 @@ class MemoryGateTurnRunner:
         self._delete_memory = delete_memory
         self._mirror = mirror
         self._outbox = outbox
+        self._receipt_queue = receipt_queue
         self._attempted_threads: set[str] = set()
 
     async def run_workflow(self, *, memory_scope: str, **kwargs) -> TurnOutcome:
@@ -637,6 +642,7 @@ class MemoryGateTurnRunner:
                     dynamic_instructions=progressive,
                     excluded_memory_ids=excluded_memory_ids,
                 )
+            await self._record_coverage(run_context, model_resolution, outcome, emit)
             await self._record_citations(self._contexts.snapshot(thread_id), outcome, emit)
             return outcome
 
@@ -728,6 +734,7 @@ class MemoryGateTurnRunner:
                     dynamic_instructions=progressive,
                     excluded_memory_ids=current.excluded_memory_ids,
                 )
+            await self._record_coverage(context, model_resolution, outcome, emit)
             await self._record_citations(self._contexts.snapshot(thread_id), outcome, emit)
             return outcome
 
@@ -754,6 +761,39 @@ class MemoryGateTurnRunner:
             emit=emit,
             on_context_changed=self._on_context_changed,
         )
+
+    async def _record_coverage(
+        self,
+        context: MemoryToolContext,
+        resolution: ThreadModelResolution | None,
+        outcome: TurnOutcome,
+        emit: RunEmitter,
+    ) -> None:
+        if not (
+            self._receipt_queue
+            and resolution
+            and resolution.model.startswith("subscription:")
+            and outcome.stop_reason is StopReason.END_TURN
+            and outcome.message_history
+        ):
+            return
+        response = outcome.message_history[-1]
+        if not isinstance(response, ModelResponse) or not (response.model_name or "").startswith(
+            "subscription:"
+        ):
+            return
+        request = covered_turn_receipt(
+            response, context.principal_id, context.thread_id, emit.run_id, emit.prompt_id
+        )
+        await self._receipt_queue.enqueue(request)
+        if not await self._receipt_queue.flush(context.spine):
+            await emit.error(
+                {
+                    "code": "spend_pending",
+                    "phase": "receipt",
+                    "message": "Answer delivered. The included turn is waiting for the ledger.",
+                }
+            )
 
     async def _record_citations(
         self,

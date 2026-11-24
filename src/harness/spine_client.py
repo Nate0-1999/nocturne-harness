@@ -640,7 +640,7 @@ class SpendEvent(ContractModel):
 
     event_uid: ULID
     ts: datetime
-    product_type: Literal["llm.request", "llm.embedding"]
+    product_type: Literal["llm.request", "llm.embedding", "subscription.turn"]
     quantity_type: NonBlankString
     unit_of_measure: NonBlankString
     # WALL money / A-027: quantities obey the receipt's positive decimal precision.
@@ -691,6 +691,8 @@ class InfrastructureInvoice(ContractModel):
 class SpendTableMetrics(ContractModel):
     """Exact quantities and honest known-cost state for one ledger grouping."""
 
+    covered_turns: int = 0
+
     input_tokens: NonNegativeDecimalString
     kv_cache_tokens: NonNegativeDecimalString
     reasoning_tokens: NonNegativeDecimalString
@@ -726,6 +728,7 @@ class PurposeSpendRow(SpendTableMetrics):
 
 
 class SpendReceipt(ContractModel):
+    covered_by: str | None = None
     event_uid: ULID
     ts: datetime
     thread_id: UUID | None
@@ -772,6 +775,7 @@ class MessageCache(ContractModel):
 
 
 class DailySpend(ContractModel):
+    covered_turns: int = 0
     day: datetime
     model_usd: NonNegativeDecimalString | None
     infrastructure_usd: NonNegativeDecimalString | None
