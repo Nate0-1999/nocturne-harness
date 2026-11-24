@@ -135,10 +135,14 @@ export function shortName(name: string): string {
   return name.replace(/^[^:]+:\s*/u, '')
 }
 
-export function modelLabel(model: string | null): string {
+export function modelLabel(model: string | null, subscriptionTool?: string): string {
+  if (subscriptionTool) {
+    const name = subscriptionTool === 'codex' ? 'Codex' : subscriptionTool === 'claudeAgent' ? 'Claude Code' : subscriptionTool
+    return `${name} · ${model}`
+  }
   if (model?.startsWith('subscription:')) {
     const [tool, , ...slug] = model.slice('subscription:'.length).split('/')
-    if (slug.length > 0) return `${tool === 'claudeAgent' ? 'Claude Code' : 'Codex'} · ${slug.join('/')}`
+    if (slug.length > 0) return modelLabel(slug.join('/'), tool)
   }
   return model === null ? '—' : model.slice(model.indexOf(':') + 1)
 }

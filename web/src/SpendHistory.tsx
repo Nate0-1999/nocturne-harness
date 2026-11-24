@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 
 import { formatHumanPercent, formatHumanQuantity, formatHumanUsd } from './humanNumbers'
+import { modelLabel } from './modelBrowser'
 import { includedTurns, SPEND_WINDOWS, spendPolylines, spendSeries, windowActivity, type SpendMetrics, type SpendTableSnapshot, type SpendWindow } from './spendTable'
 import { useRackPlugin } from './rack'
 import { dayDrift, formatDayUsd, type ReconciliationSnapshot } from './vitals'
@@ -147,7 +148,7 @@ export function SpendReceipts({ snapshot }: { snapshot: SpendTableSnapshot }) {
       <thead><tr><th>Receipt ID · ULID</th><th>Model / purpose</th><th>Quantity</th><th>USD · basis</th></tr></thead>
       <tbody>{snapshot.receipts.map((receipt) => <tr key={receipt.event_uid} data-receipt-id={receipt.event_uid}>
         <th>{receipt.event_uid}<small>{new Date(receipt.ts).toLocaleString()}</small></th>
-        <td title={receipt.ref}>{receipt.covered_by && (receipt.covered_by === 'codex' ? 'Codex · ' : 'Claude Code · ')}{receipt.model ?? receipt.purpose}<div>{receipt.quantity_type.replaceAll('_', ' ')}</div></td>
+        <td title={receipt.ref}>{receipt.covered_by ? modelLabel(receipt.model, receipt.covered_by) : receipt.model ?? receipt.purpose}<div>{receipt.quantity_type.replaceAll('_', ' ')}</div></td>
         <td>{receipt.covered_by ? '1 turn' : `${formatHumanQuantity(receipt.quantity)} ${receipt.unit_of_measure}`}</td>
         <td>{receipt.covered_by ? 'Included with your plan' : <>{receipt.cost_usd === null ? 'Price not reported' : receipt.cost_usd}<div>{receipt.basis}</div></>}</td>
       </tr>)}</tbody>

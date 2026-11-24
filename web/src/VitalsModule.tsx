@@ -213,16 +213,17 @@ function SpendRow({
   disclosure?: { expanded: boolean; count: number; toggle: () => void }
 }) {
   const partial = partialSpendCopy(metrics)
+  const coverage = metrics.covered_turns > 0 && <small className="spend-table__coverage">{includedTurns(metrics.covered_turns)}</small>
   return (
     <tr className={nested ? 'spend-table__model' : purpose ? 'spend-table__purpose' : undefined}>
       <th scope="row">
-        {disclosure === undefined ? <span>{name}</span> : (
+        {disclosure === undefined ? <><span>{name}</span>{coverage}</> : (
           <Button action={disclosure.expanded ? "collapse" : "expand"} variant="bare" type="button" data-tooltip-detail="Show or hide this conversation's models." aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
             <span className="spend-table__name" title={name}>{name}</span>
             <small>{disclosure.count} {disclosure.count === 1 ? 'model' : 'models'}</small>
+            {coverage}
           </Button>
         )}
-        {metrics.covered_turns > 0 && <small>{includedTurns(metrics.covered_turns)}</small>}
         {purpose && <small>Other work</small>}
       </th>
       <Metric value={metrics.input_tokens} />
