@@ -6,83 +6,188 @@
   "diffs": [
     {
       "repo": "harness",
-      "base": "fbb52e3a5a6ab17465c821a0aab7c3a9774c5560",
-      "head": "952a86b8dd05c160d7c83539a8837d0c686312bb"
+      "base": "a16ea264659b64a3a7c004367f36e2dd9021195c",
+      "head": "874562f51e42c476abff6b79316ac6f9061e8992"
     }
   ],
   "unmapped": {
-    "harness/DECISIONS.md": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/src/harness/__init__.py": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/src/harness/t3_front.py": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/tests/test_daemon.py": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/tests/test_t3_passthrough.py": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m2st1/browser_check.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-009.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-061.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-067.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-069.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-070.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-074.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-075.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-102.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-104.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-105.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-107.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-108.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-110.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-111.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-112.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-113.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-115.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-116.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-117.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-118.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-119.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-120.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-123.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-124.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-130.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-132.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-168.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-170.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-171.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-173.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-178.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-179.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-183.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-184.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-186.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-187.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-190.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-191.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-192.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-193.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-194.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-195.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-196.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-199.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-201.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-205.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-206.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-213.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-215.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/FL-216.png": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/SHA256SUMS": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/m8td/ledger-report.json": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/verification/sym13/browser_check.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-B8tieEOw.css": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-Ba3n3wOi.js": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-BlGWo4cz.js": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-Dl5jRwi1.css": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/dist/index.html": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/tests/rackModuleTemplate.test.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/tests/stageLayout.test.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-BBhQ1WZz.js": "Built web assets, including intermediate bundles; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-BlkDahZv.js": "Built web assets, including intermediate bundles; FL-216 carries the walk.",
-    "harness/web/dist/assets/index-DdDeaeem.js": "Built web assets, including intermediate bundles; FL-216 carries the walk."
+    "harness/DECISIONS.md": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/src/harness/__init__.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/src/harness/t3_acp.py": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/src/harness/t3_client.py": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/src/harness/t3_front.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/src/harness/t3_front_session.py": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/src/harness/t3_server.py": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/tests/test_daemon.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/tests/test_run_loop.py": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/tests/test_t3_front.py": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/tests/test_t3_passthrough.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m2st1/browser_check.mjs": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8ta/FL-007.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-008.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-009.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-016.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-017.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-018.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-039.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-044.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-067.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-069.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-070.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-074.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-075.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-076.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-079.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-084.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-119.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-157.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-162.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-164.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-166.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-167.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-169.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-170.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-172.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-173.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-174.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-178.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-179.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-182.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-183.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-186.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-187.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-190.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-191.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-192.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-193.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-194.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-200.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-206.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-207.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-208.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/FL-211.png": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/SHA256SUMS": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8ta/ledger-report.json": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/verification/m8td/FL-009.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-061.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-067.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-069.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-070.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-074.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-075.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-102.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-104.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-105.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-107.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-108.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-110.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-111.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-112.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-113.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-115.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-116.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-117.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-118.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-119.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-120.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-123.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-124.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-130.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-132.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-168.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-170.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-171.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-173.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-178.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-179.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-183.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-184.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-186.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-187.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-190.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-191.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-192.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-193.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-194.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-195.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-196.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-199.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-201.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-205.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-206.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-213.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-215.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/FL-216.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/SHA256SUMS": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/m8td/ledger-report.json": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/verification/sym13/browser_check.mjs": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-B8tieEOw.css": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-Ba3n3wOi.js": "M8TA's change, beneath this packet in the stack; covered by M8TA's own report 339.",
+    "harness/web/dist/assets/index-BlGWo4cz.js": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-Dl5jRwi1.css": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/index.html": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/tests/rackModuleTemplate.test.mjs": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/tests/stageLayout.test.mjs": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-BBhQ1WZz.js": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-BlkDahZv.js": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-DdDeaeem.js": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
+    "FL-008": {
+      "label": "Complete logs of every conversation are kept for good, until it becomes too expensive, and every session sits in one table with a session id so anything can be audited.",
+      "walk": "Look up an old conversation in the sessions table; its row and its full log are there.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-008.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-016": {
+      "label": "All conversation history is kept the way Codex and Claude Code keep it; a conversation without history is not supported.",
+      "walk": "Send three prompts, quit, `nocturne up`, select the thread; the three exchanges are there.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-016.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-017": {
+      "label": "Every prompt is intercepted and relevant memories are added to the context before the model runs.",
+      "walk": "Send a prompt in a thread with memories; the Injection Console shows the memories added before the model ran.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-017.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-018": {
+      "label": "A hard pause on a thread's first prompt where the user scans and removes injected memories before the model starts; afterwards removal is ad hoc with no pause.",
+      "walk": "New thread, first prompt; the gate opens with the memories and waits; the second prompt does not pause.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-018.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-039": {
+      "label": "Agents make no memories until compaction; the explicit /remember command is the other way.",
+      "walk": "Run an agent thread through a turn; no memory is created mid-turn, only at compaction or by /remember. A /remember of a fact the user states is saved \u2014 checked and repaired before the Palace, never a bare refusal.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-039.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-044": {
+      "label": "At compaction the summarizing agent turns anything important but not needed for the next few build steps into a memory through the normal memory creation path, and compaction waits for those memories to land before dropping the rest.",
+      "walk": "Cross a compaction on a main thread: every fact a continuing agent would want lands as its own self-contained memory (no count cap; shorten one over-long claim, split only independent claims), a curator pass follows and merges them with what the Palace already holds, the last share of the conversation is still there word for word, the next prompt's injection can draw on the new facts, and the whole original chat is still on record beside the facts drawn from it (owner, 2026-10-05, v2.133; M5RM).",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-044.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
     "FL-067": {
       "label": "Agents move through the file structure of the machine they live in, and the interface shows where every agent is.",
       "walk": "Ask the agent to move to another folder; the interface shows its new location.",
@@ -90,7 +195,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-067.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-069": {
       "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
@@ -99,7 +204,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-069.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-070": {
       "label": "Image input: paste an image and the agent reviews it.",
@@ -108,7 +213,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-070.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-074": {
       "label": "A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration).",
@@ -117,7 +222,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-074.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-075": {
       "label": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
@@ -126,7 +231,25 @@
       "verdict": "FAIL",
       "screenshot": "FL-075.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-076": {
+      "label": "Commit every turn; one-click rewind of chat and code together to any earlier turn.",
+      "walk": "Rewind to turn 2; chat and files both revert.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-076.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-079": {
+      "label": "Full conversation history kept, the way Codex and Claude Code do.",
+      "walk": "Restart the Harness and scroll a long thread; every earlier turn is still there.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-079.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-102": {
       "label": "The Deck: a flashcard stack of terminals, cards colored to match their agents, only one card on top at a time (that project's agent's last response) to interact with, the next card popping up once you respond, ordered purely by which finished first.",
@@ -135,7 +258,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-102.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-104": {
       "label": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
@@ -144,7 +267,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-104.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-105": {
       "label": "An Ableton-like rack: the shipped layout is only version one of the default opinion, and people can easily roll and add their own plugins and visualizers to the views from the ground up.",
@@ -153,7 +276,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-105.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-107": {
       "label": "A plugin to change common model parameters such as top p and temperature, as an Ableton-style visualizer and input block.",
@@ -162,7 +285,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-107.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-110": {
       "label": "Global or current on every module; current modules switch together with the work.",
@@ -171,7 +294,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-110.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-111": {
       "label": "One standard module template that can be dragged and grown or shrunk as much as you want, with a dialogue box for its internal settings, on a very large canvas you can pan and zoom while modules stay the same size.",
@@ -180,7 +303,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-111.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-112": {
       "label": "Tabs as layers of the same stage; Injection and Graph as ordinary modules; a gear beside the title for rarely changed options.",
@@ -189,7 +312,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-112.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-113": {
       "label": "A finer, near-continuous background grid, more descriptive well-formatted hover tips, an easy way to create tabs, a much smaller archive button, a model device that is obviously clickable.",
@@ -198,7 +321,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-113.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-115": {
       "label": "Attunement to a specific stack beyond global and current.",
@@ -207,7 +330,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-115.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-116": {
       "label": "A module not set to global attunes by proximity, measured across tabs (a tab counting one unit) and grid position, ties picked at random, and it shows which thread or stack it is attuned to.",
@@ -216,7 +339,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-116.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-117": {
       "label": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
@@ -225,7 +348,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-117.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-119": {
       "label": "A Palace State module holding the general state stats.",
@@ -234,7 +357,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-119.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-120": {
       "label": "One conversation module with stack and focused modes.",
@@ -243,7 +366,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-120.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-124": {
       "label": "Threads removable or archivable; a back-to-the-stage control on every view.",
@@ -252,7 +375,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-124.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-130": {
       "label": "A tree-search view reached by rotating the farm.",
@@ -261,7 +384,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-130.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-132": {
       "label": "A time-order control that highlights new roots and moves the panels to the longest-waiting response.",
@@ -270,7 +393,34 @@
       "verdict": "FAIL",
       "screenshot": "FL-132.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-157": {
+      "label": "Constitution: spend walls, soft budgets per run or day that pause the work at the wall for the judge (symphony budget law).",
+      "walk": "Start a symphony with a small budget; when spend reaches the wall the run pauses and a boundary card appears on the Deck for the judge.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-157.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-166": {
+      "label": "A prompt when the app's memory use passes a threshold of the local system's memory, memory-leak guards, and no proceeding without write access at startup.",
+      "walk": "Start the daemon in a folder with no write access; it refuses to proceed, and doctor shows the app's memory use against its threshold.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-166.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-169": {
+      "label": "Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless.",
+      "walk": "Start a client whose version differs from the cloud Palace's; it either keeps working or refuses with a plain version message.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-169.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-171": {
       "label": "A startup and settings option: \"Back up conversation transcripts to cloud?\"",
@@ -279,7 +429,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-171.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-172": {
+      "label": "Constitution: Palace export and portability (gate-day).",
+      "walk": "Run nocturne export to produce one file containing every principal-scoped memory and its lineage; import it into another Palace and compare the archive (A-071 CLI front door).",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-172.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-173": {
       "label": "Constitution: a warming retry when the Palace is asleep, a \"busy, retrying\" banner on rate limits, and the banner clears on recovery (gate-day).",
@@ -288,7 +447,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-173.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-174": {
+      "label": "Constitution: a doctor readout naming which identity the running daemon is (gate verification-identity work).",
+      "walk": "Run doctor; the readout names the daemon's identity and its home.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-174.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-178": {
       "label": "Constitution: a verification identity with its own account and home for tests and scouts (gate verification-identity work).",
@@ -297,7 +465,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-178.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-179": {
       "label": "Constitution: a plain ownership refusal when one identity tries to decide another identity's approval queue item (gate verification-identity work).",
@@ -306,7 +474,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-179.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-184": {
       "label": "A distinct module for scheduled jobs that makes them easy to monitor; the best visualization is still to be worked out.",
@@ -315,7 +483,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-184.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-187": {
       "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
@@ -324,7 +492,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-187.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-190": {
       "label": "The Harness can use skills and has the best and most common tools available, compiled from a list.",
@@ -333,7 +501,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-190.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-191": {
       "label": "The tools and skills Claude Code and Codex use on this machine, pinned to versioned open-source sources.",
@@ -342,7 +510,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-191.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-194": {
       "label": "The Pydantic toolset and skills as the tool layer.",
@@ -351,7 +519,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-194.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-195": {
       "label": "The feature ledger generates coverage reports and requires evidence for the rows affected by a build.",
@@ -360,16 +528,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-195.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-196": {
       "label": "The rules machine checks citations, frozen law, product vocabulary, seed states and packet precedents.",
       "walk": "Remove a guard citation on a disposable branch and observe CI fail; change a frozen axiom and observe the freeze step fail; restore both and observe Rules pass. The master ADR check remains red until the owner applies the citation patch.",
       "protected": true,
-      "verdict": "FAIL",
+      "verdict": "BLOCKED",
       "screenshot": "FL-196.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Local negative controls on throwaway copies of this packet's heads (rules-control.txt): removing one guard citation made the citation check exit 1 and restoring it exit 0; altering one frozen axiom made the freeze check exit 1 in each product and restoring it exit 0. The deliberately failing hosted pushes the row's walk names were not performed."
     },
     "FL-199": {
       "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
@@ -378,7 +546,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-199.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-201": {
       "label": "One scale across modules: an icon reused anywhere is one size, text of one role is one size and one font, and a box belongs only to an icon that is a button.",
@@ -387,7 +555,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-201.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-205": {
       "label": "The thread list tells you where and how: each thread shows its project by name and the model and thinking level in force, and the list reads cleaner.",
@@ -396,7 +564,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-205.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-007": {
+      "label": "Every memory links to the full conversation it came from, so an agent can reach more than just the memory when needed.",
+      "walk": "Open a memory card; it names the conversation it came from, and following that link opens the conversation.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-007.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-009": {
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
@@ -405,7 +582,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-009.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-061": {
       "label": "Compaction instructions tuned by back-test; memory size as a tunable beside the threshold and allotments.",
@@ -414,7 +591,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-061.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-084": {
+      "label": "Plan-mode compaction: the summarizer asks the user one to four questions before compacting. (seed SD-040)",
+      "walk": "Enable /compact plan on, cross the configured fill line, and answer the one to four model questions. No history is dropped before the answer; the ensuing compaction record retains questions and answer, including across restart.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-084.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-108": {
       "label": "Resizable modules and a plugin-contributor skill shipped with the repo.",
@@ -423,7 +609,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-108.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-118": {
       "label": "Out Loud mode: responses are read aloud and listen-triggered dictation is a primary way in, equal to typing, not an add-on.",
@@ -432,7 +618,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-118.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-123": {
       "label": "Each main cube view as its own module with its own 3D asset.",
@@ -441,7 +627,34 @@
       "verdict": "FAIL",
       "screenshot": "FL-123.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-162": {
+      "label": "Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.",
+      "walk": "On a fresh machine, follow the splash repo's install steps; you are asked for a GCP credential and an OpenRouter key and nothing else before the app comes up.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-162.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-164": {
+      "label": "Local mode with no internet, cloud mode, and a way to mirror our cloud setup into your own provider.",
+      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Start the Harness with the network off and send one message; the reply arrives and the memory lands in the local palace.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-164.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-167": {
+      "label": "One obvious start command with an update prompt; update, deploy, launch and doctor as one or two commands.",
+      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Run the one start command when a newer release exists; it offers the update, then launches.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-167.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-168": {
       "label": "A restore popup that asks whether to roll back these memories and lists them.",
@@ -450,7 +663,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-168.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-170": {
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
@@ -459,7 +672,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-170.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-182": {
+      "label": "Agent workflows that are programmable, so making agents do work is extremely easy.",
+      "walk": "Save an agent workflow and run it twice; both runs do the same work without a person steering.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-182.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-183": {
       "label": "Agent workflows can be set up on cron jobs.",
@@ -468,7 +690,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-183.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
@@ -477,7 +699,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-186.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-192": {
       "label": "Swappable seams: router, model policy with an off-switch, toolset as a unit, memory system.",
@@ -486,7 +708,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-192.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-193": {
       "label": "The common core of terminal-agent tools (skills, progressive prompting, model switching, compaction, app interactions) in one piece that pulls upstream updates.",
@@ -495,7 +717,16 @@
       "verdict": "FAIL",
       "screenshot": "FL-193.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-200": {
+      "label": "Spin up new palaces easily: one command creates a fresh palace with its own database, schema and token in the owner's project, reachable by name; the app can point at any palace the owner has; a test palace is where verification agents train and is dropped whole afterwards.",
+      "walk": "Run the new-palace command with a name; a fresh empty palace answers by that name; point the app at it, save a memory, then drop it whole; the owner's main palace is untouched throughout.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-200.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-206": {
       "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
@@ -504,7 +735,34 @@
       "verdict": "FAIL",
       "screenshot": "FL-206.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-207": {
+      "label": "A workflow is a folder \u2014 the bundle: its recipe, its skills, its tools and the names of its keys \u2014 that checks, packs to one archive with a digest, and saves as a job carrying that digest.",
+      "walk": "`nocturne workflow new <folder>` makes the folder. Add a SKILL.md folder under .agents/skills, an executable under tools, a key name in keys.example and a cron line in workflow.json. `nocturne workflow check <folder>` refuses until the vault holds the named key, then lists the tool with its --help line, the key name and the digest. `nocturne workflow pack <folder>` from two different folders writes the same .tar bytes, whose sha256 is the digest. `nocturne jobs save <folder>` records the digest on the job; the Jobs module's row reads 'bundle <digest head>' and its detail shows the digest, the tools and the key names (names only). The run's tool inventory lists the bundle's skill.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-207.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-208": {
+      "label": "The vault: one owner-only env file per workflow holds the keys its tools need; a value is never printed, logged, journaled or packed, and no agent can read it.",
+      "walk": "Pipe a value into `nocturne vault set <workflow> <NAME>`: it lands in vault/<workflow>.env (mode 600 in a 700 folder) and the command prints the name and the path only. Run the saved bundle, then search every transcript, journal, log, the packed archive, the Palace database and the captures for the value: none. Save a job that tells its agent to read the vault file with the read tool and with cat: both are refused and no card offers to open it.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-208.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+    },
+    "FL-211": {
+      "label": "SSH targets run the same product version, each with its own local Palace; initialization starts the localhost service and runs doctor.",
+      "walk": "Add stage and prod by SSH address. Initialize both hosts at the sender's version, inspect healthy doctor and verification identities, and inspect nocturne targets and the Jobs tier view. A version mismatch names the older side and never downgrades.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-211.png",
+      "flag": "F086",
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-213": {
       "label": "Promote sends only stage's enabled digest whose last proof for that digest passed; production proves the same bytes before enabling.",
@@ -513,7 +771,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-213.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-215": {
       "label": "A button says what it does and one symbol means one thing: one word per action and one icon per meaning, held in two tables in the kit; a confirmation names the action, the thing and what is lost and answers Yes or No. Errors name the failure and a next step while preserving authored guidance; an empty state says what fills it; long instructions and legends open on demand.",
@@ -522,7 +780,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-215.png",
       "flag": "F086",
-      "observed": "Not walked by M8TD. The packet's change shares this row's file; its own walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
+      "observed": "Not walked by M8TD. The range against main holds this packet's change and M8TA's beneath it; M8TA's rows were walked in its own report 339. M8TD's walk covered the T3 module (FL-216) only. This capture shows packet context only. The row's required walk remains to be done."
     },
     "FL-216": {
       "label": "T3 Code's own screen is a Stage module: it sits and resizes like any module, one control fits it to the window and returns it, a prompt typed in it is answered by Nocturne's agent, and a restart restores it. T3 refuses every hosting page; a pass-through on this machine admits Nocturne's own page and no other. With T3 stopped the module says so in one line with the way to start it.",
@@ -541,17 +799,12 @@
     "FL-004": "outside diff",
     "FL-005": "outside diff",
     "FL-006": "outside diff",
-    "FL-007": "outside diff",
-    "FL-008": "outside diff",
     "FL-010": "outside diff",
     "FL-011": "outside diff",
     "FL-012": "outside diff",
     "FL-013": "outside diff",
     "FL-014": "outside diff",
     "FL-015": "outside diff",
-    "FL-016": "outside diff",
-    "FL-017": "outside diff",
-    "FL-018": "outside diff",
     "FL-019": "outside diff",
     "FL-020": "outside diff",
     "FL-021": "outside diff",
@@ -572,12 +825,10 @@
     "FL-036": "outside diff",
     "FL-037": "outside diff",
     "FL-038": "outside diff",
-    "FL-039": "outside diff",
     "FL-040": "dropped",
     "FL-041": "outside diff",
     "FL-042": "outside diff",
     "FL-043": "outside diff",
-    "FL-044": "outside diff",
     "FL-045": "outside diff",
     "FL-046": "outside diff",
     "FL-047": "outside diff",
@@ -603,15 +854,12 @@
     "FL-071": "outside diff",
     "FL-072": "outside diff",
     "FL-073": "outside diff",
-    "FL-076": "outside diff",
     "FL-077": "horizon",
     "FL-078": "outside diff",
-    "FL-079": "outside diff",
     "FL-080": "outside diff",
     "FL-081": "outside diff",
     "FL-082": "outside diff",
     "FL-083": "outside diff",
-    "FL-084": "outside diff",
     "FL-085": "outside diff",
     "FL-086": "outside diff",
     "FL-087": "outside diff",
@@ -665,40 +913,27 @@
     "FL-154": "outside diff",
     "FL-155": "outside diff",
     "FL-156": "outside diff",
-    "FL-157": "outside diff",
     "FL-158": "outside diff",
     "FL-159": "outside diff",
     "FL-197": "outside diff",
     "FL-160": "outside diff",
     "FL-161": "outside diff",
-    "FL-162": "outside diff",
     "FL-163": "outside diff",
-    "FL-164": "outside diff",
     "FL-165": "outside diff",
-    "FL-166": "outside diff",
-    "FL-167": "outside diff",
-    "FL-169": "outside diff",
-    "FL-172": "outside diff",
-    "FL-174": "outside diff",
     "FL-175": "outside diff",
     "FL-176": "horizon",
     "FL-177": "horizon",
     "FL-180": "outside diff",
     "FL-181": "outside diff",
-    "FL-182": "outside diff",
     "FL-185": "outside diff",
     "FL-188": "unverified",
     "FL-189": "dropped",
     "FL-198": "outside diff",
-    "FL-200": "outside diff",
     "FL-202": "outside diff",
     "FL-203": "outside diff",
     "FL-204": "horizon",
-    "FL-207": "outside diff",
-    "FL-208": "outside diff",
     "FL-209": "outside diff",
     "FL-210": "outside diff",
-    "FL-211": "outside diff",
     "FL-212": "outside diff",
     "FL-214": "outside diff"
   }
