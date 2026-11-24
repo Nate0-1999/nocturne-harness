@@ -253,8 +253,9 @@ async def test_a_resent_prompt_id_runs_once_whether_active_queued_or_finished():
 
 
 class BoundaryRunner:
-    def __init__(self) -> None:
+    def __init__(self, native: bool = False) -> None:
         self.decision: str | None = None
+        self.wall = {"wall": "subscription", "card_id": "current"} if native else {"wall": "workspace"}
 
     async def run(
         self,
@@ -267,18 +268,19 @@ class BoundaryRunner:
     ) -> TurnOutcome:
         del thread_id, model_resolution
         self.decision = await emit.boundary_decision(
-            {"event_kind": "boundary_card", "decision": "owner_action", "wall": "workspace"}
+            {"event_kind": "boundary_card", "decision": "owner_action", **self.wall}
         )
         await emit.event(
-            {"event_kind": "boundary_card", "decision": self.decision, "wall": "workspace"}
+            {"event_kind": "boundary_card", "decision": self.decision, **self.wall}
         )
         return TurnOutcome(StopReason.END_TURN, (*message_history, f"{prompt}:complete"))
 
 
 @pytest.mark.asyncio
-async def test_a_boundary_card_pauses_its_run_until_the_owner_answers() -> None:
+@pytest.mark.parametrize("native", [False, True])
+async def test_a_boundary_card_pauses_its_run_until_the_owner_answers(native: bool) -> None:
     """F198 / ADR-015: the run waits at its boundary card; only that run's answer resumes it."""
-    runner = BoundaryRunner()
+    runner = BoundaryRunner(native)
     loop = RunLoop(runner, factory(Ids()))
     sink = Sink()
     run_id = await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="go", sink=sink)
@@ -289,8 +291,11 @@ async def test_a_boundary_card_pauses_its_run_until_the_owner_answers() -> None:
         await asyncio.sleep(0.01)
     assert loop._threads["thread-1"].active.state == "waiting_gate"
     with pytest.raises(ValueError, match="No boundary card is waiting on this run."):
-        await loop.decide_boundary(thread_id="thread-1", run_id=ulid(999), decision="denied")
-    await loop.decide_boundary(thread_id="thread-1", run_id=run_id, decision="allowed_once")
+        await loop.decide_boundary(thread_id="thread-1", run_id=ulid(999), decision="denied", card_id="current" if native else None)
+    if native:
+        with pytest.raises(ValueError, match="This is no longer the waiting request."):
+            await loop.decide_boundary(thread_id="thread-1", run_id=run_id, decision="allowed_once", card_id="previous")
+    await loop.decide_boundary(thread_id="thread-1", run_id=run_id, decision="allowed_once", card_id="current" if native else None)
     await _wait_for_done_count(sink, 1)
     assert runner.decision == "allowed_once"
     with pytest.raises(ValueError, match="No boundary card is waiting on this run."):

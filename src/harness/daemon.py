@@ -199,6 +199,7 @@ class BoundaryDecisionRequest(BaseModel):
     """F198: the owner's answer to a waiting boundary card."""
 
     run_id: str
+    card_id: str | None = None
     decision: Literal["allowed_once", "allowed_thread", "denied"]
 
 
@@ -1214,6 +1215,7 @@ def create_dev_app(
             ),
             t3,
             journal,
+            lambda thread_id: workspace_toolset_for(thread_id).location().cwd,
         ),
         owned_spine,
         context_factory,
@@ -1720,7 +1722,10 @@ def create_dev_app(
         async def decide_thread_boundary(thread_id: UUID, body: BoundaryDecisionRequest):
             try:
                 await loop.decide_boundary(
-                    thread_id=str(thread_id), run_id=body.run_id, decision=body.decision
+                    thread_id=str(thread_id),
+                    run_id=body.run_id,
+                    decision=body.decision,
+                    card_id=body.card_id,
                 )
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc

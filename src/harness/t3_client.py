@@ -248,8 +248,14 @@ class T3Client:
         return await self.dispatch(thread, "run.interrupt", runId=run, holdQueue=True)
 
     async def decline(self, thread: str, request: str):
+        return await self.respond(thread, request, allow=False)
+
+    async def respond(self, thread: str, request: str, *, allow: bool):
         return await self.dispatch(
-            thread, "runtime-request.respond", requestId=request, decision="decline"
+            thread,
+            "runtime-request.respond",
+            requestId=request,
+            decision="accept" if allow else "decline",
         )
 
     async def launch(

@@ -242,7 +242,8 @@ export function SymphonyDeck() {
   const [deciding, setDeciding] = useState(false)
   const decide = (card: (typeof boundaries)[number], decision: 'allowed_once' | 'allowed_thread' | 'denied') => {
     setDeciding(true)
-    void events.dispatch({ type: 'boundary.decide', run_id: String(card.run_id), decision })
+    void events.dispatch({ type: 'boundary.decide', run_id: String(card.run_id),
+      card_id: card.wall === 'subscription' ? String(card.card_id) : undefined, decision })
       .catch((error: unknown) => setStatus(failureMessage(error, 'The card was not answered. Keep your reply and try again.')))
       .finally(() => setDeciding(false))
   }
@@ -332,12 +333,13 @@ export function SymphonyDeck() {
     <section className="symphony-deck" data-testid="symphony-deck">
       <header className="symphony-deck__header">
         <div><p>Conductor channel</p><h1>The Deck</h1></div>
-        <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
+        <span>{visibleCards.length + boundaries.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
       </header>
       <p className="symphony-deck__rule" title="The longest-waiting reply stays first. Browse freely; steer the conductor here. Workers are never directly addressable.">Reply to steer the conductor.</p>
       {boundaries.map((card) => (
-        <article className="deck-proposal-card" data-testid="boundary-card" key={String(card.run_id)}>
-          <h2>{card.wall === 'spend' ? 'Spend boundary · paused' : `Workspace boundary · ${String(card.wall)}`}</h2>
+        <article className="deck-proposal-card" data-testid="boundary-card" data-wall={String(card.wall)} key={String(card.card_id ?? card.run_id)}>
+          <h2>{card.wall === 'subscription' ? `${String(card.judge)} · waiting for permission` :
+            card.wall === 'spend' ? 'Spend boundary · paused' : `Workspace boundary · ${String(card.wall)}`}</h2>
           <p>{String(card.reason)}</p>
           {card.wall === 'spend' ? (
             <>
@@ -346,13 +348,13 @@ export function SymphonyDeck() {
             </>
           ) : (
             <footer>
-              <small>{String(card.judge)} · {String(card.policy)}</small>
+              <small>{card.wall === 'subscription' ? String(card.policy) : `${String(card.judge)} · ${String(card.policy)}`}</small>
               <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-once"
                 data-tooltip-detail="Let this request cross this wall; the next one asks again."
                 onClick={() => decide(card, 'allowed_once')}>Allow once</Button>
               <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-thread"
-                data-tooltip-detail="Let every request in this thread cross this wall."
-                onClick={() => decide(card, 'allowed_thread')}>Allow for this thread</Button>
+                data-tooltip-detail={card.wall === 'subscription' ? 'Grant this tool access for the rest of this conversation.' : 'Let every request in this thread cross this wall.'}
+                onClick={() => decide(card, 'allowed_thread')}>{card.wall === 'subscription' ? 'Allow for this conversation' : 'Allow for this thread'}</Button>
               <Button action="deny" type="button" disabled={deciding} data-testid="boundary-deny"
                 data-tooltip-detail="Stop this request; nothing crosses the wall."
                 onClick={() => decide(card, 'denied')}>Deny</Button>
@@ -360,7 +362,7 @@ export function SymphonyDeck() {
           )}
         </article>
       ))}
-      {visibleCards.length === 0 ? (
+      {visibleCards.length === 0 && boundaries.length === 0 ? (
         <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
       ) : (
         <div className="deck-proposal-queue" data-testid="deck-proposal-queue">
