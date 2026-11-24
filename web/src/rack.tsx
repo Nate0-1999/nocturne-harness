@@ -102,7 +102,7 @@ export type RackAction =
   | { type: 'jobs.stop'; run_id: string }
   | { type: 'jobs.deliver'; workflow: string; target: string; action: 'push' | 'promote' }
   | { type: 'policies.load' }
-  | { type: 'models.load'; thread_id: string | null }
+  | { type: 'models.load'; thread_id: string | null; subscriptions?: boolean }
   | { type: 'models.local'; url: string | null; model: string | null; when_offline: boolean }
   | { type: 'models.pin'; model: string; pinned: boolean }
   | { type: 'models.ban'; target: string; banned: boolean }
@@ -650,10 +650,12 @@ function dispatchRackAction<Action extends RackAction>(
       }
       case 'policies.load':
         return fetchJson('/v1/model-policies') as Promise<RackActionResult<Action>>
-      case 'models.load':
-        return fetchJson(action.thread_id === null
-          ? '/v1/models'
-          : `/v1/models?thread_id=${encodeURIComponent(action.thread_id)}`) as Promise<RackActionResult<Action>>
+      case 'models.load': {
+        const query = new URLSearchParams()
+        if (action.thread_id !== null) query.set('thread_id', action.thread_id)
+        if (action.subscriptions) query.set('subscriptions', 'true')
+        return fetchJson(query.size ? `/v1/models?${query}` : '/v1/models') as Promise<RackActionResult<Action>>
+      }
       case 'models.pin':
         return fetchJson('/v1/model-pins', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },

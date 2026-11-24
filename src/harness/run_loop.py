@@ -295,21 +295,6 @@ class RunLoop:
     ) -> ParameterSnapshot:
         """Validate, apply, journal, and publish one bound control write."""
 
-        try:
-            normalized = self._parameter_registry.validate_bound_write(
-                module_id=module_id,
-                parameter_id=parameter_id,
-                value=value,
-            )
-        except ParameterWriteViolation as exc:
-            await self._publish_parameter_refusal(
-                thread_id=thread_id,
-                module_id=module_id,
-                parameter_id=parameter_id,
-                reason=exc.reason,
-            )
-            raise
-
         submission_lock = self._submission_locks.setdefault(thread_id, asyncio.Lock())
         async with submission_lock:
             async with self._lock:
@@ -334,6 +319,22 @@ class RunLoop:
                 )
                 # WALL money / ADR-023: resolve controls and preserve the running model.
                 raise ParameterWriteViolation("invalid")
+
+            try:
+                normalized = self._parameter_registry.validate_bound_write(
+                    module_id=module_id,
+                    parameter_id=parameter_id,
+                    value=value,
+                    effort_levels=resolution.effort_levels,
+                )
+            except ParameterWriteViolation as exc:
+                await self._publish_parameter_refusal(
+                    thread_id=thread_id,
+                    module_id=module_id,
+                    parameter_id=parameter_id,
+                    reason=exc.reason,
+                )
+                raise
 
             candidate: ThreadModelResolution | None = None
             if parameter_id == "model.slug":
@@ -365,11 +366,7 @@ class RunLoop:
 
                 if candidate is not None:
                     sacrificed_prefix = state.cached_prefix_tokens
-                    updated = replace(
-                        candidate,
-                        stickiness_epoch=previous.stickiness_epoch + 1,
-                        request_parameters=previous.request_parameters,
-                    )
+                    updated = await self._switch_model_locked(thread_id, previous, candidate)
                     state.cached_prefix_tokens = 0
                 else:
                     updated = self._with_parameter(previous, parameter_id, normalized)
@@ -1458,11 +1455,7 @@ class RunLoop:
             message = "Model unchanged: broker model switching is unavailable."
         elif message is None and candidate is not None and previous is not None:
             changed_at = self._clock()
-            resolution = replace(
-                candidate,
-                stickiness_epoch=previous.stickiness_epoch + 1,
-                request_parameters=previous.request_parameters,
-            )
+            resolution = await self._switch_model_locked(thread_id, previous, candidate)
             event = {
                 "event_kind": "model_change",
                 "old_model": previous.model,
@@ -1497,7 +1490,17 @@ class RunLoop:
                 event["sacrificed_cached_prefix_tokens"],
                 event["context_tokens"],
             )
-            if previous.model == resolution.model:
+            if resolution.model.startswith("subscription:"):
+                tool, _, model = resolution.model.removeprefix("subscription:").split("/", 2)
+                message = (
+                    f"This conversation now uses {model} through {tool}. "
+                    "The first message to this tool includes earlier user and assistant text "
+                    "from the conversation history. The tool starts in an empty private folder "
+                    "inside your Nocturne home. Your project files stay in their own folder. "
+                    "The tool can read other paths if its own permissions allow it. "
+                    "The tool controls its own actions outside Nocturne’s fence."
+                )
+            elif previous.model == resolution.model:
                 message = (
                     f"Model re-resolved to {resolution.model} in a new stickiness epoch. "
                     f"Context window: {resolution.context_tokens} tokens."
@@ -1542,6 +1545,30 @@ class RunLoop:
     def _aware_clock(self) -> datetime:
         instant = self._clock()
         return instant
+
+    async def _switch_model_locked(self, thread_id, previous, candidate):
+        parameters = previous.request_parameters
+        if parameters.effort is not None:
+            try:
+                self._parameter_registry.validate_bound_write(
+                    module_id="model_device",
+                    parameter_id="model.effort",
+                    value=parameters.effort,
+                    effort_levels=candidate.effort_levels,
+                )
+            except ParameterWriteViolation:
+                self._ensure_parameter_thread_locked(thread_id, previous)
+                await self._record_parameter_change_locked(
+                    thread_id=thread_id,
+                    parameter_id="model.effort",
+                    old_value=parameters.effort,
+                    new_value=None,
+                    changed_at=self._clock(),
+                )
+                parameters = replace(parameters, effort=None)
+        return replace(
+            candidate, stickiness_epoch=previous.stickiness_epoch + 1, request_parameters=parameters
+        )
 
     def _ensure_parameter_thread_locked(
         self,

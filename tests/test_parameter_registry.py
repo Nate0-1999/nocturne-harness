@@ -18,6 +18,43 @@ class _IdleRunner:
         return TurnOutcome(StopReason.END_TURN, (), UsageSnapshot())
 
 
+def test_thinking_accepts_only_levels_reported_for_this_model() -> None:
+    """A-095 / ADR-023: a native-only level must never leak to a broker or a different tool."""
+    from harness.t3_sources import _thinking
+
+    registry = ParameterRegistry()
+    bound = {"module_id": "model_device", "parameter_id": "model.effort"}
+    for option, reported, unsupported in [
+        (
+            {
+                "id": "reasoningEffort",
+                "type": "select",
+                "options": [{"id": "low"}, {"id": "ultra"}],
+            },
+            ["low", "ultra"],
+            "on",
+        ),
+        (
+            {"id": "effort", "type": "select", "options": [{"id": "ultrathink"}]},
+            ["ultrathink"],
+            "ultra",
+        ),
+        ({"id": "thinking", "type": "boolean"}, ["on", "off"], "high"),
+        ({"id": "other", "type": "boolean"}, [], "low"),
+    ]:
+        thinking = _thinking({"capabilities": {"optionDescriptors": [option]}})
+        levels = tuple((thinking or {}).get("levels", ()))
+        assert list(levels) == reported
+        for level in levels:
+            assert (
+                registry.validate_bound_write(**bound, value=level, effort_levels=levels) == level
+            )
+        with pytest.raises(ParameterWriteViolation):
+            registry.validate_bound_write(**bound, value=unsupported, effort_levels=levels)
+    with pytest.raises(ParameterWriteViolation):
+        registry.validate_bound_write(**bound, value="ultra")
+
+
 class _Resolver:
     async def resolve(self, thread_id: str) -> ThreadModelResolution:
         del thread_id

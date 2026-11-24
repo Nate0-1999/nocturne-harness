@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import { browseOrder, chipParts, modelMark, policyInForce, spendModelLabel, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
+import { browseOrder, chipParts, modelMark, policyInForce, spendModelLabel, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -13,6 +14,32 @@ const models = [
   model('top', '57', '4', 200_000),
   model('unscored', null, '0.05', null),
 ]
+
+/** P2 / SD-115: keep the pinned state visible and the unpinned button reachable by touch or keyboard. */
+test('model pins reveal on row hover, keyboard focus and a touch hold', async () => {
+  const css = await readFile(new URL('../src/assets/rack.css', import.meta.url), 'utf8')
+  const pin = String.raw`\.kit-button--pin\[aria-pressed="false"\]`
+  assert.match(css, new RegExp(String.raw`\.model-row ${pin} \{\s*opacity: 0; pointer-events: none;\s*\}`))
+  for (const row of [String.raw`\.model-row:hover`, String.raw`\.model-row:is\(:has\(:focus-visible\), \[data-show-pin\]\)`]) {
+    assert.match(css, new RegExp(String.raw`${row} ${pin} \{\s*opacity: 1;\s*pointer-events: auto;`))
+  }
+})
+
+/** A-095: sorting or searching a broker catalog must preserve the owner's plan choices. */
+test('subscription groups and names survive every broker sort and search', () => {
+  const codex = 'subscription:codex/ref/astra'
+  const claude = 'subscription:claudeAgent/ref/opus'
+  const browser = { models: [{ model: codex }, ...models, { model: claude }], subscriptions: [
+    { tool: 'codex', availability: 'available' }, { tool: 'claudeAgent', availability: 'available' },
+  ], chat_policy: 'elbow', configurations: [] }
+  for (const sort of ['rank', 'price', 'context']) {
+    assert.deepEqual(browseOrder(browser.models, [], 'absent', sort), [])
+    assert.deepEqual(subscriptionGroups(browser).map(s => s.models.map(m => m.model)), [[codex], [claude]])
+  }
+  assert.equal(modelMark(browser, claude, 'high'), 'Claude Code · opus')
+  assert.equal(modelMark(null, codex, 'low'), 'Codex · astra')
+  assert.equal(subscriptionState({ tool: 'claudeAgent', availability: 'signed_out' }), 'Signed out · claude auth login')
+})
 
 /** P2 / FL-206: restarting can leave a thread with no strategy or a named-route lookup. Spend must
  * agree with its header on the active strategy without relabeling other models on the bill. */
