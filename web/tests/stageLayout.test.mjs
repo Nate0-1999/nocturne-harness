@@ -50,7 +50,7 @@ test('layer switching preserves independent camera and module layouts through re
     work?.modules.find((module) => module.module_id === 'conversation'),
     {
       instance_id: 'conversation', module_id: 'conversation', source_thread_id: undefined,
-      conversation_mode: 'focused', x: 20, y: 8, width: 20, height: 20,
+      conversation_mode: 'focused', x: 20, y: 8, width: 16, height: 20,
     },
   )
 })
@@ -114,7 +114,7 @@ test('off-screen recovery fits Recipe and Conversation stack at native scale ins
   const deck = deckLayer.modules.find((module) => module.module_id === 'conversation')
   assert.deepEqual(deck, {
     instance_id: 'conversation', module_id: 'conversation',
-    conversation_mode: 'stack', x: 106, y: 68, width: 7, height: 20,
+    conversation_mode: 'stack', x: 104, y: 68, width: 7, height: 20,
   })
   assert.equal(deckLayer.camera.zoom, 1)
   assert.equal(moduleFitsViewport(
@@ -421,11 +421,15 @@ test('a fresh work layer opens readable at laptop sizes', () => {
     const camera = openingStageCamera(width, height, modules)
     assert.ok(camera.zoom >= 0.75 && camera.zoom <= 1, `${width}: zoom ${camera.zoom}`)
     assert.ok(inView(camera, conversation, width), `${width}: conversation in view`)
-    assert.ok(camera.y + (conversation.y + conversation.height) * STAGE_UNIT_HEIGHT * camera.zoom <= height)
+    // M8LK: the composer ends above the Off-screen bar (48px up from the window's foot).
+    assert.ok(camera.y + (conversation.y + conversation.height) * STAGE_UNIT_HEIGHT * camera.zoom <= height - 48)
   }
-  const wide = openingStageCamera(1440, 800, modules)
-  for (const module of modules.filter((item) => ['threads', 'memory'].includes(item.module_id))) {
-    assert.ok(inView(wide, module, 1440), `1440: ${module.module_id} in view`)
+  // M8LK: 1267 by 678 is the Stage of the owner's 1267-wide window, where Memory was cut off.
+  for (const [width, height] of [[1440, 800], [1267, 678]]) {
+    const wide = openingStageCamera(width, height, modules)
+    for (const module of modules.filter((item) => ['threads', 'memory'].includes(item.module_id))) {
+      assert.ok(inView(wide, module, width), `${width}: ${module.module_id} in view`)
+    }
   }
   const small = openingStageCamera(800, 500, modules)
   assert.ok(inView(small, conversation, 800) && small.zoom > 0.7, `800: zoom ${small.zoom}`)
