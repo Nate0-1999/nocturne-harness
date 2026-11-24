@@ -24,7 +24,7 @@ from harness.config import HarnessSettings
 from harness.daemon import EnvelopeSender, _build_web, create_app, create_dev_app
 from harness.envelope import Envelope, EnvelopeFactory, ImageInput, MessageType, StopReason
 from harness.memory_panel import EMPTY_MEMORY_BLOCK
-from harness.model_policy import ThreadModelResolution
+from harness.model_policy import ModelPolicyResolver, ThreadModelResolution
 from harness.run_loop import RunLoop
 from harness.run_protocol import RunEmitter, TurnOutcome, UsageSnapshot
 from harness.spine_client import (
@@ -174,6 +174,15 @@ def test_attunement_tie_pick_is_durably_journaled(tmp_path: Path) -> None:
     assert rows[0]["record_type"] == "event"
     assert rows[0]["thread_id"] == thread_id
     assert rows[0]["event"] == response.json()
+
+
+def fixture_resolver(settings):
+    return ModelPolicyResolver(
+        policy=settings.effective_model_policy_chat,
+        static_model=settings.chat_model,
+        static_context_tokens=settings.model_context_tokens,
+        catalog=None,
+    )
 
 
 def png_input(data: bytes = b"\x89PNG\r\n\x1a\ndaemon-image") -> ImageInput:
@@ -1374,6 +1383,7 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
         machine_id="machine-test",
         agent_id="agent-test",
         chat_model="openrouter:static/visible-model",
+        model_context_tokens=32_000,
         anthropic_api_key=None,
         openai_api_key=None,
         openrouter_api_key=None,
@@ -1381,6 +1391,7 @@ def test_dev_app_wires_the_real_streaming_agent_adapter(
     agent = HarnessAgent(settings, model=FunctionModel(stream_function=stream))
     app = create_dev_app(
         tmp_path,
+        model_resolver_override=fixture_resolver(settings),
         settings=settings,
         agent=agent,
         spine=FailingPrepareSpine(),  # type: ignore[arg-type]
@@ -1440,6 +1451,7 @@ def test_dev_app_project_binding_reaches_the_trusted_prepare_context(tmp_path: P
         machine_id="machine-test",
         agent_id="agent-test",
         chat_model="openrouter:static/visible-model",
+        model_context_tokens=32_000,
         anthropic_api_key=None,
         openai_api_key=None,
         openrouter_api_key=None,
@@ -1449,6 +1461,7 @@ def test_dev_app_project_binding_reaches_the_trusted_prepare_context(tmp_path: P
     journal = TranscriptJournal(tmp_path / "transcripts")
     app = create_dev_app(
         tmp_path,
+        model_resolver_override=fixture_resolver(settings),
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
@@ -1713,6 +1726,7 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
         machine_id="machine-test",
         agent_id="agent-test",
         model_context_tokens=777_777,
+        chat_model="openrouter:fixture/chat",
         anthropic_api_key=None,
         openai_api_key=None,
         openrouter_api_key=None,
@@ -1735,6 +1749,7 @@ def test_dev_gate_round_trip_blocks_validates_commits_and_injects_system_block(
     transcript_journal = TranscriptJournal(tmp_path / "transcripts")
     app = create_dev_app(
         tmp_path,
+        model_resolver_override=fixture_resolver(settings),
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
@@ -1853,6 +1868,8 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
 
     settings = HarnessSettings(
         _env_file=None,
+        chat_model="openrouter:fixture/chat",
+        model_context_tokens=32_000,
         spine_token="test-token",
         principal_id="principal-test",
         machine_id="machine-test",
@@ -1866,6 +1883,7 @@ def test_dev_panel_remove_updates_shared_context_for_the_next_model_call(
     transcript_journal = TranscriptJournal(tmp_path / "transcripts")
     app = create_dev_app(
         tmp_path,
+        model_resolver_override=fixture_resolver(settings),
         settings=settings,
         agent=agent,
         spine=spine,  # type: ignore[arg-type]
@@ -2606,4 +2624,4 @@ def test_model_browser_without_a_listing_source_is_a_plain_empty_state(tmp_path:
 
     assert response.status_code == 200
     assert response.json()["models"] == []
-    assert response.json()["unavailable"] == "This model source publishes no model list."
+    assert "Reconnect" in response.json()["unavailable"]

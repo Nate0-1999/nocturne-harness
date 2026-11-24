@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import create_dev_app
+from harness.model_policy import ModelPolicyResolver
 from verification.fixture_isolation import install_fixture_isolation
 from verification.m2h.scenario_app import _model
 from verification.m2st3.scenario_app import HonestDisplaySpine
@@ -28,6 +29,12 @@ def create_scenario_app() -> FastAPI:
     spine = HonestDisplaySpine()
     harness_app = create_dev_app(
         settings=settings,
+        model_resolver_override=ModelPolicyResolver(
+            policy=settings.effective_model_policy_chat,
+            static_model=settings.chat_model,
+            static_context_tokens=settings.model_context_tokens,
+            catalog=None,
+        ),
         agent=HarnessAgent(settings, model=_model()),
         spine=spine,  # type: ignore[arg-type]
     )

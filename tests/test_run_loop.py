@@ -591,6 +591,16 @@ class BlockingSink:
         await self.release.wait()
 
 
+@pytest.mark.asyncio
+async def test_missing_model_cannot_supply_a_thread_budget():
+    """SPEC C.5: a missing model cannot set a memory or parallel work budget."""
+    loop = RunLoop(ImmediateHistoryRunner(), factory(Ids()))
+    with pytest.raises(
+        ModelCatalogUnavailable, match="This conversation has no model context yet."
+    ):
+        await loop.model_context("cold")
+
+
 def factory(ids: Ids) -> EnvelopeFactory:
     return EnvelopeFactory(
         machine_id="machine-1",

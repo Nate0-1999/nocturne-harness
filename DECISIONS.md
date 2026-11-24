@@ -4675,3 +4675,10 @@ archive operation here.
 ## M8XF — Account for each compaction fact [P1.5]
 
 F221, SD-107, A-096. Keep the model proposal in the compaction record. Attach the Palace decision by candidate ID and reuse the ID after an interrupted delivery. Old records have only their original proposal.
+## M8DL — Best value for new conversations (P4)
+
+PRECEDENT: SD-100, M3SK, M6MS, F259 and draft A-098. A home that set nothing uses the
+elbow over eligible models. If the owner's pin is banned, new conversations use the elbow
+until the ban is lifted. Established conversations retain their model. The settings show
+when the pick changed separately from the catalog date used for a saved pick. In the six
+retained observations the elbow picked six different models. Report 336 records the walk.

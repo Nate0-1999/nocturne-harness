@@ -1,12 +1,12 @@
 """Harness configuration for the C.4 client and C.5 agent limits."""
 
+from functools import cached_property
 from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from harness.model_policy import parse_model_policy
+from spine.model_policy import HomeModelChoices, parse_model_policy
 
 
 class HarnessSettings(BaseSettings):
@@ -32,11 +32,11 @@ class HarnessSettings(BaseSettings):
     local_model: str | None = None
     local_when_offline: bool = False
     local_model_context_tokens: int = Field(default=32768, ge=1)
-    chat_model: str = "openrouter:openai/gpt-4.1-mini"
+    chat_model: str | None = None
     model_policy_chat: str | None = None
     model_policy_subagent: str | None = None
     model_policy_judge: str | None = None
-    model_context_tokens: int = Field(default=1_047_576, ge=1)
+    model_context_tokens: int | None = Field(default=None, ge=1)
     run_request_limit: int = Field(default=40, ge=1)
     run_total_tokens_limit: int = Field(default=500_000, ge=1)
     # F169: a model request that sends nothing this long (not even OpenRouter's keep-alive) ends.
@@ -74,9 +74,16 @@ class HarnessSettings(BaseSettings):
 
     @property
     def effective_model_policy_chat(self) -> str:
-        """Preserve static behavior when MODEL_POLICY_CHAT is unset."""
+        """Explicit policy, explicit model, then the best value in the catalog."""
+        return self.model_policy_chat or (
+            f"pinned:{self.chat_model}" if self.chat_model else "elbow"
+        )
 
-        return self.model_policy_chat or f"pinned:{self.chat_model}"
+    @cached_property
+    def model_choices(self) -> HomeModelChoices:
+        from harness.onboarding import nocturne_home
+
+        return HomeModelChoices(self.nocturne_home or nocturne_home())
 
     @property
     def model_policy_optimization_enabled(self) -> bool:

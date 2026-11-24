@@ -13,7 +13,7 @@ import {
 } from './spendTable'
 import './assets/honest-display.css'
 import { Button } from './kit'
-import { modelLabel, strategyName } from './modelBrowser'
+import { parseBrowser, spendModelLabel, type ModelBrowser } from './modelBrowser'
 import { failureMessage } from './requestFailure'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
@@ -29,6 +29,8 @@ export function VitalsModule() {
   const [snapshot, setSnapshot] = useState<SpendTableSnapshot | null>(null)
   const [reconciliation, setReconciliation] = useState<ReconciliationSnapshot | null>(null)
   const [expandedThreads, setExpandedThreads] = useState<ReadonlySet<string>>(new Set())
+  const [browser, setBrowser] = useState<ModelBrowser | null>(null)
+  const showingModels = expandedThreads.size > 0
   const [collapsed, setCollapsed] = useState(() => globalThis.innerHeight < 120)
   const [window, setWindow] = useState<SpendWindow>('1h')
   const attunedWithoutTarget = scope === 'ATTUNED' && rack.attunement === null
@@ -38,6 +40,15 @@ export function VitalsModule() {
   }, [events])
 
   useEffect(() => events.subscribeResize((event) => setCollapsed(event.grid_height === 1)), [events])
+
+  useEffect(() => {
+    if (!showingModels) return
+    let active = true
+    events.dispatch({ type: 'models.load', thread_id: null })
+      .then(value => { if (active) setBrowser(parseBrowser(value)) })
+      .catch(() => { if (active) setBrowser(null) })
+    return () => { active = false }
+  }, [events, showingModels, sequence])
 
   useEffect(() => {
     if (attunedWithoutTarget) return
@@ -74,7 +85,6 @@ export function VitalsModule() {
     () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry.title])),
     [rack.catalog],
   )
-  // FL-206: each conversation's model and the strategy that chose it, from the catalog.
   const threadEntries = useMemo(
     () => new Map(rack.catalog.map((entry) => [entry.thread_id, entry])),
     [rack.catalog],
@@ -131,7 +141,7 @@ export function VitalsModule() {
           <table>
             <thead>
               <tr>
-                <th scope="col">Conversation / model</th>
+                <th scope="col" title="The strategy in force is shown beside the conversation’s current model.">Conversation / model</th>
                 <th scope="col">Input</th>
                 <th scope="col">KV cache</th>
                 <th scope="col">Reasoning</th>
@@ -163,7 +173,7 @@ export function VitalsModule() {
                   ...(expanded ? row.models.map((model, index) => (
                     <SpendRow
                       key={`${row.thread_id}:${model.model ?? 'unreported'}:${index}`}
-                      name={modelRowName(threadEntries.get(row.thread_id), model.model)}
+                      name={spendModelLabel(browser, threadEntries.get(row.thread_id), model.model)}
                       metrics={model}
                       nested
                     />
@@ -221,13 +231,6 @@ function SpendRow({
       <td title={metrics.hourly_unpriced_lines > 0 ? 'The provider did not report a price. No later price is pending.' : undefined}>{money(metrics.spend_per_hour_usd, metrics.hourly_receipt_lines)}{metrics.spend_per_hour_usd !== null && metrics.hourly_unpriced_lines > 0 && ' + unpriced'}</td>
     </tr>
   )
-}
-
-/** FL-206: the strategy that chose a conversation's current model, named beside it. */
-function modelRowName(mark: { model?: string | null, policy?: string | null } | undefined, model: string | null): string {
-  if (model === null) return 'Model not reported'
-  const strategy = mark?.model != null && modelLabel(mark.model) === model ? strategyName(mark.policy) : null
-  return strategy === null ? model : `${strategy} · ${model}`
 }
 
 function Metric({ value }: { value: string }) {

@@ -184,6 +184,11 @@ class ModelPinUpdate(BaseModel):
     pinned: bool
 
 
+class ModelBanUpdate(BaseModel):
+    target: str
+    banned: bool
+
+
 class LocalModelSettings(BaseModel):
     url: str | None = None
     model: str | None = None
@@ -519,6 +524,8 @@ def create_app(
                     )
             try:
                 snapshot = await loop.parameter_snapshot(thread_id, as_of=instant)
+            except ModelCatalogUnavailable as exc:
+                raise HTTPException(503, str(exc)) from exc
             except ParameterWriteViolation:
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -801,6 +808,15 @@ def create_app(
                             proposed_response=message.payload.proposed_response,
                             sink=send,
                         )
+                    except ModelCatalogUnavailable as exc:
+                        await loop.send_direct(
+                            send,
+                            factory.create(
+                                MessageType.ERROR,
+                                {"code": "model_unavailable", "message": str(exc)},
+                                thread_id=message.thread_id,
+                            ),
+                        )
                     except ThreadWorkspaceMoved as exc:
                         await loop.send_direct(
                             send,
@@ -971,6 +987,7 @@ def create_dev_app(
         "judge": configured.model_policy_judge or configured.effective_model_policy_chat,
     }
     policy_errors: dict[str, str] = {}
+    saved_policies = {}
     if role_policy_path.exists():
         saved_policies = json.loads(role_policy_path.read_text())
         for role in role_policies:
@@ -986,6 +1003,13 @@ def create_dev_app(
                         )
                         continue
                 role_policies[role] = saved_policies[role]
+    inherited_roles = {
+        role
+        for role in ("subagent", "judge")
+        if role not in saved_policies and getattr(configured, f"model_policy_{role}") is None
+    }
+    for role in inherited_roles:
+        role_policies[role] = role_policies["chat"]
     for role, policy in role_policies.items():
         setattr(configured, f"model_policy_{role}", policy)
     discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
@@ -1013,6 +1037,7 @@ def create_dev_app(
     owned_symphony_experience = symphony_experience or SymphonyExperience(id_factory=factory.new_id)
     model_resolver = model_resolver_override or ModelPolicyResolver(
         policy=configured.effective_model_policy_chat,
+        choices=configured.model_choices,
         static_model=configured.chat_model,
         static_context_tokens=configured.model_context_tokens,
         catalog=completion_router.catalog,
@@ -1154,11 +1179,11 @@ def create_dev_app(
                         None if context.toolset is None else str(context.toolset.location().cwd)
                     ),
                     prompt=loop.latest_prompt(thread_id) or context.project_key or "",
-                    model_context_tokens=configured.model_context_tokens,
+                    model_context_tokens=await loop.model_context(thread_id),
                 ),
                 ids,
             )
-        except SpineClientError:
+        except (SpineClientError, ModelCatalogUnavailable):
             pass  # Display an unavailable score rather than inventing one.
         return [
             item.model_copy(
@@ -1390,7 +1415,12 @@ def create_dev_app(
     if hasattr(owned_spine, "on_busy"):
         owned_spine.on_busy = palace_busy
 
-    execution = SymphonyExecution(settings=configured, home=home, context_factory=context_factory)
+    execution = SymphonyExecution(
+        settings=configured,
+        home=home,
+        context_factory=context_factory,
+        model_context=loop.model_context,
+    )
     worktree_removals: set[asyncio.Task] = set()
 
     async def remove_finished_worktrees(symphony_id: str | None = None) -> None:
@@ -1536,6 +1566,10 @@ def create_dev_app(
                 parsed = parse_model_policy(body.policy)
                 if str(parsed.value).startswith("subscription:"):
                     raise ValueError("Subscription choices belong to one conversation.")
+                if parsed.kind == "pinned" and configured.model_choices.excluded(
+                    configured.model_choices.bans(), str(parsed.value)
+                ):
+                    raise ValueError("This model is banned. Lift its ban in model settings.")
                 if role != "curator" and parsed.kind == "pinned":
                     completion_router.model_for(str(parsed.value))
             except ValueError as exc:
@@ -1548,12 +1582,18 @@ def create_dev_app(
                         502, "The Palace could not save the curator policy."
                     ) from exc
                 return await agent_model_policies()
-            updated = {**role_policies, role: body.policy}
+            updated = {**saved_policies, role: body.policy}
             home.mkdir(parents=True, exist_ok=True)
             temporary = role_policy_path.with_suffix(".tmp")
             temporary.write_text(json.dumps(updated, indent=2) + "\n")
             temporary.replace(role_policy_path)
-            role_policies.update(updated)
+            saved_policies.update(updated)
+            role_policies[role] = body.policy
+            inherited_roles.discard(role)
+            if role == "chat":
+                for inherited in inherited_roles:
+                    role_policies[inherited] = body.policy
+                    setattr(configured, f"model_policy_{inherited}", body.policy)
             policy_errors.pop(role, None)
             setattr(configured, f"model_policy_{role}", body.policy)
             if role == "chat" and isinstance(model_resolver, ModelPolicyResolver):
@@ -1571,6 +1611,11 @@ def create_dev_app(
         async def model_browser(thread_id: str | None = None, subscriptions: bool = False):
             """FL-202: the token source's models, the owner's pins, the four policies now."""
             catalog = completion_router.catalog
+            active_policy = (
+                model_resolver.active_policy
+                if isinstance(model_resolver, ModelPolicyResolver)
+                else role_policies["chat"]
+            )
             current = None
             if thread_id is not None:
                 try:
@@ -1581,7 +1626,7 @@ def create_dev_app(
                         # FL-206: the strategy that chose it, named beside the model.
                         "policy": loop.thread_models().get(thread_id, {}).get("policy"),
                     }
-                except ParameterWriteViolation:
+                except (ParameterWriteViolation, ModelCatalogUnavailable):
                     pass
             # A source with no list (e.g. a direct Anthropic key) is a state, not a failure.
             browser: dict[str, object] = {
@@ -1593,21 +1638,39 @@ def create_dev_app(
                 try:
                     browser = await browse_models(
                         catalog,
-                        chat_policy=role_policies["chat"],
+                        chat_policy=active_policy,
                         current_model=(
                             None
                             if current is None or current["model"].startswith("subscription:")
                             else current["model"]
                         ),
                         fallback_model=configured.chat_model,
+                        choices=configured.model_choices,
                         burn=await measured_token_burn(owned_spine),
                     )
                     if not browser["models"] and completion_router.remote_catalog is None:
                         browser["unavailable"] = "This model source publishes no model list."
+                except ModelCatalogUnavailable:
+                    browser["unavailable"] = "The catalog cannot be read now."
+            if isinstance(model_resolver, ModelPolicyResolver):
+                try:
+                    preview = await model_resolver.preview()
+                    if preview.benchmark is None and preview.reason:
+                        browser["unavailable"] = preview.reason
+                        browser["using_saved_pick"] = True
+                    if not any(
+                        card["policy"] == active_policy for card in browser["configurations"]
+                    ):
+                        browser["configurations"].append(
+                            {
+                                "policy": active_policy,
+                                "model": preview.model,
+                                "reason": preview.reason or "Keeps the model you chose.",
+                            }
+                        )
                 except ModelCatalogUnavailable as exc:
-                    if not (subscriptions and t3.binary.is_file() or t3.running):
-                        raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
-                    browser["unavailable"] = "The broker model list is unavailable."
+                    browser["unavailable"] = str(exc)
+            bans = configured.model_choices.bans()
             if subscriptions and t3.binary.is_file() or t3.running:
                 try:
                     native = await sources(t3)
@@ -1621,6 +1684,7 @@ def create_dev_app(
                     browser["models"].append(
                         {
                             "model": key,
+                            "banned_by": configured.model_choices.ban_target(bans, key),
                             "name": f"{source['name']} · {model['name']}",
                             "context_tokens": None,
                             "prompt_price": None,
@@ -1633,15 +1697,28 @@ def create_dev_app(
                     )
             return {
                 **browser,
+                "bans": bans,
+                "last_pick": configured.model_choices.last(active_policy),
                 "local": {
                     "url": configured.local_model_url,
                     "model": configured.local_model,
                     "when_offline": configured.local_when_offline,
                 },
-                "pins": model_pins(),
-                "chat_policy": role_policies["chat"],
+                "pins": [
+                    pin for pin in model_pins() if not configured.model_choices.excluded(bans, pin)
+                ],
+                "chat_policy": active_policy,
+                "requested_policy": role_policies["chat"],
                 "current": current,
             }
+
+        @app.put("/v1/model-bans")
+        async def update_model_ban(body: ModelBanUpdate):
+            try:
+                configured.model_choices.set_ban(body.target, body.banned)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            return {"bans": configured.model_choices.bans()}
 
         @app.put("/v1/local-model")
         async def local_model_settings(body: LocalModelSettings):
@@ -1659,6 +1736,10 @@ def create_dev_app(
         async def pin_model(body: ModelPinUpdate):
             pins = [pin for pin in model_pins() if pin != body.model]
             if body.pinned:
+                if configured.model_choices.excluded(configured.model_choices.bans(), body.model):
+                    raise HTTPException(
+                        422, "This model is banned. Lift its ban in model settings."
+                    )
                 pins.append(body.model)
             home.mkdir(parents=True, exist_ok=True)
             temporary = model_pin_path.with_suffix(".tmp")

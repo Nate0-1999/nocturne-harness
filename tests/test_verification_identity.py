@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 from pydantic_ai.models.function import FunctionModel
-from test_daemon import GateSpine, frame, receive_until
+from test_daemon import GateSpine, fixture_resolver, frame, receive_until
 from test_memory_panel import memory_unit
 from test_queue_provenance import BATCH_UID, ITEM_UID, DecisionSpine
 
@@ -43,7 +43,9 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
     environment = config.process_environment({"PRINCIPAL_ID": "local"})
     for key, value in environment.items():
         monkeypatch.setenv(key, value)
-    settings = HarnessSettings(_env_file=None)
+    settings = HarnessSettings(
+        _env_file=None, chat_model="openrouter:fixture/chat", model_context_tokens=32_000
+    )
     owner_memory = memory_unit(uuid4(), principal_id="local", body="Owner-only sentinel")
     corpus = [owner_memory]
     requested = []
@@ -95,6 +97,7 @@ def test_verification_daemon_cannot_list_owner_memories(tmp_path, monkeypatch):
 
     app = create_dev_app(
         tmp_path,
+        model_resolver_override=fixture_resolver(settings),
         settings=settings,
         agent=HarnessAgent(settings, model=FunctionModel(stream_function=unused)),
     )
@@ -139,7 +142,9 @@ def test_nondefault_home_env_keeps_all_daemon_files_out_of_owner_home(tmp_path, 
     monkeypatch.delenv("NOCTURNE_HOME", raising=False)
     monkeypatch.delenv("PRINCIPAL_ID", raising=False)
     config = initialize(tmp_path / "verification", monkeypatch)
-    settings = HarnessSettings(_env_file=config.path)
+    settings = HarnessSettings(
+        _env_file=config.path, chat_model="openrouter:fixture/chat", model_context_tokens=32_000
+    )
     assert settings.nocturne_home == config.home
     assert onboarding._parse_config(config.path)["NOCTURNE_HOME"] == str(config.home)
 
@@ -148,6 +153,7 @@ def test_nondefault_home_env_keeps_all_daemon_files_out_of_owner_home(tmp_path, 
 
     app = create_dev_app(
         tmp_path,
+        model_resolver_override=fixture_resolver(settings),
         settings=settings,
         spine=GateSpine(),
         agent=HarnessAgent(settings, model=FunctionModel(stream_function=unused)),

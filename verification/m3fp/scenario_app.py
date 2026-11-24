@@ -20,6 +20,7 @@ from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 from harness.agent import HarnessAgent
 from harness.config import HarnessSettings
 from harness.daemon import create_dev_app
+from harness.model_policy import ModelPolicyResolver
 from harness.onboarding import nocturne_home
 from harness.packaged import _runtime_web_assets
 from harness.spine_client import (
@@ -181,6 +182,12 @@ def create_scenario_app() -> FastAPI:
         web_dist,
         missing_web_message=refusal or "The packaged Rack is unavailable.",
         settings=settings,
+        model_resolver_override=ModelPolicyResolver(
+            policy=settings.effective_model_policy_chat,
+            static_model=settings.chat_model,
+            static_context_tokens=settings.model_context_tokens,
+            catalog=None,
+        ),
         agent=HarnessAgent(settings, model=_model()),
         spine=spine,  # type: ignore[arg-type]
         transcript_journal=journal,
