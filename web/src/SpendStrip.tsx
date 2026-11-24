@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { formatHumanPercent } from './humanNumbers'
 import { useRackPlugin } from './rack'
 import { SpendLines } from './SpendHistory'
-import { parseSpendTableSnapshot, spendSeries, type SpendTableSnapshot, type SpendWindow } from './spendTable'
+import { includedTurns, parseSpendTableSnapshot, spendSeries, spendWindowMinutes, windowActivity, type SpendTableSnapshot, type SpendWindow } from './spendTable'
 import { dayDrift, formatDayUsd, parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import './assets/spend-history.css'
 
@@ -41,15 +41,22 @@ export function SpendStrip() {
   const day = dayDrift(reconciliation)
   const today = snapshot === null ? null : spendSeries(snapshot, 'today').series.find((entry) => entry.dimension === 'total')
   const latest = snapshot === null ? null : spendSeries(snapshot, '10m').series.find((entry) => entry.dimension === 'total')?.lines[0].values.at(-2)
+  const todayActivity = snapshot && windowActivity(snapshot, spendWindowMinutes(snapshot.as_of, 'today')[0])
+  const selectedActivity = snapshot && windowActivity(snapshot, spendWindowMinutes(snapshot.as_of, window)[0])
+  const lastMinute = snapshot && latest && windowActivity(snapshot, latest.minute, latest.minute + 59_999)
+  const coveredOnly = compact ? todayActivity?.coveredOnly : selectedActivity?.coveredOnly
   const summary = <>
     <strong>Spend</strong>
     {snapshot === null
       ? <span>{failed ? 'Spend could not be loaded. Reload to try again.' : 'Reading spend…'}</span>
       : <>
-        <span title="Recorded spend since local midnight.">Today {formatDayUsd(today?.sum ?? 0)}</span>
-        <span title="The last full minute's recorded spend.">Last minute {latest?.cost == null ? '—' : formatDayUsd(latest.cost)}</span>
+        {compact && todayActivity && todayActivity.covered > 0 && <span>Today · {includedTurns(todayActivity.covered)}</span>}
+        {!coveredOnly && <>
+          <span title="Recorded spend since local midnight.">Today {formatDayUsd(today?.sum ?? 0)}</span>
+          <span title="The last full minute's recorded spend.">Last minute {latest?.cost == null || lastMinute?.coveredOnly ? '—' : formatDayUsd(latest.cost)}</span>
+        </>}
       </>}
-    {day?.drifting && <span className="spend-strip__drift" role="status" data-testid="spend-drift-banner"
+    {day?.drifting && !coveredOnly && <span className="spend-strip__drift" role="status" data-testid="spend-drift-banner"
       title="Today's ledger (UTC) against OpenRouter's bill for the key. The key may also pay for other Palaces and apps.">
       Ledger {formatDayUsd(day.ledger)} vs bill {formatDayUsd(day.broker)} today
       {day.percent === null ? ' · no bill yet' : ` · ${day.percent > 0 ? '+' : ''}${formatHumanPercent(day.percent)} drift`}

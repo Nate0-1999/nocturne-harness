@@ -1,4 +1,5 @@
 export interface SpendMetrics {
+  covered_turns: number
   input_tokens: string
   kv_cache_tokens: string
   reasoning_tokens: string
@@ -38,6 +39,7 @@ export interface SpendTableSnapshot {
 }
 
 export interface SpendReceipt {
+  covered_by: string | null
   event_uid: string
   ts: string
   thread_id: string | null
@@ -70,6 +72,7 @@ export interface MessageCache {
 }
 
 export interface DailySpend {
+  covered_turns: number
   day: string
   model_usd: string | null
   infrastructure_usd: string | null
@@ -97,6 +100,22 @@ export function spendWindowMinutes(asOf: string, window: SpendWindow): number[] 
   const midnight = new Date(end).setHours(0, 0, 0, 0)
   const start = window === '10m' ? end - 9 * 60_000 : window === '1h' ? end - 59 * 60_000 : Math.max(midnight, end - 1439 * 60_000)
   return Array.from({ length: (end - start) / 60_000 + 1 }, (_, i) => start + i * 60_000)
+}
+
+export function includedTurns(count: number): string {
+  return `Included with your plan · ${count} ${count === 1 ? 'turn' : 'turns'}`
+}
+
+export function windowActivity(snapshot: SpendTableSnapshot, firstMinute: number, until = Date.parse(snapshot.as_of)) {
+  let covered = 0
+  let metered = 0
+  for (const receipt of snapshot.receipts) {
+    const time = Date.parse(receipt.ts)
+    if (time < firstMinute || time > until) continue
+    if (receipt.covered_by) covered += 1
+    else metered += 1
+  }
+  return { covered, coveredOnly: covered > 0 && metered === 0 }
 }
 
 /** ADR-024: a minute whose receipts all lack a price is unknown (a gap), never zero. */
@@ -167,6 +186,7 @@ export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
     receipts: array(root.receipts ?? [], 'receipts').map((value) => {
       const receipt = record(value, 'receipt')
       return {
+        covered_by: receipt.covered_by == null ? null : nonblank(receipt.covered_by, 'covered_by'),
         event_uid: nonblank(receipt.event_uid, 'event_uid'),
         ts: timestamp(receipt.ts, 'ts'),
         thread_id: receipt.thread_id === null ? null : nonblank(receipt.thread_id, 'thread_id'),
@@ -208,6 +228,7 @@ export function parseSpendTableSnapshot(value: unknown): SpendTableSnapshot {
     days: array(root.days ?? [], 'days').map((value) => {
       const day = record(value, 'daily spend')
       return {
+        covered_turns: integer(day.covered_turns ?? 0, 'covered_turns'),
         day: timestamp(day.day, 'day'),
         model_usd: day.model_usd === null ? null : decimal(day.model_usd, 'model_usd'),
         infrastructure_usd: day.infrastructure_usd === null ? null : decimal(day.infrastructure_usd, 'infrastructure_usd'),
@@ -278,6 +299,7 @@ function parseMetrics(row: Record<string, unknown>, path: string): SpendMetrics 
     throw new TypeError(`${path} has impossible unpriced receipt counts`)
   }
   return {
+    covered_turns: integer(row.covered_turns ?? 0, `${path}.covered_turns`),
     input_tokens: decimal(row.input_tokens, `${path}.input_tokens`),
     kv_cache_tokens: decimal(row.kv_cache_tokens, `${path}.kv_cache_tokens`),
     reasoning_tokens: decimal(row.reasoning_tokens, `${path}.reasoning_tokens`),

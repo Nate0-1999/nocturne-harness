@@ -158,6 +158,10 @@ def _estimated_request(
 ) -> SpendEventsRequest:
     events = []
     for event in request.events:
+        if event.product_type == "subscription.turn":
+            # A confirmed count retains its exact payload on disk and at every delivery.
+            events.append(event)
+            continue
         meta = dict(event.meta)
         meta["receipt_queue"] = {
             "original_basis": event.basis,
