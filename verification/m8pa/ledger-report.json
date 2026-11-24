@@ -7,13 +7,15 @@
     {
       "repo": "harness",
       "base": "a16ea264659b64a3a7c004367f36e2dd9021195c",
-      "head": "c7eb3985b7034049c98c2dae45ceb408102d6c9e"
+      "head": "8ab91a20600d561b29565028a0d3f59a74ef8ba4"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "Decision record for the paired version and profiler.",
     "harness/src/harness/__init__.py": "Paired wheel version.",
+    "harness/tests/test_daemon.py": "Regression test of the catalog response when a workflow, a named conversation and a new turn run together.",
     "harness/tests/test_run_loop.py": "Checks the paired version or the identities of working versus queued turns.",
+    "harness/tests/test_symphony_experience.py": "Regression test for a supervised Symphony remaining discoverable after kickoff ends.",
     "harness/verification/m8pa/FL-009.png": "Packet walk evidence or integrity metadata. No runtime behavior.",
     "harness/verification/m8pa/FL-017.png": "Packet walk evidence or integrity metadata. No runtime behavior.",
     "harness/verification/m8pa/FL-018.png": "Packet walk evidence or integrity metadata. No runtime behavior.",
@@ -76,10 +78,13 @@
     "harness/verification/m8pa/SHA256SUMS": "Packet walk evidence or integrity metadata. No runtime behavior.",
     "harness/verification/m8pa/ledger-report.json": "Packet walk evidence or integrity metadata. No runtime behavior.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated wheel assets for the reviewed web sources.",
-    "harness/web/dist/assets/index-DKbonXHB.js": "Generated wheel assets for the reviewed web sources.",
+    "harness/web/dist/assets/index-C2_eq86B.js": "Packaged web assets rebuilt from the reviewed source.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated wheel assets for the reviewed web sources.",
-    "harness/web/dist/assets/index-nte1O_37.css": "Generated wheel assets for the reviewed web sources.",
-    "harness/web/dist/index.html": "Generated wheel assets for the reviewed web sources."
+    "harness/web/dist/assets/index-t9rgyieJ.css": "Packaged web assets rebuilt from the reviewed source.",
+    "harness/web/dist/index.html": "Generated wheel assets for the reviewed web sources.",
+    "harness/web/tests/profileRunList.test.mjs": "Renders the actual run list and checks current-first ordering.",
+    "harness/web/dist/assets/index-DKbonXHB.js": "Generated wheel assets for the reviewed web sources.",
+    "harness/web/dist/assets/index-nte1O_37.css": "Generated wheel assets for the reviewed web sources."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
