@@ -1096,7 +1096,8 @@ class RunLoop:
                 model_resolution is not None
                 and model_resolution.model.startswith("subscription:")
                 and self._transcript_journal is not None
-                and self._transcript_journal.front_prompts(thread_id)
+                and active.turn.prompt_id
+                in self._transcript_journal.front_prompts(thread_id).values()
                 and active.turn.model_target is None
             ):
                 # WALL tool calls / SD-114: the front conversation cannot delegate to a native tool.
@@ -1437,7 +1438,7 @@ class RunLoop:
         elif (
             target.startswith("subscription:")
             and self._transcript_journal is not None
-            and self._transcript_journal.front_prompts(thread_id)
+            and active.turn.prompt_id in self._transcript_journal.front_prompts(thread_id).values()
         ):
             active.model_error = "Model unchanged: this T3 conversation uses Nocturne’s own agent."
         elif self._model_resolver is None:

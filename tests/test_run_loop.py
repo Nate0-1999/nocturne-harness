@@ -3249,5 +3249,8 @@ async def test_restored_front_prompt_cannot_run_a_subscription(tmp_path: Path) -
         done = next(m.payload for m in sink.messages if m.type is MessageType.RUN_DONE)
         assert done.error_message == "Select a Nocturne model for this T3 conversation."
         assert not runner.resolutions
+        await loop.submit(thread_id="front", prompt_id=ulid(2), prompt="From the Deck", sink=sink)
+        await _wait_for_done_count(sink, 2)
+        assert runner.resolutions == [model]
     finally:
         await loop.close()
