@@ -107,7 +107,10 @@ interface PersistedHarnessState {
   selectedThreadId: string | null
 }
 
+export interface RunningProfile { thread_id: string; run_id: string; name: string }
+
 export interface HarnessStoreState extends PersistedHarnessState {
+  profileRuns: RunningProfile[]
   threads: Record<string, ThreadState>
   drafts: Record<string, string>
   setDraft: (threadId: string, draft: string) => void
@@ -115,7 +118,7 @@ export interface HarnessStoreState extends PersistedHarnessState {
   daemonMachineId: string | null
   globalError: HarnessError | null
   createThread: (binding?: string | null | ThreadWorkspaceBinding) => string
-  hydrateCatalog: (catalog: ThreadCatalogEntry[], running?: string[]) => void
+  hydrateCatalog: (catalog: ThreadCatalogEntry[], running?: string[], profileRuns?: RunningProfile[]) => void
   /** FL-206: the selected thread's model mark is daemon truth too, though the poll leaves the rest of its entry alone. */
   markThread: (threadId: string, mark: Pick<ThreadCatalogEntry, 'model' | 'effort' | 'policy'>) => void
   removeFixtureThreads: () => number
@@ -719,6 +722,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
   persist<HarnessStoreState, [], [], PersistedHarnessState>(
     (set, get) => ({
       catalog: [],
+      profileRuns: [],
       selectedThreadId: null,
       threads: {},
       drafts: {},
@@ -762,7 +766,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
         return threadId
       },
 
-      hydrateCatalog: (incoming, running) => {
+      hydrateCatalog: (incoming, running, profileRuns) => {
         const restored = restoredState({ catalog: incoming, selectedThreadId: null }).catalog
         set((state) => {
           const restoredIds = new Set(restored.map((entry) => entry.thread_id))
@@ -784,6 +788,7 @@ export const useHarnessStore = create<HarnessStoreState>()(
           ))
           return {
             catalog,
+            profileRuns: profileRuns ?? state.profileRuns,
             selectedThreadId,
             threads: {
               ...runtimeForCatalog(restored),

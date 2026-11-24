@@ -56,6 +56,7 @@ import {
   type HarnessError,
   type MemoryPanelState,
   type OutboundImage,
+  type RunningProfile,
   type ThreadState,
 } from './store'
 
@@ -84,6 +85,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
 }
 
 export interface RackSnapshot {
+  profileRuns: RunningProfile[]
   preferenceScope?: string
   drafts: Record<string, string>
   catalog: ThreadCatalogEntry[]
@@ -212,6 +214,7 @@ export interface RackQueryResult {
 }
 
 type RackSelectionValue = (
+  | { kind: 'profile_run'; id: string }
   | { kind: 'agent'; id: string; thread_id: string }
   | { kind: 'path'; id: string }
   | { kind: 'thread'; id: string }
@@ -560,6 +563,7 @@ function snapshotFromState(state: ReturnType<typeof useHarnessStore.getState>): 
   )
   return {
     preferenceScope: useHarnessStore.persist.getOptions().name,
+    profileRuns: state.profileRuns,
     drafts: state.drafts,
     catalog: state.catalog,
     selectedThreadId: state.selectedThreadId,
@@ -1342,6 +1346,7 @@ export function RackRuntime({ children }: { children: ReactNode }) {
       if (response.ok) {
         const payload = await response.json() as {
           threads?: ThreadCatalogEntry[]
+          profile_runs?: RunningProfile[]
           identity?: { principal_id: string; home: string }
           default_workspace?: { path: string; label: string }
         }
@@ -1351,7 +1356,7 @@ export function RackRuntime({ children }: { children: ReactNode }) {
           await useHarnessStore.persist.rehydrate()
         }
         if (active && Array.isArray(payload.threads)) {
-          useHarnessStore.getState().hydrateCatalog(payload.threads)
+          useHarnessStore.getState().hydrateCatalog(payload.threads, undefined, payload.profile_runs)
         }
         if (
           typeof payload.default_workspace?.path === 'string' &&
@@ -1382,12 +1387,12 @@ export function RackRuntime({ children }: { children: ReactNode }) {
     // again every two seconds; the selected thread stays on its own events.
     const poll = globalThis.setInterval(() => {
       void globalThis.fetch('/v1/transcripts/catalog', { cache: 'no-store', credentials: 'same-origin' })
-        .then((response) => response.ok ? response.json() as Promise<{ threads?: ThreadCatalogEntry[], running?: string[] }> : null)
+        .then((response) => response.ok ? response.json() as Promise<{ threads?: ThreadCatalogEntry[], running?: string[], profile_runs?: RunningProfile[] }> : null)
         .then((payload) => {
           if (!active || !Array.isArray(payload?.threads) || !Array.isArray(payload.running)) return
           const store = useHarnessStore.getState()
           const before = store.selectedThreadId
-          store.hydrateCatalog(payload.threads.filter((entry) => entry.thread_id !== before), payload.running)
+          store.hydrateCatalog(payload.threads.filter((entry) => entry.thread_id !== before), payload.running, payload.profile_runs)
           // FL-206: its model, thinking level and strategy are the run loop's truth, read with the rest.
           const live = payload.threads.find((entry) => entry.thread_id === before)
           if (before !== null && live !== undefined) store.markThread(before, live)

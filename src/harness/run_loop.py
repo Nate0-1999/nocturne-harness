@@ -512,6 +512,25 @@ class RunLoop:
             if state.active is not None or state.queued
         ]
 
+    def running_profile_ids(self) -> list[tuple[str, str]]:
+        """A queued turn has no bars yet. A Symphony can outlive its launch turn."""
+        runs = dict.fromkeys(
+            (thread_id, state.active.turn.run_id)
+            for thread_id, state in self._threads.items()
+            if state.active is not None
+        )
+        if self._symphony_experience is not None:
+            for thread_id, stack_id in self._symphony_experience.running_stacks():
+                for message in reversed(self._threads[thread_id].messages):
+                    if any(
+                        event.get("event_kind") == "symphony_started"
+                        and event.get("symphony_id") == stack_id
+                        for event in message.get("events", ())
+                    ):
+                        runs[thread_id, message["run_id"]] = None
+                        break
+        return list(runs)
+
     def thread_models(self) -> dict[str, dict[str, str | None]]:
         """FL-205 / FL-206: each thread's model, thinking level and the strategy that chose it."""
 

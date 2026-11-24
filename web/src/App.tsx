@@ -34,6 +34,7 @@ import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { WorkVisualization } from './WorkVisualization'
 import { ProfilerModule } from './ProfilerModule'
+import { ProfileRunList } from './ProfileRunList'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
@@ -68,6 +69,7 @@ import {
   RACK_MANIFESTS,
   clearRackSelection,
   createHostPluginApi,
+  rackSelectionSurface,
   isRackModuleId,
   useRackHostSnapshot,
   useRackHostSelection,
@@ -176,6 +178,7 @@ const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
 }
 
 const DISMISSIBLE_OVERLAY_CLASSES = {
+  profiler: 'rack-overlay-module--profiler',
   thread_end: 'rack-overlay-module--thread-end',
   model_device: 'rack-overlay-module--model-device',
 } as const
@@ -865,6 +868,9 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
     setPlatePressStatus(`${selectedColorway.label} removed.`)
   }
 
+  const toolbarInert = openGate !== null || dismissibleOverlay !== null
+  const runningProfiles = <ProfileRunList runs={snapshot.profileRuns} current={snapshot.selectedThreadId}
+    onOpen={(id) => rackSelectionSurface.select({ kind: 'profile_run', id })} />
   return (
     <div
       className="rack-shell rack-shell--stage"
@@ -872,6 +878,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       data-testid="rack-shell"
     >
       <div className="rack-ambient" aria-hidden="true" />
+      {toolbarInert && dismissibleOverlay !== 'profiler' && runningProfiles}
       <div className="rack-stage-header" data-rack-module="header">
         <RackPluginIframe
           manifest={RACK_MANIFESTS.header}
@@ -997,7 +1004,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       <div
         className="stage-toolbar"
         aria-label="Stage controls"
-        inert={openGate !== null || dismissibleOverlay !== null || undefined}
+        inert={toolbarInert || undefined}
       >
         <div className="stage-layers" role="tablist" aria-label="Stage layers">
           {layout.layers.map((candidate) => (
@@ -1055,6 +1062,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
         >
           Library
         </Button>
+        <div className="stage-running-profiles">{!toolbarInert && runningProfiles}</div>
       </div>
 
       <div
@@ -1269,7 +1277,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           isRegressionFixture={isRegressionFixture}
         />
       </div>
-      {dismissibleOverlay !== null && openGate === null && (
+      {dismissibleOverlay !== null && (openGate === null || dismissibleOverlay === 'profiler') && (
         <DismissibleRackOverlay
           moduleId={dismissibleOverlay}
           scope={layout.scopes[dismissibleOverlay]
