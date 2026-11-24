@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from harness.envelope import StopReason
+from harness.project_path import repository_root
 from harness.t3_client import TERMINAL, T3Error
 
 MODELS = {
@@ -124,7 +125,8 @@ class FrontSession:
                             transcript = self.front.journal.current_thread(key)
                         if transcript is not None and (
                             not transcript.workspace_root
-                            or Path(transcript.workspace_root) == self.cwd
+                            or Path(transcript.workspace_root)
+                            in {self.cwd, repository_root(self.cwd)}
                         ):
                             self.thread = transcript.thread_id
                             self.session = params["sessionId"]
