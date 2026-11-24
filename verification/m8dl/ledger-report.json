@@ -6,8 +6,8 @@
   "diffs": [
     {
       "repo": "harness",
-      "base": "4e05088cfc929d67bc4f2b19f44ab2a634d6830a",
-      "head": "a0bd5c6757c28af6243386294859783ad650e33f"
+      "base": "20e1acbead49777a2e93d23e8a107bcea97afd23",
+      "head": "d9a6ece9d840557be530fbc879e22ccd02a00b57"
     }
   ],
   "unmapped": {
@@ -102,12 +102,16 @@
     "harness/verification/m8dl/FL-215.png": "Packet evidence, verification driver or hash manifest.",
     "harness/verification/m8dl/SHA256SUMS": "Packet evidence, verification driver or hash manifest.",
     "harness/verification/m8dl/ledger-report.json": "Packet evidence, verification driver or hash manifest.",
+    "harness/web/dist/assets/index-BLDbGRmH.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-DoOzFJqX.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/index.html": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
+    "harness/web/tests/modelBrowser.test.mjs": "Test assertions or explicitly supplied verification model. No production routing originates here.",
     "harness/web/dist/assets/index-BPuuuTS-.js": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/assets/index-C9C6ezyI.css": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/assets/index-CxLfYhog.js": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
     "harness/web/dist/assets/index-DWLjn1EB.css": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
-    "harness/web/dist/index.html": "Built from the reviewed Model Device, header, rack action and stylesheet sources.",
-    "harness/web/tests/modelBrowser.test.mjs": "Test assertions or explicitly supplied verification model. No production routing originates here.",
     "harness/verification/m8dl/impacted.json": "Packet evidence, verification driver or hash manifest."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
