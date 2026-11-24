@@ -6,8 +6,8 @@
   "diffs": [
     {
       "repo": "harness",
-      "base": "0286ddfcde175be3288136eeafc74ab95fe11768",
-      "head": "6b1e8f4a408254be25e5d6ba90e6eaf6ea54efa5"
+      "base": "b5cdc56df0d84bc405a2f2aeef859746a4231509",
+      "head": "8c939aa5128369170fc32aef69fff21945ce2a98"
     }
   ],
   "unmapped": {
@@ -60,9 +60,11 @@
     "harness/verification/m8xf/FL-210.png": "Public packet evidence for the affected rows.",
     "harness/verification/m8xf/SHA256SUMS": "Public packet evidence for the affected rows.",
     "harness/verification/m8xf/ledger-report.json": "Public packet evidence for the affected rows.",
+    "harness/web/dist/assets/index-BhY1GrWr.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/assets/index-DoOzFJqX.js": "Generated web bundle, rebuilt from the merged source at the landing sync; a build output with no feature behavior of its own.",
+    "harness/web/dist/index.html": "Generated packaged UI for the compaction record, covered by FL-044.",
     "harness/web/dist/assets/index-C_LShiAN.js": "Packet verification evidence.",
-    "harness/web/dist/assets/index-dQ6qrT_F.js": "Packet verification evidence.",
-    "harness/web/dist/index.html": "Generated packaged UI for the compaction record, covered by FL-044."
+    "harness/web/dist/assets/index-dQ6qrT_F.js": "Packet verification evidence."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -86,7 +88,7 @@
     },
     "FL-039": {
       "label": "Agents make no memories until compaction; the explicit /remember command is the other way.",
-      "walk": "Run an agent thread through a turn; no memory is created mid-turn, only at compaction or by /remember. A /remember of a fact the user states is saved \u2014 checked and repaired before the Palace, never a bare refusal.",
+      "walk": "Run an agent thread through a turn; no memory is created mid-turn, only at compaction or by /remember. A /remember of a fact the user states is saved — checked and repaired before the Palace, never a bare refusal.",
       "protected": true,
       "verdict": "FAIL",
       "screenshot": "FL-039.png",
@@ -212,7 +214,7 @@
     },
     "FL-165": {
       "label": "Blue-water mode: work offline on a local copy of the Palace, then on reconnect push the working directory and the agent's memory to the cloud and reconcile the two.",
-      "walk": "With the cloud Palace unreachable, send the first prompt of a new thread: the memory check screen opens from the local mirror and says so; /remember a fact and remove one memory \u2014 both are queued and shown as waiting; restore the connection: the queued writes push in order and the cloud Palace shows them alongside what was saved there meanwhile.",
+      "walk": "With the cloud Palace unreachable, send the first prompt of a new thread: the memory check screen opens from the local mirror and says so; /remember a fact and remove one memory — both are queued and shown as waiting; restore the connection: the queued writes push in order and the cloud Palace shows them alongside what was saved there meanwhile.",
       "protected": true,
       "verdict": "FAIL",
       "screenshot": "FL-165.png",
@@ -419,7 +421,7 @@
     },
     "FL-206": {
       "label": "Strategies and models: the strategies rail beside the model list, each strategy with its one-sentence meaning and the model it picks now; one plain summary of the model in use; the strategy named wherever the model is.",
-      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow \u00b7 <model>'. Pick Floor and Budget from the rail the same way.",
+      "walk": "Open the Model Device from the conversation's model chip: the strategies (Pinned, Max, Elbow, Floor, Budget once the ledger has a burn, Local when offline) stand beside the ranked model list, each with what it means and the model it picks now, the one in force marked; the model in use has one paragraph naming its price in and out (the price the chip quotes), context, rank, thinking level, which strategy chose it and why, and since when. Click Elbow; a new thread's header chip, thread-list row, conversation configuration legend and spend-module model row all read 'Elbow · <model>'. Pick Floor and Budget from the rail the same way.",
       "protected": false,
       "verdict": "FAIL",
       "screenshot": "FL-206.png",
