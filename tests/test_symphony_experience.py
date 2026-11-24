@@ -607,6 +607,47 @@ def test_signed_launch_cannot_mix_judge_authority_or_step_identity(damage, messa
 
 
 @pytest.mark.asyncio
+async def test_profile_tracks_a_symphony_after_its_launch_turn_finishes() -> None:
+    """A-093 / M8PA: a quiet chat keeps its kickoff bars reachable while its workers run."""
+    next_id = ids()
+    experience = SymphonyExperience(id_factory=next_id)
+    loop = RunLoop(
+        ForbiddenRunner(), EnvelopeFactory(machine_id="test"), symphony_experience=experience
+    )
+    execution = ControlledExecution()
+    experience.bind(execution, loop.publish_symphony_state)
+    sink = EnvelopeSink()
+    thread = "12345678-1234-5678-1234-567812345678"
+    try:
+        await loop.submit(
+            thread_id=thread, prompt_id=next_id(), prompt="take this to a symphony", sink=sink
+        )
+        await asyncio.wait_for(sink.done.wait(), 1)
+        draft = next(
+            m.payload.event["draft_id"]
+            for m in sink.messages
+            if getattr(m.payload, "event", {}).get("event_kind") == "symphony_deliberation"
+        )
+        sink.done.clear()
+        kickoff = await loop.submit(
+            thread_id=thread,
+            prompt_id=next_id(),
+            prompt="Launch",
+            symphony=launch(draft),
+            sink=sink,
+        )
+        await asyncio.wait_for(sink.done.wait(), 1)
+        assert loop.running_thread_ids() == []
+        assert loop.running_profile_ids() == [(thread, kickoff)]
+        execution.release.set()
+        await asyncio.gather(*experience._tasks.values())
+        assert loop.running_profile_ids() == []
+    finally:
+        await experience.close()
+        await loop.close()
+
+
+@pytest.mark.asyncio
 async def test_run_loop_routes_both_symphony_turns_locally_and_keeps_fifo_events() -> None:
     """ADR-012: the escalation protocol lives in the ordinary journaled run lifecycle."""
 

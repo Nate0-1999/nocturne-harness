@@ -906,6 +906,54 @@ def test_missing_web_build_is_explicit(tmp_path: Path) -> None:
     )
 
 
+def test_catalog_profile_runs_name_the_workflow_chat_and_unjournaled_turn(tmp_path, monkeypatch):
+    """A-103: a workflow keeps its saved name while another conversation starts."""
+    workflow, chat, fresh = (str(uuid4()) for _ in range(3))
+    definition = dict(
+        name="Weekly report",
+        prompt="Summarize",
+        folder=str(tmp_path),
+        model_policy="elbow",
+        budget_usd="0.01",
+        exit_condition="true",
+    )
+
+    class Palace(GateSpine):
+        async def jobs(self, machine_id):
+            return {
+                "jobs": [],
+                "runs": [
+                    {
+                        "thread_id": workflow,
+                        "run_id": PROMPT_ID,
+                        "state": "completed",
+                        "definition": definition,
+                    }
+                ],
+            }
+
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    settings = HarnessSettings(_env_file=None, principal_id="verification", machine_id="test")
+    app = create_dev_app(tmp_path, settings=settings, spine=Palace(), transcript_journal=journal)
+    for thread, title in ((chat, "Conversation title"), (workflow, "Workflow prompt")):
+        journal.append_message(
+            thread, {"role": "user", "content": title, "message_id": PROMPT_ID}, parent_id=None
+        )
+    monkeypatch.setattr(
+        RunLoop,
+        "running_profile_ids",
+        lambda self: [(workflow, PROMPT_ID), (chat, SECOND_PROMPT_ID), (fresh, SNAPSHOT_ID)],
+    )
+    with TestClient(app) as client:
+        response = client.get("/v1/transcripts/catalog")
+        response.raise_for_status()
+        assert response.json()["profile_runs"] == [
+            {"thread_id": workflow, "run_id": PROMPT_ID, "name": "Weekly report"},
+            {"thread_id": chat, "run_id": SECOND_PROMPT_ID, "name": "Conversation title"},
+            {"thread_id": fresh, "run_id": SNAPSHOT_ID, "name": "Conversation"},
+        ]
+
+
 def test_catalog_answers_after_the_launch_folder_moves(tmp_path, monkeypatch) -> None:
     """F135 (M3EX-14): a renamed launch folder must not hide every thread."""
 

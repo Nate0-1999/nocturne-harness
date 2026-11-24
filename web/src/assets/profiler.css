@@ -9,7 +9,8 @@
 .profiler-live-runs > strong { color: var(--accent); }
 .profiler-live-runs button { flex: 0 1 auto; min-width: 7rem; max-width: min(36ch, 65vw); }
 .profiler-live-runs button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rack-shell--stage:has(> .profiler-live-runs) { padding-top: 2.25rem; }
+.stage-running-profiles { position: relative; flex: 1 1 11rem; min-width: min(11rem, 100%); }
+.stage-running-profiles .profiler-live-runs { position: absolute; inset-inline: 0; top: 50%; transform: translateY(-50%); height: auto; border: 0; }
 .rack-shell--stage > .profiler-live-runs { position: absolute; inset: 0 0 auto; z-index: 116; }
 .rack-overlay-module--profiler { inset: 3.25rem 0 0; }
 
