@@ -4662,3 +4662,12 @@ The reader parses the same GFM as the rendered reply and holds the unfinished se
 until more text or the end arrives. A rate change cancels the active utterance and
 resumes at its last reported word, or from the sentence start on engines without word events.
 Playback speed uses the existing home/principal preference scope.
+
+## M8TB — Keep finished Nocturne conversations out of Codex’s active history [P4]
+
+SD-103 permits one Codex-specific call outside T3. After a confirmed terminal
+run, the subscription client follows that run’s provider-thread reference and
+sends `thread/archive` to the installed Codex app-server over local stdio.
+T3 remains responsible for prompts, permissions and resume. A failed archive
+is logged and the conversation keeps its outcome. Claude Code has no native
+archive operation here.

@@ -22,6 +22,7 @@ from harness.onboarding import (
     doctor_nocturne,
     init_nocturne,
     load_config,
+    nocturne_home,
     open_nocturne,
     restore_nocturne,
     up_nocturne,
@@ -66,6 +67,10 @@ def build_parser() -> argparse.ArgumentParser:
     restore.add_argument("backup_id", help="verified backup generation to restore")
     seed = commands.add_parser("seed", help="add Markdown documents to the Palace review queue")
     seed.add_argument("paths", nargs="+", help="Markdown files or glob patterns")
+    t3 = commands.add_parser("t3", help="manage the local subscription server")
+    t3.add_subparsers(dest="t3_action", required=True).add_parser(
+        "install", help="install the pinned, verified server inside this Nocturne home"
+    )
     commands.add_parser("doctor", help="inspect Palace health and startup readiness")
     palace = commands.add_parser("palace", help="create, choose and remove named Palaces")
     palace_commands = palace.add_subparsers(dest="palace_action", required=True)
@@ -238,6 +243,14 @@ def main(
             return restore_nocturne(args.backup_id, stdout=stdout)
         elif args.command == "seed":
             return seed_nocturne(args.paths, stdout=stdout)
+        elif args.command == "t3":
+            from harness.t3_install import InstallError, install
+
+            try:
+                folder = install(nocturne_home())
+            except (InstallError, OSError) as exc:
+                raise OnboardingError(str(exc)) from None
+            print(f"T3 installed in {folder}.", file=stdout)
         elif args.command == "doctor":
             return doctor_nocturne(stdout=stdout)
         elif args.command == "palace":
