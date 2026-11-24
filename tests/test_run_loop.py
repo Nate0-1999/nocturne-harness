@@ -3224,7 +3224,7 @@ async def test_every_message_is_stamped_where_it_was_written_and_restart_keeps_i
 
 @pytest.mark.asyncio
 async def test_restored_front_prompt_cannot_run_a_subscription(tmp_path: Path) -> None:
-    """P4 / SD-114: restoring a subscription selection must never route a front prompt to a native tool."""
+    """P4 / SD-114: a restored subscription must never receive a front prompt."""
     journal = TranscriptJournal(tmp_path)
     first = journal.bind_front_prompt("front", "server", "native-thread", "native-message")
     restored = TranscriptJournal(tmp_path)
