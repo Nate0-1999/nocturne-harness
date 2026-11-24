@@ -110,11 +110,14 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   threads: expandLegacyModule({ instance_id: 'threads', module_id: 'threads', x: 1, y: 1, width: 4, height: 10 }),
+  // M8LK: Threads + Conversation + Memory are 1,488px wide (were 1,728), so a 1267-wide window opens
+  // on all three whole. Conversation stays above 782px, where its layout turns compact; Threads keeps
+  // its width, which the phone's Threads view is framed on.
   conversation: expandLegacyModule({
     instance_id: 'conversation', module_id: 'conversation', conversation_mode: 'focused',
-    x: 5, y: 1, width: 10, height: 10,
+    x: 5, y: 1, width: 8.5, height: 10,
   }),
-  memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 15, y: 1, width: 4, height: 10 }),
+  memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 13.5, y: 1, width: 3, height: 10 }),
   vitals: expandLegacyModule({ instance_id: 'vitals', module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
   palace_state: expandLegacyModule({ instance_id: 'palace_state', module_id: 'palace_state', x: 19, y: 12, width: 5, height: 4 }),
   context_bars: expandLegacyModule({ instance_id: 'context_bars', module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
@@ -532,8 +535,9 @@ export function openingStageCamera(
     const right = Math.max(...set.map((module) => module.x + module.width)) * STAGE_UNIT_WIDTH
     const top = Math.min(...set.map((module) => module.y)) * STAGE_UNIT_HEIGHT
     const bottom = Math.max(...set.map((module) => module.y + module.height)) * STAGE_UNIT_HEIGHT
+    // M8LK: 80 = 24 above + 56 below, the Off-screen bar's own strip, so it never sits on the composer.
     const zoom = Math.min(1, (viewportWidth - 48) / (right - left),
-      fitHeight ? (viewportHeight - 48) / (bottom - top) : 1)
+      fitHeight ? (viewportHeight - 80) / (bottom - top) : 1)
     // The rows below either fit whole or start under the window, never half under the recall bar.
     const below = modules.filter((module) => module.y * STAGE_UNIT_HEIGHT >= bottom)
     const nextTop = Math.min(...below.map((module) => module.y)) * STAGE_UNIT_HEIGHT
