@@ -1092,6 +1092,16 @@ class RunLoop:
         )
         spend_scope.__enter__()
         try:
+            if (
+                model_resolution is not None
+                and model_resolution.model.startswith("subscription:")
+                and self._transcript_journal is not None
+                and active.turn.prompt_id
+                in self._transcript_journal.front_prompts(thread_id).values()
+                and active.turn.model_target is None
+            ):
+                # WALL tool calls / SD-114: the front conversation cannot delegate to a native tool.
+                raise ValueError("Select a Nocturne model for this T3 conversation.")
             if model_resolution is not None and self._offline_resolution is not None:
                 available = await self._offline_resolution(model_resolution)
                 if available.model != model_resolution.model:
@@ -1425,6 +1435,12 @@ class RunLoop:
         target = active.turn.model_target
         if not target:
             active.model_error = "Model unchanged: add an OpenRouter model string after /model."
+        elif (
+            target.startswith("subscription:")
+            and self._transcript_journal is not None
+            and active.turn.prompt_id in self._transcript_journal.front_prompts(thread_id).values()
+        ):
+            active.model_error = "Model unchanged: this T3 conversation uses Nocturne’s own agent."
         elif self._model_resolver is None:
             active.model_error = "Model unchanged: broker model switching is unavailable."
         else:

@@ -17,7 +17,7 @@ from errno import ELOOP, ENOENT, ENOTDIR
 from pathlib import Path
 from typing import Any
 
-from harness.envelope import Envelope, ImageInput, ImageView
+from harness.envelope import Envelope, ImageInput, ImageView, generate_ulid
 from harness.project_path import validate_artificial_project_path
 
 
@@ -330,6 +330,13 @@ class TranscriptJournal:
         transcript = self._hydrate_file(self._filename_for_thread(thread_id))
         return transcript.conversation_title(fallback="") if transcript else ""
 
+    def current_thread(self, thread_id: str) -> HydratedTranscript | None:
+        """Read one conversation at its current durable branch cursor."""
+        with self._lock:
+            if not self.path_for_thread(thread_id).exists():
+                return None
+            return self._hydrate_file(self._filename_for_thread(thread_id))
+
     def hydrate_threads(self) -> tuple[HydratedTranscript, ...]:
         """Reconstruct every current transcript branch from durable journal rows."""
 
@@ -624,6 +631,63 @@ class TranscriptJournal:
                     "history": history,
                 },
             )
+
+    def front_prompts(self, thread_id: str) -> dict[str, str]:
+        """Map T3 message IDs to the ordinary prompt IDs that survive restart."""
+        with self._lock:
+            if not self.path_for_thread(thread_id).exists():
+                return {}
+            rows = map(json.loads, self._read_file_rows(self._filename_for_thread(thread_id)))
+            return {
+                r["native_message"]: r["prompt_id"]
+                for r in rows
+                if r.get("record_type") == "t3_front"
+            }
+
+    def front_thread(self, thread_id: str, environment: str) -> str | None:
+        with self._lock:
+            rows = self._read_file_rows(self._filename_for_thread(thread_id))
+            for raw in reversed(rows):
+                row = json.loads(raw)
+                if (
+                    row.get("record_type") in {"t3_front", "t3_window"}
+                    and row["environment"] == environment
+                ):
+                    return row["native_thread"]
+            return None
+
+    def bind_front_window(self, thread_id: str, environment: str) -> None:
+        """An existing journal keeps its identity when its T3 window is created."""
+        with self._lock:
+            if self.front_thread(thread_id, environment) is None:
+                self._append(
+                    thread_id,
+                    {
+                        "version": 1,
+                        "record_type": "t3_window",
+                        "native_thread": thread_id,
+                        "environment": environment,
+                    },
+                )
+
+    def bind_front_prompt(self, thread_id, environment, native_thread, native_message):
+        with self._lock:
+            prior = self.front_prompts(thread_id).get(native_message)
+            if prior is not None:
+                return prior
+            prompt_id = generate_ulid()
+            self._append(
+                thread_id,
+                {
+                    "version": 1,
+                    "record_type": "t3_front",
+                    "environment": environment,
+                    "native_thread": native_thread,
+                    "native_message": native_message,
+                    "prompt_id": prompt_id,
+                },
+            )
+            return prompt_id
 
     def bind_subscription(self, thread_id: str, binding: dict[str, str]) -> None:
         """A-095: persist native identities before a prompt can be accepted remotely."""
