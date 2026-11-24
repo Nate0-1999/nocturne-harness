@@ -660,7 +660,22 @@ class TranscriptJournal:
             return []
         with self._lock:
             rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
-        return [row for row in rows if row.get("record_type") == "compaction_record"]
+        outcomes = {}
+        for row in rows:
+            if row.get("record_type") == "admission_outcomes":
+                outcomes.update(row["outcomes"])
+        records = [row for row in rows if row.get("record_type") == "compaction_record"]
+        for record in records:
+            for fact in record.get("facts", []):
+                if fact.get("candidate_id") in outcomes:
+                    fact["outcome"] = outcomes[fact["candidate_id"]]
+        return records
+
+    def append_admission_outcomes(self, thread_id: str, outcomes: dict) -> None:
+        with self._lock:
+            self._append(
+                thread_id, {"version": 1, "record_type": "admission_outcomes", "outcomes": outcomes}
+            )
 
     def compaction_policy(self, thread_id: str) -> dict[str, Any]:
         """Restore the owner's latest compaction choices from this thread's journal."""
