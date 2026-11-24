@@ -44,13 +44,14 @@ export type StageModuleId =
   | 'jobs'
   | 'security'
   | 'profiler'
+  | 't3'
 
 export type ConversationMode = 'focused' | 'stack'
 
 export const STAGE_MODULE_IDS: StageModuleId[] = [
   'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'farm', 'roots', 'injection_console', 'palace_queue',
-  'recipe', 'jobs', 'security', 'profiler',
+  'recipe', 'jobs', 'security', 'profiler', 't3',
 ]
 export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
   'conversation', 'vitals', 'context_bars', 'memory_graph',
@@ -106,6 +107,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   jobs: 'GLOBAL',
   security: 'ATTUNED',
   profiler: 'ATTUNED',
+  t3: 'GLOBAL',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
@@ -132,6 +134,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   jobs: expandLegacyModule({ instance_id: 'jobs', module_id: 'jobs', x: 2, y: 2, width: 16, height: 12 }),
   security: expandLegacyModule({ instance_id: 'security', module_id: 'security', x: 2, y: 2, width: 12, height: 10 }),
   profiler: expandLegacyModule({ instance_id: 'profiler', module_id: 'profiler', x: 2, y: 2, width: 16, height: 12 }),
+  t3: expandLegacyModule({ instance_id: 't3', module_id: 't3', x: 25, y: 1, width: 10, height: 10 }),
 }
 
 export function registerStagePlugin(id: CustomRackModuleId) {
@@ -151,7 +154,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       name: 'Work',
       // M3EX-27: the factory Work layer opens at full size; 64% was unreadable at 1440 wide.
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 1 }),
-      modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue']
+      modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 't3']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [{ ...DEFAULT_MODULES.jobs }, { ...DEFAULT_MODULES.security }, { ...DEFAULT_MODULES.profiler }],
     },
@@ -944,6 +947,8 @@ function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'jobs', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'security', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'profiler', 'work')
+  // SD-114: T3's screen joins a layout the owner already arranged beside its modules, never on top.
+  layout = addFactoryModuleToExistingLayout(layout, 't3', 'work', true)
   layout = addFactoryRemovedModuleToExistingLayout(addFactoryRemovedModuleToExistingLayout(layout, 'farm', 'graph'), 'roots', 'graph')
   return addFactoryRemovedModuleToExistingLayout(
     addFactoryModuleToExistingLayout(
@@ -980,6 +985,7 @@ function addFactoryModuleToExistingLayout(
   layout: StageLayoutSet,
   moduleId: StageModuleId,
   preferredLayerId: string,
+  clear = false,
 ): StageLayoutSet {
   const alreadyPlaced = [...layout.layers, ...layout.removed_layers].some((layer) =>
     [...layer.modules, ...layer.removed_modules].some(
@@ -997,7 +1003,7 @@ function addFactoryModuleToExistingLayout(
           ...cloneLayer(layer),
           modules: [
             ...layer.modules.map((module) => ({ ...module })),
-            { ...DEFAULT_MODULES[moduleId] },
+            clear ? clearOfOthers({ ...DEFAULT_MODULES[moduleId] }, layer.modules) : { ...DEFAULT_MODULES[moduleId] },
           ],
         }
       : cloneLayer(layer)),
@@ -1084,7 +1090,7 @@ function parseScopes(
 function isStageModuleId(value: unknown): value is StageModuleId {
   return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'threads' || value === 'conversation' || value === 'memory' ||
     value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' || value === 'farm' || value === 'roots' ||
-    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler' || value === 't3'
 }
 
 function isLegacyRackModuleId(value: unknown): value is 'threads' | 'chat' | 'memory' {

@@ -59,7 +59,7 @@ import {
   type ThreadState,
 } from './store'
 
-export type RackModuleId = CustomRackModuleId | 'header' | 'spend_strip' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security' | 'profiler'
+export type RackModuleId = CustomRackModuleId | 'header' | 'spend_strip' | 'threads' | 'conversation' | 'memory' | 'vitals' | 'palace_state' | 'context_bars' | 'gate' | 'thread_end' | 'palace_queue' | 'model_device' | 'memory_graph' | 'palace_nebula' | 'farm' | 'roots' | 'injection_console' | 'recipe' | 'jobs' | 'security' | 'profiler' | 't3'
 export type RackModuleSlot = 'header' | 'panel' | 'strip' | 'overlay'
 export type RackMemoryPanelState = MemoryPanelState
 
@@ -80,7 +80,7 @@ export function isRackModuleId(value: unknown): value is RackModuleId {
     value === 'palace_nebula' ||
     value === 'farm' || value === 'roots' ||
     value === 'injection_console' ||
-    value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler'
+    value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler' || value === 't3'
 }
 
 export interface RackSnapshot {
@@ -519,6 +519,13 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     streams: ['thread.snapshot', 'run.started', 'run.done'], actions: [],
     bounds: stageGridBounds(instrumentStageBounds.preferred), movable: true,
     law_bound: false, default_scope: 'ATTUNED',
+  },
+  // SD-114: T3 Code's own screen. The host page frames it; it takes nothing from the rack.
+  t3: {
+    id: 't3', name: 'T3', version: '1.0.0', class: 'control', slot: 'panel',
+    streams: [], actions: [],
+    bounds: stageGridBounds({ w: 20, h: 20 }), movable: true,
+    law_bound: false, default_scope: 'GLOBAL',
   },
 }
 

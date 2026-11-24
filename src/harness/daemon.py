@@ -1503,6 +1503,21 @@ def create_dev_app(
                 raise HTTPException(503, "The T3 window could not be opened.")
             return {"opened": True}
 
+        @app.post("/v1/t3/front/frame")
+        async def open_front_frame(request: Request):
+            page = f"http://127.0.0.1:{request.scope['server'][1]}"
+            if request.headers.get("origin") != page:
+                # WALL owner files / SD-114: only this home's own page is handed T3's screen.
+                raise HTTPException(403, f"Open Nocturne at {page} to use T3 here.")
+            try:
+                return {"url": await front.frame_url(page)}
+            except T3Error as exc:
+                raise HTTPException(503, str(exc)) from None
+
+        @app.get("/v1/t3/front/frame")
+        async def front_frame_state():
+            return {"running": front.running}
+
         @app.post("/v1/threads/{thread_id}/rewind")
         async def rewind_thread(thread_id: UUID, request: RewindRequest):
             try:

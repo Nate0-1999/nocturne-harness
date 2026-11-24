@@ -34,6 +34,7 @@ import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { WorkVisualization } from './WorkVisualization'
 import { ProfilerModule } from './ProfilerModule'
+import { T3Module } from './T3Module'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
@@ -1394,6 +1395,7 @@ function RackModuleFrame({
   const [resizeSequence, setResizeSequence] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [filled, setFilled] = useState(false)
   const isDocked = manifest.slot === 'panel'
   const isStrip = manifest.slot === 'strip'
   const usesTemplate = isDocked || isStrip
@@ -1432,7 +1434,7 @@ function RackModuleFrame({
   }
 
   function beginMove(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!usesTemplate || !manifest.movable || onMove === undefined || event.button !== 0) {
+    if (!usesTemplate || !manifest.movable || onMove === undefined || event.button !== 0 || filled) {
       return
     }
     event.preventDefault()
@@ -1565,6 +1567,7 @@ function RackModuleFrame({
       data-rack-template-module={usesTemplate ? 'true' : undefined}
       data-dragging={usesTemplate ? dragging : undefined}
       data-settings-open={settingsOpen || undefined}
+      data-filled={filled || undefined}
       inert={inert || undefined}
     >
       {usesTemplate && (
@@ -1581,12 +1584,12 @@ function RackModuleFrame({
           >
             <ActionIcon action="move" />
             <strong>{manifest.name}</strong>
-            <span
+            {manifest.id !== 't3' && <span
               className="rack-module__attunement"
               data-testid={`attunement-${instanceId}`}
             >
               {attunementBadge(scope, attunement)}
-            </span>
+            </span>}
           </div>
           {manifest.id === 'conversation' && conversationMode !== undefined && (
             <div className="conversation-mode" role="group" aria-label="Conversation mode">
@@ -1603,14 +1606,26 @@ function RackModuleFrame({
               ))}
             </div>
           )}
-          <RackSettingsControl
+          {/* T3's screen reads nothing from the rack, so it has no scope to show or set. */}
+          {manifest.id !== 't3' && <RackSettingsControl
             manifest={manifest}
             scope={scope}
             onScopeChange={(value) => onScopeChange?.(instanceId, moduleId, value)}
             onOpenChange={setSettingsOpen}
             attunementControl={attunementControl}
             namedStackSelected={namedStackSelected}
-          />
+          />}
+          {manifest.id === 't3' && (
+            <Button action={filled ? 'minimize' : 'fit'} iconOnly variant="bare"
+              className="rack-module__fill"
+              type="button"
+              data-testid="t3-module-fill"
+              aria-label={filled ? 'Minimize T3 to its module' : 'Fit T3 to the window'}
+              data-tooltip={filled ? 'Minimize to its module' : 'Fit to the window'}
+              data-tooltip-detail={filled ? 'Put T3 back in its place on this layer.' : 'T3 covers the whole Nocturne window.'}
+              onClick={() => setFilled((value) => !value)}
+            />
+          )}
           {onRemove !== undefined && (
             <Button action="remove" iconOnly variant="bare"
               className="rack-module__remove"
@@ -1635,7 +1650,7 @@ function RackModuleFrame({
           )}
         </div>
       )}
-      {!sheetMode && resizeDirections.map((direction) => {
+      {!sheetMode && !filled && resizeDirections.map((direction) => {
         return (
           <Button variant="bare"
             key={direction}
@@ -1674,7 +1689,7 @@ function RackModuleFrame({
         )
       })}
       <div className="rack-module__content">
-        <RackPluginIframe
+        {manifest.id === 't3' ? <T3Module /> : <RackPluginIframe
           key={`${instanceId}:${scope}:${attunement?.source_instance_id ?? 'none'}`}
           instanceId={instanceId}
           manifest={manifest}
@@ -1684,7 +1699,7 @@ function RackModuleFrame({
           attunement={scope === 'ATTUNED' ? attunement : null}
           theme={theme}
           isRegressionFixture={isRegressionFixture}
-        />
+        />}
       </div>
     </div>
   )
