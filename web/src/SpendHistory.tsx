@@ -142,7 +142,7 @@ export function SpendReceipts({ snapshot }: { snapshot: SpendTableSnapshot }) {
   const lines = snapshot.receipts.length - covered
   return <details className="spend-history">
     <summary>Spend receipts · {lines} {lines === 1 ? 'line' : 'lines'}{covered > 0 && ` · ${includedTurns(covered)}`}</summary>
-    <p>Oldest first. Each receipt keeps its original ID and amount.</p>
+    <p>Sorted by receipt ID. Each timestamp shows when the event occurred.</p>
     {snapshot.receipts.length === 0 ? <p>Run a prompt to add spend receipts.</p> : <div className="spend-table__scroll"><table className="spend-receipts" aria-label="Spend receipts">
       <thead><tr><th>Receipt ID · ULID</th><th>Model / purpose</th><th>Quantity</th><th>USD · basis</th></tr></thead>
       <tbody>{snapshot.receipts.map((receipt) => <tr key={receipt.event_uid} data-receipt-id={receipt.event_uid}>
