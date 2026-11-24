@@ -301,6 +301,7 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
     server = T3Server(tmp_path)
     (server.root / "workspace").mkdir(parents=True)
     client = AsyncMock(environment_id="test-environment")
+    client.workspace_project.return_value = "shared-project"
     client.launch.return_value = {"sequence": 1}
 
     async def call(method, params):
@@ -349,13 +350,10 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
     assert journal.read_messages("thread-1")[-1]["content"] == text
     binding = journal.subscription_binding("thread-1")
     assert binding and binding["source"].endswith("/test-model")
-    project = next(
-        args.args[1] for args in client.call.await_args_list if args.args[0] == "projects.mutate"
-    )
     title = journal.catalog()[0].title
-    assert project["title"] == client.launch.await_args.args[-1] == title
-    workspace = Path(project["workspaceRoot"])
-    assert workspace == tmp_path and binding["location"] == str(tmp_path)
+    client.workspace_project.assert_awaited_once_with(str(tmp_path), title)
+    assert client.launch.await_args.args[-1] == title and binding["location"] == str(tmp_path)
+    assert binding["native_project"] == "shared-project"
     assert all(
         value not in json.dumps(binding) for value in ("@", "account-one", "Private Account")
     )
@@ -407,3 +405,61 @@ def test_authenticated_claude_ultra_survives_failed_usage_probe():
     for billing in ("apiKey", "console"):
         provider["auth"]["type"] = billing
         assert not list(offers(project_sources([provider])))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("found", [False, True])
+async def test_conversations_share_only_the_exact_existing_project(found):
+    """A-099: two conversations in one folder need separate native threads on one T3 project."""
+    from unittest.mock import AsyncMock
+
+    from harness.t3_client import T3Client
+
+    client = T3Client(23001)
+    client.call = AsyncMock(side_effect=T3Error("project creation failed"))
+
+    async def frames(method, args):
+        assert method == "orchestration.subscribeShell" and args == {}
+        projects = [{"id": "neighbor", "workspaceRoot": "/work/neighbor"}]
+        if found:
+            projects.append({"id": "same", "workspaceRoot": "/work"})
+        yield {"values": [{"kind": "snapshot", "snapshot": {"projects": projects}}]}
+
+    client._frames = frames
+    if found:
+        assert await client.workspace_project("/work", "Second conversation") == "same"
+    else:
+        with pytest.raises(T3Error, match="project creation failed"):
+            await client.workspace_project("/work", "Second conversation")
+
+
+@pytest.mark.asyncio
+async def test_conversation_grant_journals_future_requests_and_still_obeys_provider_override():
+    """A-099: a follow-up uses the grant but a provider override still needs the owner."""
+    from unittest.mock import AsyncMock
+
+    from harness.t3_turn import NativeTurn
+
+    client, emit = AsyncMock(), AsyncMock()
+    binding = {"location": "/work", "permission": "allowed_thread"}
+    turn = NativeTurn(client, "thread", "message", emit, "Claude Code", binding, lambda: None)
+    turn.run = "run"
+    emit.boundary_decision.return_value = "denied"
+    for request_id, override in (("read", False), ("override", True)):
+        await turn.request(
+            {"id": request_id, "status": "pending", "kind": "file-read"},
+            [
+                {
+                    "type": "approval_request",
+                    "runId": "run",
+                    "requestId": request_id,
+                    "prompt": "sibling/file",
+                    "fullAccessOverride": override,
+                }
+            ],
+        )
+    emit.boundary_decision.assert_awaited_once()
+    events = [call.args[0] for call in emit.event.await_args_list]
+    assert [e["decision"] for e in events] == ["requested", "allowed_thread", "denied"]
+    assert events[0]["reason"] == "File read: sibling/file"
+    assert [call.kwargs["allow"] for call in client.respond.await_args_list] == [True, False]

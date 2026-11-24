@@ -66,24 +66,14 @@ class SubscriptionTurns:
                 raise T3Error("A previous subscription turn is still open.")
         fresh = not same_source or binding.get("location") != workspace
         if fresh:
+            title = self.journal.conversation_title(thread_id).strip() or "Nocturne conversation"
             binding = {
                 "source": key,
                 "environment": environment,
                 "location": workspace,
-                "native_project": new_id(),
+                "native_project": await client.workspace_project(workspace, title),
                 "native_thread": new_id(),
             }
-            title = self.journal.conversation_title(thread_id).strip() or "Nocturne conversation"
-            await client.call(
-                "projects.mutate",
-                {
-                    "type": "project.create",
-                    "projectId": binding["native_project"],
-                    "commandId": new_id(),
-                    "title": title,
-                    "workspaceRoot": workspace,
-                },
-            )
             self.journal.bind_subscription(thread_id, binding)
         thread = binding["native_thread"]
         message = new_id()
@@ -216,7 +206,11 @@ class NativeTurn:
             "policy": self.binding["location"],
             "run_id": self.emit.run_id,
             "card_id": request,
-            "reason": re.sub(r"[\w.+%-]+@[\w.-]+", "[private address]", description),
+            "reason": re.sub(
+                r"[\w.+%-]+@[\w.-]+",
+                "[private address]",
+                f"{item['kind'].replace('-', ' ').capitalize()}: {description}",
+            ),
             "decision": "owner_action",
             "created_at": datetime.now(UTC).isoformat(),
         }
