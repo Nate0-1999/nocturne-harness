@@ -30,6 +30,8 @@ class FrontSession:
         self.stopping = False
         self.cancel_sent = False
         self.card = None
+        self.card_answered = False
+        self.node = None
 
     async def send(self, **message):
         self.writer.write(json.dumps({"jsonrpc": "2.0", **message}).encode() + b"\n")
@@ -53,6 +55,8 @@ class FrontSession:
                 method = request.get("method")
                 if method is None:
                     # A T3 acknowledgement never decides a Deck card.
+                    if request.get("id") == self.card:
+                        self.card_answered = True
                     continue
                 params = request.get("params", {})
                 rid = request.get("id")
@@ -204,6 +208,7 @@ class FrontSession:
             if len(runs) != 1 or runs[0]["providerInstanceId"] != "nocturne":
                 raise T3Error("T3 could not identify one active Nocturne turn.")
             message_id = runs[0]["userMessageId"]
+            self.node = runs[0].get("rootNodeId")
             message = next(m for m in projection["messages"] if m["id"] == message_id)
             if message["role"] != "user" or message.get("attachments"):
                 raise T3Error("This Nocturne conversation accepts text prompts.")
@@ -303,17 +308,28 @@ class FrontSession:
             return
         call_id = str(uuid4())
         self.card = call_id
+        self.card_answered = False
         call = {"toolCallId": call_id, "title": title, "kind": "other"}
         await self.update(sessionUpdate="tool_call", **call, status="pending")
         await self.send(
             id=call_id,
-            method="session/request_permission",
+            method="elicitation/create",
             params={
                 "sessionId": self.session,
-                "toolCall": call,
-                "options": [
-                    {"optionId": "seen", "name": "Review on the Deck", "kind": "allow_once"}
-                ],
+                "mode": "form",
+                "message": title,
+                "requestedSchema": {
+                    "type": "object",
+                    "properties": {
+                        "review": {
+                            "type": "string",
+                            "title": "Nocturne",
+                            "description": title,
+                            "enum": ["Review on the Deck"],
+                        }
+                    },
+                    "required": ["review"],
+                },
             },
         )
 
@@ -322,6 +338,8 @@ class FrontSession:
             return
         call_id = self.card
         for _ in range(12):
+            if self.card_answered:
+                break
             projection = await client.call(
                 "orchestration.getThreadProjection", {"threadId": self.native}
             )
@@ -329,19 +347,15 @@ class FrontSession:
                 (
                     request
                     for request in projection["runtimeRequests"]
-                    if (request.get("nativeRequestRef") or {}).get("nativeId") == call_id
+                    if request["kind"] == "user_input"
+                    and request["nodeId"] == self.node
+                    and request["status"] == "pending"
                 ),
                 None,
             )
             if card is not None:
-                if card["status"] == "pending":
-                    # The Deck already decided. Retire only this ACP notification.
-                    await client.dispatch(
-                        self.native,
-                        "runtime-request.respond",
-                        requestId=card["id"],
-                        decision="cancel",
-                    )
+                # No answers: cancel only this run's informational form after the Deck decides.
+                await client.dispatch(self.native, "runtime-request.respond", requestId=card["id"])
                 break
             await asyncio.sleep(0.1)
         await self.update(sessionUpdate="tool_call_update", toolCallId=call_id, status="completed")
