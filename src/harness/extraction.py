@@ -8,10 +8,10 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Literal
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent, _within_cap
-from harness.memory_outbox import MemoryOutbox, never_reached_palace
+from harness.memory_outbox import MemoryOutbox, never_reached_palace, palace_refused
 from harness.spine_client import (
     ExtractionCandidate,
     ExtractionRequest,
@@ -19,9 +19,11 @@ from harness.spine_client import (
     ProjectBackfillRequest,
     QueueCard,
     SearchRequest,
+    SpineBusyError,
     SpineClient,
     SpineClientError,
     SpineProblemError,
+    SpineTransportError,
     ThreadProject,
 )
 from harness.transcript import TranscriptJournal
@@ -62,7 +64,43 @@ class ExtractionService:
 
     async def replay(self, payload: Mapping[str, object]) -> None:
         """M4BW: a queued compaction batch reaches the Palace's queue now, through its law."""
-        await self._create_extraction(ExtractionRequest.model_validate(payload["request"]))
+        request = ExtractionRequest.model_validate(payload["request"])
+        try:
+            response = await self._create_extraction(request)
+        except SpineProblemError as exc:
+            # A terminal delivery refusal moves the batch out of the outbox.
+            # Its compaction record must stop waiting at the same time.
+            if request.candidate_ids and palace_refused(exc) and exc.status_code != 402:
+                self._journal.append_admission_outcomes(
+                    str(request.thread_id), self._delivery_refusals(request, exc)
+                )
+            raise
+        if request.candidate_ids:
+            self._journal.append_admission_outcomes(
+                str(request.thread_id), self._outcomes(request, response)
+            )
+
+    @staticmethod
+    def _delivery_refusals(request: ExtractionRequest, exc: SpineProblemError) -> dict[str, dict]:
+        return {
+            str(key): {
+                "candidate_id": str(key),
+                "status": "refused",
+                "source": "delivery",
+                "reason": exc.problem.detail or exc.problem.title or f"HTTP {exc.status_code}",
+            }
+            for key in request.candidate_ids or []
+        }
+
+    @staticmethod
+    def _outcomes(request: ExtractionRequest, response: ExtractionResponse) -> dict[str, dict]:
+        outcomes = response.outcomes or []
+        if [item.candidate_id for item in outcomes] != request.candidate_ids:
+            raise SpineClientError("The Palace did not account for every submitted fact.")
+        return {
+            str(item.candidate_id): item.model_dump(mode="json", exclude_none=True)
+            for item in outcomes
+        }
 
     async def archive(self, thread_id: UUID) -> ThreadEndResult:
         text_id = str(thread_id)
@@ -161,6 +199,9 @@ class ExtractionService:
         duplicate_count = 0
         facts: list[dict[str, object]] = []
         offline = False  # A-079: once the Palace is unreached, verdicts wait for it
+        account = origin == "compaction"
+        group_ids: dict[str | None, list[UUID]] = {}
+        outcomes = {}
         for item in draft.candidates:
             # Owner 2026-10-07 (v2.133): a fact no user message or tool result verified says so.
             if (
@@ -223,10 +264,29 @@ class ExtractionService:
                     "verdict": verdict,
                 }
             )
+            if account:
+                candidate_id = uuid4()
+                facts[-1]["candidate_id"] = str(candidate_id)
+                facts[-1]["proposal"] = (
+                    None
+                    if offline
+                    else {"verdict": verdict, "target_ids": [str(uid) for uid in target_ids]}
+                )
+                facts[-1]["outcome"] = {"status": "waiting"}
+                if verdict == "already_known":
+                    known = next(n for n in neighbors.results if n.memory_id in target_ids)
+                    facts[-1]["outcome"] = {
+                        "status": "already_known",
+                        "memory_id": str(known.memory_id),
+                        "label": known.label,
+                        "source": "model",
+                    }
             if verdict == "already_known":
                 duplicate_count += 1
                 continue
             location, folders = _origin_location(item.source_message_ids, locations or {}, fallback)
+            if account:
+                group_ids.setdefault(location, []).append(candidate_id)
             groups.setdefault(location, []).append(
                 _candidate(item, verdict, target_ids, project_key, folders)
             )
@@ -240,14 +300,21 @@ class ExtractionService:
                 editor=origin,
                 origin_location=location,
                 candidates=candidates,
+                candidate_ids=group_ids.get(location, []) if account else None,
             )
             response = None
             if not offline:
                 try:
                     response = await self._create_extraction(request)
                 except SpineClientError as exc:
-                    if self._outbox is None or not never_reached_palace(exc):
+                    if request.candidate_ids and palace_refused(exc) and exc.status_code != 402:
+                        outcomes.update(self._delivery_refusals(request, exc))
+                        continue
+                    replay_safe = account and isinstance(exc, (SpineTransportError, SpineBusyError))
+                    if self._outbox is None or not (replay_safe or never_reached_palace(exc)):
                         raise
+            if response is not None and request.candidate_ids:
+                outcomes.update(self._outcomes(request, response))
             if response is None:
                 # A-079: the batch waits in the outbox; its cards arrive on reconnect.
                 if candidates:
@@ -260,6 +327,9 @@ class ExtractionService:
                 response = ExtractionResponse(cards=[], duplicate_count=0)
             cards.extend(response.cards)
             duplicate_count += response.duplicate_count
+        for fact in facts:
+            if fact.get("candidate_id") in outcomes:
+                fact["outcome"] = outcomes[fact["candidate_id"]]
         self._journal.append_extraction(
             text_id,
             tail_message_id=tail,
@@ -301,6 +371,8 @@ class ExtractionService:
         logger.info("memory project backfill: %d memories took their project", result.updated)
 
     async def _create_extraction(self, request: ExtractionRequest) -> ExtractionResponse:
+        if request.candidate_ids is not None:
+            return await self._spine.create_extraction(request)
         try:
             try:
                 response = await self._spine.create_extraction(request)

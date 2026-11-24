@@ -20,6 +20,7 @@ from pydantic import (
     StrictStr,
     TypeAdapter,
 )
+from spine.queue.contracts import ExtractionOutcome
 
 type JsonObject = dict[str, Any]
 
@@ -408,6 +409,8 @@ class ExtractionRequest(ContractModel):
     origin_location: str | None = None
     candidates: list[ExtractionCandidate]
 
+    candidate_ids: list[UUID] | None = None
+
 
 class SeedRequest(ContractModel):
     principal_id: str
@@ -451,6 +454,7 @@ class QueueCard(ContractModel):
 
 
 class ExtractionResponse(ContractModel):
+    outcomes: list[ExtractionOutcome] | None = None
     cards: list[QueueCard]
     duplicate_count: int
 
