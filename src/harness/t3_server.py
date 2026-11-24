@@ -60,6 +60,7 @@ def _descendants(root: int, known: dict[int, str]) -> dict[int, str]:
 
 class T3Server:
     def __init__(self, home: Path):
+        self.home = home
         self.root = home / "t3"
         self.binary = self.root / "install" / VERSION / "t3"
         self._lock = asyncio.Lock()
@@ -92,14 +93,8 @@ class T3Server:
                 raise
             return self._client
 
-    async def _start(self) -> T3Client:
-        state = self.root / "state"
-        work = self.root / "workspace"
-        tmp = self.root / "tmp"
-        for folder in (self.root, state, state / "userdata", work, tmp):
-            folder.mkdir(mode=0o700, parents=True, exist_ok=True)
-            folder.chmod(0o700)
-        settings = {
+    def _settings(self) -> dict:
+        return {
             "providerInstances": _native_tools(),
             "enableProviderUpdateChecks": False,
             "continueThreadsAfterServerUpdate": False,
@@ -107,9 +102,21 @@ class T3Server:
             "promptSuggestionsEnabled": False,
             "observability": {},
         }
+
+    def _home_environment(self) -> dict:
+        return {"HOME": str(Path.home())}
+
+    async def _start(self) -> T3Client:
+        state = self.root / "state"
+        work = self.root / "workspace"
+        tmp = self.root / "tmp"
+        for folder in (self.root, state, state / "userdata", work, tmp):
+            folder.mkdir(mode=0o700, parents=True, exist_ok=True)
+            folder.chmod(0o700)
+        settings = self._settings()
         (state / "userdata/settings.json").write_text(json.dumps(settings))
         env = {
-            "HOME": str(Path.home()),
+            **self._home_environment(),
             "SHELL": "/bin/sh",
             "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin",
             "TMPDIR": str(tmp),
@@ -175,12 +182,15 @@ class T3Server:
                     code.set_exception(T3Error("T3 exited before local authentication."))
 
         self._reader = asyncio.create_task(drain())
+        return await self._authenticate(port, settings, env, await code)
+
+    async def _authenticate(self, port, settings, env, code) -> T3Client:
         client = T3Client(
             port,
             codex_binary=settings["providerInstances"]["codex"]["config"]["binaryPath"],
             native_env={k: env[k] for k in ("HOME", "USER", "PATH", "TMPDIR") if k in env},
         )
-        await client.authenticate(await code)
+        await client.authenticate(code)
         return client
 
     async def _watch(self, pid):

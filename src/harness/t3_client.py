@@ -69,7 +69,7 @@ class T3Client:
         except (httpx.HTTPError, ValueError):
             raise T3Error("Local T3 authentication or discovery failed.") from None
 
-    async def authenticate(self, code: str):
+    async def authenticate(self, code: str, *, scopes="orchestration:read orchestration:operate"):
         descriptor = await self._http("/.well-known/t3/environment")
         if (
             descriptor.get("serverVersion") != VERSION
@@ -84,7 +84,7 @@ class T3Client:
                 "subject_token_type": "urn:t3:params:oauth:token-type:environment-bootstrap",
                 "requested_token_type": "urn:ietf:params:oauth:token-type:access_token",
                 "subject_token": code,
-                "scope": "orchestration:read orchestration:operate",
+                "scope": scopes,
             },
         )
         self.session = session["access_token"]
