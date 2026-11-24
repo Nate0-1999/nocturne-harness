@@ -872,7 +872,8 @@ function parseModule(
   ) return null
   const rawInstanceId = context.version >= 4 ? value.instance_id : rawModuleId
   if (typeof rawInstanceId !== 'string' || (
-    !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(rawInstanceId)
+    // M8TD: 't3' carries a digit; a stored layout holding it was refused whole and reset.
+    !/^[a-z_][a-z0-9_]*(?::[1-9][0-9]*)?$/.test(rawInstanceId)
     && !installedRackPlugins.some((plugin) => plugin.id === rawInstanceId && plugin.id === rawModuleId)
   )) {
     return null

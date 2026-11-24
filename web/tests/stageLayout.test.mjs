@@ -319,10 +319,35 @@ test('v4 Chat and Deck layouts migrate cleanly into focused and stack Conversati
       instance_id: 'conversation:2', module_id: 'conversation', source_thread_id: undefined,
       conversation_mode: 'stack', x: 42, y: 11, width: 16, height: 20,
     },
+    FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 't3'),
     FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 'palace_queue'),
   ])
   assert.equal(migrated.scopes.conversation, 'ATTUNED')
   assert.equal(migrated.scopes['conversation:2'], 'GLOBAL')
+})
+
+/** P2.5 / SD-114 (M8TD): an arranged layout keeps its places when T3 joins it, and loads again. */
+test('T3 joins an arranged layout beside its modules and the stored layout loads again', () => {
+  const storage = memoryStorage()
+  const t3 = FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 't3')
+  const arranged = cloneFactoryStageLayout()
+  arranged.layers[0].modules = arranged.layers[0].modules
+    .filter((module) => module.module_id !== 't3')
+    .map((module) => module.module_id === 'memory' ? { ...module, x: t3.x, y: t3.y } : module)
+  storage.setItem(STAGE_LAYOUT_STORAGE_KEY, JSON.stringify(arranged))
+
+  const joined = loadStageLayout(storage)
+  const placed = joined.layers[0].modules
+  const memory = placed.find((module) => module.module_id === 'memory')
+  const added = placed.find((module) => module.module_id === 't3')
+  assert.deepEqual([memory.x, memory.y], [t3.x, t3.y])
+  assert.ok(added.x >= Math.max(...placed.filter((module) => module !== added).map((module) => module.x + module.width)))
+
+  persistStageLayout(storage, moveStageModule(joined, 'conversation', 20, 8))
+  const again = loadStageLayout(storage).layers[0].modules
+  const kept = again.find((module) => module.module_id === 't3')
+  assert.deepEqual([kept.x, kept.y, kept.width, kept.height], [added.x, added.y, added.width, added.height])
+  assert.equal(again.find((module) => module.module_id === 'conversation').x, 20)
 })
 
 /** PLAN M2SP / P2 enlarges and recenters the Stage without moving an owner's saved v2 layout on screen. */
