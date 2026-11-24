@@ -37,7 +37,7 @@ try {
 
   const factoryModules = await mountedModules(page)
   assertJsonEqual(factoryModules, [
-    'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue',
+    'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 't3',
   ])
   observations.push({ factory_work_modules: factoryModules })
 
