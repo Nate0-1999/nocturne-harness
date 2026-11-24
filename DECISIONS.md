@@ -4687,6 +4687,7 @@ retained observations the elbow picked six different models. Report 336 records 
 
 PRECEDENT: SD-117, SD-118, M3W5B-33, M3EX-27, report 258. The factory working row was 1,728px
 wide, so a 1267-wide window opened on two modules with Memory cut off, and the Off-screen bar
-sat on the composer. Threads, Conversation and Memory are now 3 + 8 + 3 units (1,344px) and
-the opening frame keeps a strip for the bar. Stored arrangements are untouched. On a
-1920-wide window the row no longer fills the width. Report 342 lists what is left.
+sat on the composer. Threads, Conversation and Memory are now 3 + 9 + 3 units (1,440px) and
+the opening frame keeps a strip for the bar. Conversation stays 864px wide because under
+782px its layout turns compact. Stored arrangements are untouched. On a 1920-wide window
+the row no longer fills the width. Report 342 lists what is left.
