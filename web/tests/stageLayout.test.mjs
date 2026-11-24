@@ -50,7 +50,7 @@ test('layer switching preserves independent camera and module layouts through re
     work?.modules.find((module) => module.module_id === 'conversation'),
     {
       instance_id: 'conversation', module_id: 'conversation', source_thread_id: undefined,
-      conversation_mode: 'focused', x: 20, y: 8, width: 18, height: 20,
+      conversation_mode: 'focused', x: 20, y: 8, width: 17, height: 20,
     },
   )
 })
@@ -114,7 +114,7 @@ test('off-screen recovery fits Recipe and Conversation stack at native scale ins
   const deck = deckLayer.modules.find((module) => module.module_id === 'conversation')
   assert.deepEqual(deck, {
     instance_id: 'conversation', module_id: 'conversation',
-    conversation_mode: 'stack', x: 104, y: 68, width: 7, height: 20,
+    conversation_mode: 'stack', x: 106, y: 68, width: 7, height: 20,
   })
   assert.equal(deckLayer.camera.zoom, 1)
   assert.equal(moduleFitsViewport(

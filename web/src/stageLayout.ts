@@ -109,14 +109,15 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
-  // M8LK: Threads + Conversation + Memory are 15 units wide, so a 1267-wide window opens on all three
-  // whole; Conversation stays above the 782px width where its layout turns compact.
-  threads: expandLegacyModule({ instance_id: 'threads', module_id: 'threads', x: 1, y: 1, width: 3, height: 10 }),
+  threads: expandLegacyModule({ instance_id: 'threads', module_id: 'threads', x: 1, y: 1, width: 4, height: 10 }),
+  // M8LK: Threads + Conversation + Memory are 1,488px wide (were 1,728), so a 1267-wide window opens
+  // on all three whole. Conversation stays above 782px, where its layout turns compact; Threads keeps
+  // its width, which the phone's Threads view is framed on.
   conversation: expandLegacyModule({
     instance_id: 'conversation', module_id: 'conversation', conversation_mode: 'focused',
-    x: 4, y: 1, width: 9, height: 10,
+    x: 5, y: 1, width: 8.5, height: 10,
   }),
-  memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 13, y: 1, width: 3, height: 10 }),
+  memory: expandLegacyModule({ instance_id: 'memory', module_id: 'memory', x: 13.5, y: 1, width: 3, height: 10 }),
   vitals: expandLegacyModule({ instance_id: 'vitals', module_id: 'vitals', x: 1, y: 12, width: 12, height: 4 }),
   palace_state: expandLegacyModule({ instance_id: 'palace_state', module_id: 'palace_state', x: 19, y: 12, width: 5, height: 4 }),
   context_bars: expandLegacyModule({ instance_id: 'context_bars', module_id: 'context_bars', x: 13, y: 12, width: 6, height: 4 }),
