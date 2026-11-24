@@ -49,3 +49,5 @@
 /* F198: a boundary card's answers sit on one line under its reason. */
 .deck-proposal-card > footer { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .5rem; }
 .deck-proposal-card > footer small { margin-right: auto; color: var(--dim); }
+.deck-proposal-card[data-wall="subscription"] { overflow-wrap: anywhere; }
+.deck-proposal-card[data-wall="subscription"] > p { white-space: pre-wrap; }

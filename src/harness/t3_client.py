@@ -132,6 +132,39 @@ class T3Client:
                     return frame["exit"].get("value")
         raise T3Error("T3 returned no result.")
 
+    async def workspace_project(self, workspace: str, title: str) -> str:
+        from contextlib import aclosing
+
+        project = new_id()
+        try:
+            await self.call(
+                "projects.mutate",
+                {
+                    "type": "project.create",
+                    "projectId": project,
+                    "commandId": new_id(),
+                    "title": title,
+                    "workspaceRoot": workspace,
+                },
+            )
+        except T3Error:
+            # The pinned server accepts one project per root, even across two simultaneous opens.
+            async with (
+                asyncio.timeout(90),
+                aclosing(self._frames("orchestration.subscribeShell", {})) as frames,
+            ):
+                async for frame in frames:
+                    for item in frame.get("values", ()):
+                        if item.get("kind") == "snapshot":
+                            for existing in item["snapshot"]["projects"]:
+                                if existing["workspaceRoot"] == workspace and not existing.get(
+                                    "archivedAt"
+                                ):
+                                    return existing["id"]
+                            raise
+            raise
+        return project
+
     async def events(self, thread: str, after: int):
         from contextlib import aclosing
 
@@ -248,8 +281,14 @@ class T3Client:
         return await self.dispatch(thread, "run.interrupt", runId=run, holdQueue=True)
 
     async def decline(self, thread: str, request: str):
+        return await self.respond(thread, request, allow=False)
+
+    async def respond(self, thread: str, request: str, *, allow: bool):
         return await self.dispatch(
-            thread, "runtime-request.respond", requestId=request, decision="decline"
+            thread,
+            "runtime-request.respond",
+            requestId=request,
+            decision="accept" if allow else "decline",
         )
 
     async def launch(

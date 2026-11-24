@@ -4675,3 +4675,7 @@ archive operation here.
 ## M8XF — Account for each compaction fact [P1.5]
 
 F221, SD-107, A-096. Keep the model proposal in the compaction record. Attach the Palace decision by candidate ID and reuse the ID after an interrupted delivery. Old records have only their original proposal.
+
+## M8SL · Native requests at the conversation location (P3, P4.2)
+
+Use the ordinary toolset’s current directory. Rebind a legacy private-folder conversation or a changed location with its visible history. Key the Deck answer to the individual native request and keep an explicit conversation grant with its native binding. Each approval sent to T3 applies once. Native requests requiring a separate provider decision still reach the owner. A stopped request is never replayed after restart. See draft A-099.
