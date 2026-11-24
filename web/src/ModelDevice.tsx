@@ -64,7 +64,35 @@ export function useModelBrowser(threadId: string | null, model: string | null): 
 
 /** FL-202 / FL-206: the conversation's model chip, strategy first. */
 function ModelChip({ browser, model }: { browser: ModelBrowser | null, model: string | null }) {
+  if (!model && browser?.unavailable && !policyInForce(browser, null)?.model) return 'No model available'
   return modelMark(browser, model, currentEffort(browser, model), true, currentStrategy(browser, model))
+}
+
+function pickDate(value: string): string {
+  return new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function catalogMessage(browser: ModelBrowser): string | undefined {
+  if (browser.last_pick && browser.using_saved_pick) {
+    const what = browser.chat_policy === 'elbow' ? 'Best value' : 'Last pick'
+    return `${what} found on ${pickDate(browser.last_pick.checked)}. The catalog cannot be read now.`
+  }
+  return browser.unavailable
+}
+
+function StrategyReadout({ browser }: { browser: ModelBrowser }) {
+  const choice = policyInForce(browser, null)
+  const id = choice?.model ?? browser.last_pick?.model ?? null
+  const entry = browser.models.find((item) => item.model === id)
+  return <div className="model-strategy-readout">
+    <small>New conversations</small>
+    <strong>{policyName(browser.chat_policy)} · {entry ? shortName(entry.name) : id ? modelLabel(id) : 'No pick yet'}</strong>
+    <p>{strategyMeaning(browser.chat_policy)}</p>
+    {browser.requested_policy && browser.requested_policy !== browser.chat_policy && <p>Your pinned model is banned. This strategy chooses while the ban is in place.</p>}
+    {browser.last_pick && <small>Pick last changed {pickDate(browser.last_pick.changed)}</small>}
+    {browser.last_pick && !browser.unavailable && <small>Offline pick saved {pickDate(browser.last_pick.checked)}</small>}
+    {browser.unavailable && <p role="status">{catalogMessage(browser)}</p>}
+  </div>
 }
 
 /** SD-101: the conversation header's Model box lists the pinned models. One tap is this
@@ -146,11 +174,13 @@ export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
         <span aria-hidden="true">Model</span>
         <span className="chat-header__model-value" data-testid="active-model-detail">
           <ModelChip browser={browser} model={model} />
+          {!open && browser?.unavailable && <small className="model-switch__outage">{catalogMessage(browser)}</small>}
         </span>
         <span className="chat-header__model-action" aria-hidden="true">Open</span>
       </Button>
       {open && (
         <section className="model-switch__list" aria-label="Pinned models" data-testid="model-switch">
+          {listed && <StrategyReadout browser={listed} />}
           <ul>
             {choices.map((pin) => {
               const entry = listed?.models.find((item) => item.model === pin)
@@ -209,6 +239,7 @@ export function ModelDevice() {
   const [browser, setBrowser] = useState<ModelBrowser | null>(null)
   const [browserError, setBrowserError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [banTarget, setBanTarget] = useState('')
   const [sort, setSort] = useState<SortKey>('rank')
   const [localUrl, setLocalUrl] = useState<string | null>(null)
   const parameterDialog = useRef<HTMLDialogElement>(null)
@@ -349,6 +380,17 @@ export function ModelDevice() {
     }
   }
 
+  async function ban(target: string, banned: boolean) {
+    try {
+      await events.dispatch({ type: 'models.ban', target, banned })
+      setBanTarget('')
+      await loadBrowser()
+      setStatus(banned ? 'Ban added' : 'Ban lifted')
+    } catch (error) {
+      setStatus(failureMessage(error, 'The ban could not be saved.'))
+    }
+  }
+
   async function configure(configuration: Configuration) {
     if (threadId === null || !editable || configuration.model === null) return
     // Switch first: a refused switch leaves both this conversation and the agent policy as they were.
@@ -378,9 +420,10 @@ export function ModelDevice() {
         </div>
       </header>
 
+      {browser && <StrategyReadout browser={browser} />}
       <div className="model-device__truth">
         <span>Model in use</span>
-        <strong data-testid="model-device-resolved">{resolved?.startsWith('subscription:') ? modelLabel(resolved) : resolved ?? 'Waiting for thread'}</strong>
+        <strong data-testid="model-device-resolved" title={resolved ?? undefined}>{subscription ? modelLabel(resolved) : inUse ? shortName(inUse.name) : resolved ?? 'No conversation model yet'}</strong>
         {effort !== undefined && inUse?.reasoning === true && (
           <label className="model-effort" htmlFor="model-device-effort">
             <span>Thinking</span>
@@ -410,10 +453,26 @@ export function ModelDevice() {
             Parameters
           </Button>
         )}
-        {!subscription && threadId !== null && browser !== null && <p className="model-summary" data-testid="model-summary">{summary}</p>}
-        <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>
+        {!subscription && resolved !== null && browser !== null && <details><summary>Model details</summary><p className="model-summary" data-testid="model-summary">{summary}</p></details>}
+        {(resolved !== null || !browser?.unavailable) && <small>{scope === 'GLOBAL' ? 'Provider defaults · read only' : status}</small>}
       </div>
 
+      {browser && <section className="model-bans" aria-label="Banned models and makers">
+        <h3>Banned models and makers</h3>
+        {Object.keys(browser.bans ?? {}).length === 0 && <p>No bans.</p>}
+        {Object.entries(browser.bans ?? {}).map(([target, reason]) => <div key={target}>
+          <p><strong>{target.replace(/^maker:/u, 'All models by ').replace(/^model:/u, '')}</strong><br />{reason}</p>
+          <Button type="button" aria-label={`Lift ban on ${target}`} onClick={() => { void ban(target, false) }}>Lift ban</Button>
+        </div>)}
+        <div>
+          <Select aria-label="Model or maker to ban" value={banTarget} onChange={(event) => setBanTarget(event.target.value)}>
+            <option value="">Choose a model or maker</option>
+            <optgroup label="Makers">{[...new Set(browser.models.filter((item) => item.model.startsWith('openrouter:')).map((item) => modelLabel(item.model).split('/')[0]))].sort().filter((maker) => !browser.bans?.[`maker:${maker}`]).map((maker) => <option key={maker} value={`maker:${maker}`}>{maker}</option>)}</optgroup>
+            <optgroup label="Models">{browser.models.filter((item) => !item.banned_by).map((item) => <option key={item.model} value={`model:${item.model.replace(/^openrouter:/u, '')}`}>{item.name}</option>)}</optgroup>
+          </Select>
+          <Button type="button" disabled={!banTarget} onClick={() => { void ban(banTarget, true) }}>Add ban</Button>
+        </div>
+      </section>}
       <div className={subscription ? 'model-panel model-panel--subscription' : 'model-panel'}>
       {/* FL-206: the strategies rail — each one's meaning and the model it picks now; the one in
           force is marked; picking one is the same act as before (policies.save for the chat role). */}
@@ -487,12 +546,12 @@ export function ModelDevice() {
               {source.models.map(item => <li key={item.model} className="model-row">
                 <Button variant="bare" type="button" className="subscription-pick" data-model={item.model}
                   data-tooltip={modelLabel(item.model)} data-tooltip-detail="Use this plan for this conversation."
-                  aria-current={item.model === resolved || undefined} disabled={!editable || item.model === resolved}
+                  aria-current={item.model === resolved || undefined} disabled={!editable || item.model === resolved || Boolean(item.banned_by)}
                   onClick={() => { void configure({policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model'}) }}>
                   <span>{item.model.split('/').slice(2).join('/')}</span><small>Included with your plan</small>
                 </Button>
                 <Button type="button" iconOnly action={pins.includes(item.model) ? 'unpin' : 'pin'}
-                  aria-pressed={pins.includes(item.model)} data-tooltip={pins.includes(item.model) ? 'Unpin' : 'Pin model'}
+                  disabled={Boolean(item.banned_by)} aria-pressed={pins.includes(item.model)} data-tooltip={pins.includes(item.model) ? 'Unpin' : 'Pin model'}
                   data-tooltip-detail="Show this model in the conversation header."
                   onClick={() => { void pin(item.model, !pins.includes(item.model)) }}>
                   {pins.includes(item.model) ? 'Unpin' : 'Pin'}
@@ -502,7 +561,7 @@ export function ModelDevice() {
           </details>)}
         </section>}
         {groups.length === 0 && <p className="model-pin-hint">Press and hold a model to pin it.</p>}
-        <div className="model-browser__tools">
+        {(!browser?.unavailable || browser.models.length > 0) && <div className="model-browser__tools">
           <TextField
             type="search"
             aria-label="Search models"
@@ -523,7 +582,7 @@ export function ModelDevice() {
             <option value="context">Context</option>
           </Select>
           <span>{browserError ?? (browser?.unavailable ? serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.') : `${listed.length} models`)}</span>
-        </div>
+        </div>}
         <div className="model-browser__tools">
           <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"
             value={localUrl ?? browser?.local?.url ?? ''}
@@ -550,15 +609,15 @@ export function ModelDevice() {
                   data-tooltip={item.model}
                   data-tooltip-detail={current ? 'This conversation uses it now.' : item.model.startsWith('subscription:')
                     ? 'Use this subscription for this conversation.' : 'Use it here and for new conversations, until you change it.'}
-                  disabled={!editable || current}
+                  disabled={!editable || current || Boolean(item.banned_by)}
                   onClick={() => { void configure({ policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model' }) }}
                 >
-                  <span className="model-row__name">{item.name}{item.reasoning && <small> · thinks</small>}</span>
+                  <span className="model-row__name">{item.name}{item.banned_by ? <small> · banned</small> : item.reasoning && <small> · thinks</small>}</span>
                   <span>{item.score ?? '—'}</span>
                   <span>{formatPrice(item)}</span>
                   <span>{item.context_tokens === null ? '—' : formatHumanCount(item.context_tokens)}</span>
                 </Button>
-                <Button
+                {item.banned_by ? <Button type="button" onClick={() => { void ban(item.banned_by!, false) }}>Lift ban</Button> : <Button
                   type="button"
                   iconOnly
                   action={pinned ? 'unpin' : 'pin'}
@@ -568,7 +627,7 @@ export function ModelDevice() {
                   onClick={() => { void pin(item.model, !pinned) }}
                 >
                   {pinned ? 'Unpin' : 'Pin'}
-                </Button>
+                </Button>}
               </li>
             )
           })}

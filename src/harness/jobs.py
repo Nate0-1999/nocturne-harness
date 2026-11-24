@@ -52,6 +52,7 @@ class WorkflowModelResolver:
             self.resolvers[thread_id] = ModelPolicyResolver(
                 policy=definition.model_policy,
                 static_model=self.settings.chat_model,
+                choices=self.settings.model_choices,
                 static_context_tokens=self.settings.model_context_tokens,
                 catalog=self.catalog,
                 burn=self.burn,

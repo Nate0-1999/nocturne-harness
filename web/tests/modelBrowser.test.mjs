@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import { browseOrder, chipParts, modelMark, policyInForce, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
+import { browseOrder, chipParts, modelMark, policyInForce, spendModelLabel, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -39,6 +39,22 @@ test('subscription groups and names survive every broker sort and search', () =>
   assert.equal(modelMark(browser, claude, 'high'), 'Claude Code · opus')
   assert.equal(modelMark(null, codex, 'low'), 'Codex · astra')
   assert.equal(subscriptionState({ tool: 'claudeAgent', availability: 'signed_out' }), 'Signed out · claude auth login')
+})
+
+/** P2 / FL-206: restarting can leave a thread with no strategy or a named-route lookup. Spend must
+ * agree with its header on the active strategy without relabeling other models on the bill. */
+test('expanded Spend matches the strategy in force after restart and preserves other receipt names', () => {
+  const model = 'openrouter:vendor/one'
+  const billed = 'vendor/one'
+  const browser = { chat_policy: 'elbow', configurations: [{ policy: 'elbow', model }] }
+  for (const policy of ['elbow', null, 'human_command', 'hydrated_unverified']) {
+    assert.equal(spendModelLabel(browser, { model, policy }, billed), 'Elbow · vendor/one')
+  }
+  assert.equal(spendModelLabel(browser, { model, policy: 'elbow' }, 'embedding'), 'embedding')
+  assert.equal(spendModelLabel(browser, undefined, billed), billed)
+  assert.equal(spendModelLabel(null, { model, policy: null }, billed), billed)
+  assert.equal(spendModelLabel(browser, { model: 'openrouter:vendor/two', policy: 'max' }, 'vendor/two'), 'Max · vendor/two')
+  assert.equal(spendModelLabel(browser, { model }, null), 'Model not reported')
 })
 
 /** A-020: rank is a display order the owner can re-sort and pin over, never routing. */

@@ -427,7 +427,9 @@ class HarnessAgent:
             deps=context,
             capabilities=self.tool_capabilities(context),
             message_history=message_history,
-            model=self._select_model(model),
+            model=self._select_model(
+                model or self._default_model or await self._background_memory_model()
+            ),
             model_settings=model_settings,
             usage_limits=self._usage_limits,
         )
@@ -455,7 +457,9 @@ class HarnessAgent:
         if not body:
             return RememberResult(False, "Nothing to remember; add text after /remember.")
 
-        selected_model = self._select_model(model)
+        selected_model = self._select_model(
+            model or self._default_model or await self._background_memory_model()
+        )
         remember_usage = usage if usage is not None else RunUsage()
         if cl100k_token_count(body) > self._settings.memory_max_tokens:
             return await self._split_or_guide_remember(
@@ -994,7 +998,7 @@ class HarnessAgent:
         """Run the tools-free cheap-model extraction pass over one durable transcript."""
 
         if model is None:
-            model = await self._background_memory_model()
+            model = self._default_model or await self._background_memory_model()
         extraction_settings = {
             **(model_settings or {}),
             "openrouter_usage": {"include": True},
@@ -1110,7 +1114,7 @@ class HarnessAgent:
         """Give the thread-aware extractor the corpus neighborhood before queue birth."""
 
         if model is None:
-            model = await self._background_memory_model()
+            model = self._default_model or await self._background_memory_model()
         result = await self._extraction_verdict_agent.run(
             f"Candidate: {candidate.model_dump_json()}\nNeighbors: {neighbors!r}",
             model=self._select_model(model),
@@ -1144,7 +1148,7 @@ class HarnessAgent:
         """Produce a lossless semantic split or fail before any queue write."""
 
         if model is None:
-            model = await self._background_memory_model()
+            model = self._default_model or await self._background_memory_model()
         result = await self._seed_splitter_agent.run(
             f"Source: {source_name}\n\n{markdown}",
             model=self._select_model(model),
@@ -1177,6 +1181,7 @@ class HarnessAgent:
         resolver = ModelPolicyResolver(
             policy=self._settings.effective_model_policy_chat,
             static_model=self._settings.chat_model,
+            choices=self._settings.model_choices,
             static_context_tokens=self._settings.model_context_tokens,
             catalog=self._router.catalog,
         )
@@ -1221,7 +1226,10 @@ class HarnessAgent:
 
     def _select_model(self, model: Model | str | None) -> Model:
         if model is None:
-            model = self._settings.chat_model
+            model = self._default_model or self._settings.chat_model
+        if model is None:
+            # WALL money / F259: a caller without a resolution cannot guess the model to buy.
+            raise ValueError("No model has been selected. Connect to the model catalog.")
         if not isinstance(model, str):
             return model
         resolved = self._models_by_name.get(model)

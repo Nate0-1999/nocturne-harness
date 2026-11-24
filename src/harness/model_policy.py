@@ -8,6 +8,7 @@ from decimal import ROUND_CEILING, Decimal
 
 from spine.model_policy import (  # noqa: F401
     BenchmarkModel,
+    HomeModelChoices,
     ListedModel,
     ModelCatalog,
     ModelCatalogLoader,
@@ -51,9 +52,10 @@ def standard_configurations(
     *,
     chat_policy: str,
     current_model_id: str | None,
-    fallback_model: str,
+    fallback_model: str | None,
     qualify: Callable[[str], str],
     burn: TokenBurn | None = None,
+    choices: HomeModelChoices | None = None,
 ) -> tuple[StandardConfiguration, ...]:
     """Pinned, max, elbow, floor and budget, each resolved now; single-key catalogs have none.
 
@@ -71,13 +73,22 @@ def standard_configurations(
     configured = parse_model_policy(chat_policy)
     scores = {entry.model_id: entry.intelligence_index for entry in catalog.listing}
 
-    def pick(policy: ModelPolicy) -> tuple[str, str, Decimal | None]:
+    reference = (fallback_model or "").partition(":")[2]
+
+    def pick(policy: ModelPolicy) -> tuple[str | None, str, Decimal | None]:
         try:
             selected = select_model(policy, catalog.rows, burn)
             route = catalog.model_routes.get(selected.permaslug)
             if route is None:
                 raise ModelCatalogUnavailable("the selected model has no unambiguous route")
         except ModelCatalogUnavailable as exc:
+            if choices:
+                key = policy.kind if policy.value is None else f"{policy.kind}:{policy.value}"
+                try:
+                    saved = choices.offline(key)
+                except ModelCatalogUnavailable as error:
+                    return None, str(error), None
+                return saved.model, saved.reason or "", None
             return fallback_model, f"falls back to the configured model: {exc}", None
         reason = f"score {selected.intelligence_index}"
         if policy.kind in {"elbow", "budget"}:
@@ -94,19 +105,22 @@ def standard_configurations(
     if floor is None and current_model_id is not None:
         floor = scores.get(current_model_id)
     if floor is None:
-        floor = scores.get(fallback_model.split(":", 1)[1])
+        floor = scores.get(reference)
     if floor is None:
         floor = elbow_score
     pinned = qualify(current_model_id) if current_model_id is not None else None
     if pinned is None and configured.kind == "pinned":
         assert isinstance(configured.value, str)
         pinned = configured.value
-    pinned = pinned or fallback_model
+    pinned = pinned or fallback_model or elbow_model
     configurations = [
-        StandardConfiguration(f"pinned:{pinned}", pinned, "keeps this model"),
         StandardConfiguration("max", *pick(ModelPolicy("max"))[:2]),
         StandardConfiguration("elbow", elbow_model, elbow_reason),
     ]
+    if pinned and not (choices and choices.excluded(choices.bans(), pinned)):
+        configurations.insert(
+            0, StandardConfiguration(f"pinned:{pinned}", pinned, "keeps this model")
+        )
     if isinstance(floor, Decimal):
         configurations.append(
             StandardConfiguration(f"floor:{floor}", *pick(ModelPolicy("floor", floor))[:2])
@@ -114,7 +128,9 @@ def standard_configurations(
     budget = configured.value if configured.kind == "budget" else None
     if budget is None and burn is not None:
         prices = {entry.model_id: entry for entry in catalog.listing}
-        here = prices.get(current_model_id or "") or prices.get(fallback_model.split(":", 1)[1])
+        here = prices.get(current_model_id or "") or prices.get(
+            reference or (elbow_model or "").partition(":")[2]
+        )
         if here is not None and None not in (here.prompt_price, here.completion_price):
             hourly = burn.hourly_cost(
                 BenchmarkModel(here.model_id, Decimal(0), here.prompt_price, here.completion_price)
@@ -163,12 +179,16 @@ async def browse_models(
     *,
     chat_policy: str,
     current_model: str | None,
-    fallback_model: str,
+    fallback_model: str | None,
     burn: TokenBurn | None = None,
+    choices: HomeModelChoices | None = None,
 ) -> dict[str, object]:
     """FL-202's read path: the listing in qualified ids plus the configurations now."""
 
     catalog = await loader.load()
+    bans = choices.bans() if choices else {}
+    if choices:
+        catalog = choices.eligible(catalog)
     current_id = None
     if current_model is not None:
         try:
@@ -187,6 +207,7 @@ async def browse_models(
         "models": [
             {
                 "model": qualify(entry.model_id),
+                "banned_by": choices.ban_target(bans, qualify(entry.model_id)) if choices else None,
                 "name": entry.name,
                 "context_tokens": entry.context_tokens,
                 "prompt_price": number(entry.prompt_price),
@@ -208,6 +229,7 @@ async def browse_models(
                 fallback_model=fallback_model,
                 qualify=qualify,
                 burn=burn,
+                choices=choices,
             )
         ],
     }
