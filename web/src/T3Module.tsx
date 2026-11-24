@@ -13,8 +13,8 @@ export function T3Module() {
     let current = true
     globalThis.fetch('/v1/t3/front/frame', { method: 'POST' })
       .then(async (response) => {
-        const body = await response.json() as { url?: string, detail?: string }
-        return response.ok && body.url ? { url: body.url } : { line: body.detail ?? 'T3 did not start.' }
+        const body = await response.json() as { url?: string, line?: string, detail?: string }
+        return body.url ? { url: body.url } : { line: body.line ?? body.detail ?? 'T3 did not start.' }
       })
       .catch(() => ({ line: 'Nocturne is not answering. Run nocturne up.' }))
       .then((next) => { if (current) setScreen(next) })

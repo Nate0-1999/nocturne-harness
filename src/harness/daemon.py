@@ -1512,7 +1512,8 @@ def create_dev_app(
             try:
                 return {"url": await front.frame_url(page)}
             except T3Error as exc:
-                raise HTTPException(503, str(exc)) from None
+                # T3 not installed or not starting is a state the module shows, not a failure.
+                return {"line": str(exc)}
 
         @app.get("/v1/t3/front/frame")
         async def front_frame_state():
