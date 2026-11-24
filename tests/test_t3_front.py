@@ -102,7 +102,14 @@ async def test_rewind_marks_front_list_once_and_waits_for_a_journal_change(tmp_p
         messages=[{"role": "user", "text": f"user-{i}"} for i in range(2)],
     )
     client = SimpleNamespace(
-        environment_id="env", call=AsyncMock(return_value=projection), dispatch=AsyncMock()
+        environment_id="env",
+        call=AsyncMock(return_value=projection),
+        orchestration_get=AsyncMock(
+            return_value={
+                "items": [{"item": {"type": "user_message", "text": f"user-{i}"}} for i in range(2)]
+            }
+        ),
+        dispatch=AsyncMock(),
     )
     front = FrontServer(tmp_path, None, journal, tmp_path)
     row = journal.catalog()[0]
@@ -113,3 +120,36 @@ async def test_rewind_marks_front_list_once_and_waits_for_a_journal_change(tmp_p
     projection["thread"]["title"] = OUT_OF_STEP + "My conversation"
     assert await front.sync_thread(client, row)
     client.dispatch.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_sync_continues_from_full_transcript_when_projection_drops_old_turns(tmp_path):
+    """P4 / SD-114: a short projection must not skip or duplicate a journal prompt."""
+    from harness.t3_front import FrontServer
+
+    users = [
+        dict(role="user", message_id=str(i), content=f"Prompt {i}", state="end_turn")
+        for i in range(12)
+    ]
+    history = SimpleNamespace(messages=[*users, {"role": "assistant"}])
+    journal = SimpleNamespace(current_thread=lambda _: history, front_thread=lambda *_: "thread")
+    previous = [dict(role="user", text=m["content"]) for m in users[:-1]]
+    client = SimpleNamespace(
+        environment_id="env",
+        call=AsyncMock(
+            return_value=dict(thread={"title": "Long conversation"}, runs=[], messages=previous[1:])
+        ),
+        orchestration_get=AsyncMock(
+            return_value={
+                "items": [{"item": {"type": "user_message", "text": m["text"]}} for m in previous]
+            }
+        ),
+        message=AsyncMock(),
+        dispatch=AsyncMock(),
+    )
+    front = FrontServer(tmp_path, None, journal, tmp_path)
+    assert not await front.sync_thread(client, SimpleNamespace(thread_id="thread"))
+    client.dispatch.assert_not_awaited()
+    client.message.assert_awaited_once_with(
+        "thread", "nocturne-journal-11", "Prompt 11", {"instanceId": "nocturne", "model": "default"}
+    )

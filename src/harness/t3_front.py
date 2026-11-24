@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from uuid import NAMESPACE_URL, uuid5
 
 import httpx
@@ -145,16 +145,7 @@ class FrontServer(T3Server):
             root = row.workspace_root or str(self.default_root)
             if not Path(root).is_dir():
                 return True
-            async with httpx.AsyncClient(trust_env=False) as http:
-                shell = await http.get(
-                    client.origin + "/api/orchestration/shell",
-                    headers={
-                        "Authorization": f"Bearer {client.session}",
-                        "x-t3-orchestration-protocol": "2",
-                    },
-                )
-                shell.raise_for_status()
-                projects = shell.json()["projects"]
+            projects = (await client.orchestration_get("shell"))["projects"]
             project = next(
                 (
                     p["id"]
@@ -194,7 +185,12 @@ class FrontServer(T3Server):
         projection = await client.call("orchestration.getThreadProjection", {"threadId": native})
         if any(r["status"] not in TERMINAL for r in projection["runs"]):
             return False
-        visible = [m["text"] for m in projection["messages"] if m["role"] == "user"]
+        transcript = await client.orchestration_get(f"threads/{quote(native, safe='')}/transcript")
+        visible = [
+            row["item"]["text"]
+            for row in transcript["items"]
+            if row["item"]["type"] == "user_message"
+        ]
         title = projection["thread"]["title"]
         if visible != [m["content"] for m in users[: len(visible)]]:
             if not title.startswith(OUT_OF_STEP):
