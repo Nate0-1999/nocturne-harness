@@ -4682,3 +4682,5 @@ elbow over eligible models. If the owner's pin is banned, new conversations use 
 until the ban is lifted. Established conversations retain their model. The settings show
 when the pick changed separately from the catalog date used for a saved pick. In the six
 retained observations the elbow picked six different models. Report 336 records the walk.
+
+M8PA (P2, P3; SD-098, A-103). The catalog poll already reaches every Stage. It lists the IDs of turns currently executing, including a Symphony's launch turn while its workers continue. The scheduler supplies the workflow name. A tap opens the existing Profiler over the Stage and leaves the conversation selected. The module still reads one thread's profile at a time.

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import re
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Literal
@@ -319,6 +319,12 @@ class SymphonyExperience:
         await emit.text(text)
         self._start(stack)
         return self._local_outcome(message_history, text)
+
+    def running_stacks(self) -> Iterator[tuple[str, str]]:
+        """Yield only the thread and stack identities of supervised work in flight."""
+        for stack in self._stacks.values():
+            if stack.state == "running":
+                yield stack.thread_id, stack.symphony_id
 
     async def read(self, symphony_id: str) -> SymphonyStackRecord | None:
         """Read one stack by its identity for headless and owner-path verification."""

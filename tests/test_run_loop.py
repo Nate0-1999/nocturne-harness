@@ -2815,13 +2815,17 @@ async def test_running_thread_ids_lists_a_thread_only_while_it_runs(tmp_path: Pa
     workspace.mkdir()
     await loop.request_snapshot("thread-1", sink, workspace_root=str(workspace))
     assert loop.running_thread_ids() == []
-    await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="working", sink=sink)
+    run_id = await loop.submit(thread_id="thread-1", prompt_id=ulid(1), prompt="working", sink=sink)
     await control.entered.wait()
     assert loop.running_thread_ids() == ["thread-1"]
+    # M8PA: a second page must open the live bars even while another turn is queued.
+    await loop.submit(thread_id="thread-1", prompt_id=ulid(2), prompt="working", sink=sink)
+    assert loop.running_profile_ids() == [("thread-1", run_id)]
     control.release.set()
     control.cleanup_release.set()
-    await _wait_for_done_count(sink, 1)
+    await _wait_for_done_count(sink, 2)
     assert loop.running_thread_ids() == []
+    assert loop.running_profile_ids() == []
     await loop.close()
 
 

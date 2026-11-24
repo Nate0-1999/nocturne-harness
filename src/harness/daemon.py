@@ -1841,9 +1841,19 @@ def create_dev_app(
             # F135 (M3EX-14): a moved launch folder must not hide every thread.
             root = discovery_root if discovery_root.is_dir() else None
             models = loop.thread_models()
+            entries = journal.catalog()
+            titles = {entry.thread_id: entry.title for entry in entries}
             return {
-                "threads": [
-                    replace(entry, **models.get(entry.thread_id, {})) for entry in journal.catalog()
+                "threads": [replace(entry, **models.get(entry.thread_id, {})) for entry in entries],
+                "profile_runs": [
+                    {
+                        "thread_id": thread_id,
+                        "run_id": run_id,
+                        "name": workflow.name
+                        if (workflow := workflow_definitions.get(thread_id))
+                        else titles.get(thread_id, "Conversation"),
+                    }
+                    for thread_id, run_id in loop.running_profile_ids()
                 ],
                 # F179: a page hears only its selected thread (H7); this names the others running.
                 "running": loop.running_thread_ids(),

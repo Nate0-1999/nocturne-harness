@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { useRackPlugin, useRackSnapshot } from './rack'
+import { useRackPlugin, useRackSelection, useRackSnapshot } from './rack'
+import type { RunningProfile } from './store'
 import { Button, Chip, EmptyState, ModuleHeader } from './kit'
 import { MemoryCard } from './MemoryCard'
 import './assets/profiler.css'
@@ -63,12 +64,39 @@ function find(agent: Agent, id: string): Agent | null {
   return null
 }
 
-export function ProfilerModule() {
-  const threadId = useRackSnapshot().selectedThreadId
-  return <Profiler key={threadId ?? ''} threadId={threadId} />
+export function ProfileRunList({ runs, current, opened, onOpen }: {
+  runs: RunningProfile[]; current: string | null; opened?: string; onOpen: (id: string) => void
+}) {
+  if (!runs.length) return null
+  const ordered = [...runs].sort((a, b) => Number(b.thread_id === current) - Number(a.thread_id === current))
+  return <nav className="profiler-live-runs" aria-label="Running profiles">
+    <strong>Running</strong>
+    {ordered.map((run) => <Button key={run.run_id} type="button"
+      data-testid="open-running-profile" data-run-id={run.run_id} aria-pressed={opened ? run.run_id === opened : undefined}
+      title={`Show bars for ${run.name}`} onClick={() => onOpen(run.run_id)}><span>{run.name}</span></Button>)}
+  </nav>
 }
 
-function Profiler({ threadId }: { threadId: string | null }) {
+export function ProfilerModule() {
+  const { selectedThreadId, profileRuns } = useRackSnapshot()
+  return <ProfileSelection key={selectedThreadId} current={selectedThreadId} runs={profileRuns} />
+}
+
+function ProfileSelection({ current, runs }: { current: string | null; runs: RunningProfile[] }) {
+  const { selection } = useRackPlugin()
+  const global = useRackSelection()
+  const [picked, setPicked] = useState<string | null>(null)
+  const overlay = global?.kind === 'profile_run'
+  const active = runs.find((run) => run.run_id === (overlay ? global.id : picked))
+    ?? runs.find((run) => run.thread_id === current) ?? runs[0]
+  return <section className="profiler-instrument" aria-label="Agent profiler">
+    <ProfileRunList runs={runs} current={current} opened={active?.run_id}
+      onOpen={(id) => overlay ? selection.select({ kind: 'profile_run', id }) : setPicked(id)} />
+    <Profiler key={active?.run_id ?? current} threadId={active?.thread_id ?? current} liveId={active?.run_id} />
+  </section>
+}
+
+function Profiler({ threadId, liveId }: { threadId: string | null; liveId?: string }) {
   const { events, query } = useRackPlugin()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [opened, setOpened] = useState<string | null>(null)
@@ -82,25 +110,25 @@ function Profiler({ threadId }: { threadId: string | null }) {
   useEffect(() => {
     if (!threadId) return
     let active = true
-    void query.query({ resource: 'profile', thread_id: threadId, run_id: opened ?? undefined })
+    void query.query({ resource: 'profile', thread_id: threadId, run_id: liveId ?? opened ?? undefined })
       .then((result) => { if (active) { setProfile(result.data as unknown as Profile); setFailed(false) } })
       .catch(() => { if (active) setFailed(true) })
     return () => { active = false }
-  }, [query, threadId, opened, refresh])
+  }, [query, threadId, liveId, opened, refresh])
 
   useEffect(() => events.subscribe((event) => {
-    if (event.direction !== 'inbound') return
+    if (event.direction !== 'inbound' || event.envelope.thread_id !== threadId) return
     if (event.envelope.type === 'run.started') setOpened(null)
     setRefresh((value) => value + 1)
-  }), [events])
+  }), [events, threadId])
 
-  const run = profile?.run ?? null
+  const run = liveId && profile?.run?.id !== liveId ? null : profile?.run ?? null
   const live = run !== null && running(run)
   useEffect(() => {
-    if (!live) return
+    if (!live && !liveId) return
     const timer = globalThis.setTimeout(() => setRefresh((value) => value + 1), 1000)
     return () => globalThis.clearTimeout(timer)
-  }, [live, refresh])
+  }, [live, liveId, refresh])
 
   const shown = run !== null && (live || opened !== null) ? run : null
   const charted = shown !== null
@@ -162,7 +190,7 @@ function Profiler({ threadId }: { threadId: string | null }) {
   }
 
   const finished = profile?.runs.filter((entry) => entry.end !== null).slice().reverse() ?? []
-  return <section className="profiler-instrument" aria-label="Agent profiler">
+  return <>
     <ModuleHeader title="Profiler" detail={shown ? `${live ? 'Running' : 'Finished run'} · ${seconds(span)}` : undefined}>
       {shown && (Object.keys(KIND_WORDS) as StepKind[]).map((kind) => <Chip key={kind} className="profiler-key" data-kind={kind}>{KIND_WORDS[kind]}</Chip>)}
       {shown && !live && <Button action="close" iconOnly type="button" data-tooltip="Close" data-tooltip-detail="Close this run and list the finished runs."
@@ -173,7 +201,7 @@ function Profiler({ threadId }: { threadId: string | null }) {
       <ol>{row(shown, 0)}</ol>
     </div>}
     {picked?.given && <GoingIn agent={picked} onClose={() => setChosen(null)} />}
-    {!shown && profile && <>
+    {!shown && profile && !liveId && <>
       <EmptyState title={threadId ? 'No agents are running in this conversation.' : 'Select a conversation to profile its agents.'} />
       {finished.length > 0 && <ol className="profiler-runs" aria-label="Finished runs">
         {finished.map((entry) => <li key={entry.id}>
@@ -186,7 +214,7 @@ function Profiler({ threadId }: { threadId: string | null }) {
         </li>)}
       </ol>}
     </>}
-  </section>
+  </>
 }
 
 /** What the agent had going in, read from the record; where the record holds none it says so. */

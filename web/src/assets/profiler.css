@@ -5,6 +5,14 @@
 .profiler-instrument ol { margin: 0; padding: 0; list-style: none; }
 .profiler-instrument .kit-empty { min-height: 0; padding: var(--space-4) var(--space-5); }
 
+.profiler-live-runs { display: flex; align-items: center; flex: none; gap: var(--space-2); overflow-x: auto; min-width: 0; padding: 0 var(--space-3); height: 2.25rem; background: var(--surface-deep); border-bottom: 1px solid var(--line); color: var(--ink); font: var(--text-sm) var(--data-font); }
+.profiler-live-runs > strong { color: var(--accent); }
+.profiler-live-runs button { flex: 0 1 auto; min-width: 7rem; max-width: min(36ch, 65vw); }
+.profiler-live-runs button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rack-shell--stage:has(> .profiler-live-runs) { padding-top: 2.25rem; }
+.rack-shell--stage > .profiler-live-runs { position: absolute; inset: 0 0 auto; z-index: 116; }
+.rack-overlay-module--profiler { inset: 3.25rem 0 0; }
+
 .profiler-chart { flex: 1 1 auto; min-height: 5rem; padding: var(--space-3) var(--space-5); overflow-y: auto; }
 .profiler-row { display: grid; grid-template-columns: minmax(11rem, 30%) 1fr; align-items: center; gap: var(--space-3); min-height: 1.5rem; }
 .profiler-name { display: flex; align-items: center; gap: var(--space-1); min-width: 0; padding-left: calc(var(--depth) * var(--space-3)); }

@@ -33,7 +33,7 @@ import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { WorkVisualization } from './WorkVisualization'
-import { ProfilerModule } from './ProfilerModule'
+import { ProfilerModule, ProfileRunList } from './ProfilerModule'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
@@ -68,6 +68,7 @@ import {
   RACK_MANIFESTS,
   clearRackSelection,
   createHostPluginApi,
+  rackSelectionSurface,
   isRackModuleId,
   useRackHostSnapshot,
   useRackHostSelection,
@@ -176,6 +177,7 @@ const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
 }
 
 const DISMISSIBLE_OVERLAY_CLASSES = {
+  profiler: 'rack-overlay-module--profiler',
   thread_end: 'rack-overlay-module--thread-end',
   model_device: 'rack-overlay-module--model-device',
 } as const
@@ -872,6 +874,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       data-testid="rack-shell"
     >
       <div className="rack-ambient" aria-hidden="true" />
+      {dismissibleOverlay !== 'profiler' && <ProfileRunList runs={snapshot.profileRuns} current={snapshot.selectedThreadId}
+        onOpen={(id) => rackSelectionSurface.select({ kind: 'profile_run', id })} />}
       <div className="rack-stage-header" data-rack-module="header">
         <RackPluginIframe
           manifest={RACK_MANIFESTS.header}
@@ -1269,7 +1273,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           isRegressionFixture={isRegressionFixture}
         />
       </div>
-      {dismissibleOverlay !== null && openGate === null && (
+      {dismissibleOverlay !== null && (openGate === null || dismissibleOverlay === 'profiler') && (
         <DismissibleRackOverlay
           moduleId={dismissibleOverlay}
           scope={layout.scopes[dismissibleOverlay]
