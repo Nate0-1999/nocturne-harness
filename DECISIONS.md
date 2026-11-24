@@ -4682,3 +4682,16 @@ elbow over eligible models. If the owner's pin is banned, new conversations use 
 until the ban is lifted. Established conversations retain their model. The settings show
 when the pick changed separately from the catalog date used for a saved pick. In the six
 retained observations the elbow picked six different models. Report 336 records the walk.
+
+## M8TD — T3's screen in a Stage module that can fit the window [P2.5]
+
+SD-114 answers 8 to 10, draft A-101. T3 0.1.11 answers every hosting page "nobody may host
+this"; its code is not ours to change. The daemon passes the front T3 server through on its
+own loopback port and changes that one answer to name this home's page alone. Its own port
+keeps T3's page at an address apart from Nocturne's. One request per connection, so each
+request's Host is read before T3 sees it. The port is remembered per home because T3's page
+keeps its setup by address. Nocturne's page frames T3 directly: inside a rack frame the page
+would have a second host of another site, and T3's sign-in cookie would be withheld. The
+signed-in link is handed only to a request from this home's own page. Fitted, the module
+covers the window below a gate, which must stay visible. A layout the owner already arranged
+gets the module beside its modules. Report 340 records the look-first and the walk.

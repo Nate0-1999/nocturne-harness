@@ -22,7 +22,7 @@ export const STAGE_MIN_ZOOM = 0.06
 export const STAGE_MAX_ZOOM = 1.6
 const STAGE_RECOVERY_INSET = 12
 const STAGE_RECOVERY_ZOOM = 1
-const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'conversation']
+const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'conversation', 't3']
 const STAGE_ORIGIN_X = (STAGE_COLUMNS - LEGACY_STAGE_COLUMNS * STAGE_COORDINATE_SCALE) / 2
 const STAGE_ORIGIN_Y = (STAGE_ROWS - LEGACY_STAGE_ROWS * STAGE_COORDINATE_SCALE) / 2
 
