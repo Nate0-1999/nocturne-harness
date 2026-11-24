@@ -93,6 +93,16 @@ class FrontSession:
                                     f"nocturne:t3:{client.environment_id}/{self.native}",
                                 )
                             )
+                            existing = self.front.journal.current_thread(self.native)
+                            if (
+                                existing
+                                and self.front.journal.front_thread(
+                                    self.native, client.environment_id
+                                )
+                                == self.native
+                            ):
+                                self.session = self.native
+                                self.workspace_root = existing.workspace_root
                         else:
                             self.session = str(uuid4())
                         result = {**MODELS, "sessionId": self.session}
@@ -195,31 +205,28 @@ class FrontSession:
             if message["role"] != "user" or message.get("attachments"):
                 raise T3Error("This Nocturne conversation accepts text prompts.")
             self.thread = self.thread or self.session
-            await loop.request_snapshot(self.thread, sink, workspace_root=self.workspace_root)
-            snapshot = (await events.get()).payload
-            replay = next(
-                (
-                    m
-                    for m in snapshot.messages
-                    if m.get("role") == "user"
-                    and m["message_id"] == message_id
-                    and m["content"] == message["text"]
-                ),
-                None,
-            )
-            prompt_id = (
-                replay["message_id"]
-                if replay
-                else self.front.journal.bind_front_prompt(
+            replay = message_id.startswith("nocturne-journal-")
+            if replay:
+                # Display an existing answer without selecting a thread or creating a model run.
+                history = self.front.journal.current_thread(self.thread)
+                messages = history.messages if history else ()
+                prompt_id = message_id.removeprefix("nocturne-journal-")
+            else:
+                await loop.request_snapshot(self.thread, sink, workspace_root=self.workspace_root)
+                messages = (await events.get()).payload.messages
+                prompt_id = self.front.journal.bind_front_prompt(
                     self.thread, client.environment_id, self.native, message_id
                 )
+            prior = next(
+                (m for m in messages if m["message_id"] == prompt_id and m["role"] == "user"), None
             )
-            prior = next((m for m in snapshot.messages if m["message_id"] == prompt_id), None)
+            if replay and (prior is None or prior["content"] != message["text"]):
+                raise T3Error("The journal entry changed before T3 could display it.")
             if prior is not None:
                 answer = next(
                     (
                         m
-                        for m in snapshot.messages
+                        for m in messages
                         if m["role"] == "assistant" and m.get("run_id") == prior["run_id"]
                     ),
                     None,

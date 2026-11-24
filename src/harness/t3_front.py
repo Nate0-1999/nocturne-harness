@@ -8,6 +8,7 @@ import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import urlencode
+from uuid import NAMESPACE_URL, uuid5
 
 import httpx
 
@@ -167,16 +168,22 @@ class FrontServer(T3Server):
                         workspaceRoot=root,
                     ),
                 )
-            imported = await client.call(
-                "server.importAcpRegistrySession",
+            native = row.thread_id
+            await client.call(
+                "orchestration.launchThread",
                 dict(
-                    instanceId="nocturne",
+                    commandId=str(uuid5(NAMESPACE_URL, f"nocturne:window:{native}")),
                     projectId=project,
-                    sessionId=row.thread_id,
+                    threadId=native,
                     title=row.title,
+                    generateTitle=False,
+                    modelSelection={"instanceId": "nocturne", "model": "default"},
+                    runtimeMode="approval-required",
+                    interactionMode="default",
+                    workspaceStrategy={"type": "root"},
                 ),
             )
-            native = imported["threadId"]
+            self.journal.bind_front_window(row.thread_id, client.environment_id)
         projection = await client.call("orchestration.getThreadProjection", {"threadId": native})
         if any(r["status"] not in TERMINAL for r in projection["runs"]):
             return False
@@ -191,7 +198,7 @@ class FrontServer(T3Server):
             # ACP sees the original journal ID and replays the settled answer without a run.
             await client.message(
                 native,
-                prompt["message_id"],
+                "nocturne-journal-" + prompt["message_id"],
                 prompt["content"],
                 {"instanceId": "nocturne", "model": "default"},
             )

@@ -3220,3 +3220,34 @@ async def test_every_message_is_stamped_where_it_was_written_and_restart_keeps_i
     history = restarted._threads["thread-1"].message_history
     assert located_transcript(history)[1] == {"m0": str(root), "m1": str(web)}
     await restarted.close()
+
+
+@pytest.mark.asyncio
+async def test_restored_front_prompt_cannot_run_a_subscription(tmp_path: Path) -> None:
+    """P4 / SD-114: restoring a subscription selection must never route a front prompt to a native tool."""
+    journal = TranscriptJournal(tmp_path)
+    first = journal.bind_front_prompt("front", "server", "native-thread", "native-message")
+    restored = TranscriptJournal(tmp_path)
+    assert restored.bind_front_prompt("front", "server", "native-thread", "native-message") == first
+    model = ThreadModelResolution(
+        model="subscription:codex/account/model",
+        context_tokens=4096,
+        policy="max",
+        price_sorted=False,
+    )
+    runner = ResolutionRecordingRunner()
+    loop = RunLoop(
+        runner,
+        factory(Ids()),
+        model_resolver=RecordingResolver({"front": model}),
+        transcript_journal=restored,
+    )
+    sink = Sink()
+    try:
+        await loop.submit(thread_id="front", prompt_id=first, prompt="Continue", sink=sink)
+        await _wait_for_done_count(sink, 1)
+        done = next(m.payload for m in sink.messages if m.type is MessageType.RUN_DONE)
+        assert done.error_message == "Select a Nocturne model for this T3 conversation."
+        assert not runner.resolutions
+    finally:
+        await loop.close()

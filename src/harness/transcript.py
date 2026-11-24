@@ -649,9 +649,26 @@ class TranscriptJournal:
             rows = self._read_file_rows(self._filename_for_thread(thread_id))
             for raw in reversed(rows):
                 row = json.loads(raw)
-                if row.get("record_type") == "t3_front" and row["environment"] == environment:
+                if (
+                    row.get("record_type") in {"t3_front", "t3_window"}
+                    and row["environment"] == environment
+                ):
                     return row["native_thread"]
             return None
+
+    def bind_front_window(self, thread_id: str, environment: str) -> None:
+        """An existing journal keeps its identity when its T3 window is created."""
+        with self._lock:
+            if self.front_thread(thread_id, environment) is None:
+                self._append(
+                    thread_id,
+                    {
+                        "version": 1,
+                        "record_type": "t3_window",
+                        "native_thread": thread_id,
+                        "environment": environment,
+                    },
+                )
 
     def bind_front_prompt(self, thread_id, environment, native_thread, native_message):
         with self._lock:
