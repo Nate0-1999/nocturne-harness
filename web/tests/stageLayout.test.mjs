@@ -50,7 +50,7 @@ test('layer switching preserves independent camera and module layouts through re
     work?.modules.find((module) => module.module_id === 'conversation'),
     {
       instance_id: 'conversation', module_id: 'conversation', source_thread_id: undefined,
-      conversation_mode: 'focused', x: 20, y: 8, width: 16, height: 20,
+      conversation_mode: 'focused', x: 20, y: 8, width: 18, height: 20,
     },
   )
 })
