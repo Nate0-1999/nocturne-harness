@@ -4671,3 +4671,7 @@ sends `thread/archive` to the installed Codex app-server over local stdio.
 T3 remains responsible for prompts, permissions and resume. A failed archive
 is logged and the conversation keeps its outcome. Claude Code has no native
 archive operation here.
+
+## M8XF — Account for each compaction fact [P1.5]
+
+F221, SD-107, A-096. Keep the model proposal in the compaction record. Attach the Palace decision by candidate ID and reuse the ID after an interrupted delivery. Old records have only their original proposal.

@@ -1480,10 +1480,9 @@ class _MemoryStrategy:
             "machine_id": owner.service._machine_id,
             "source": transcript,
             "facts": [
-                {**fact, "memory_id": str(card.candidate.memory_id)}
+                {**fact, "memory_id": outcome["memory_id"]}
                 for fact in result.facts
-                for card in result.cards
-                if card.candidate.body == fact["body"]
+                if (outcome := fact.get("outcome", {})).get("status") == "admitted"
             ],
         }
         owner.service._journal.append_compaction_record(
