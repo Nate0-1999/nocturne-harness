@@ -12,6 +12,7 @@ from uuid import NAMESPACE_URL, uuid5
 
 import httpx
 
+from harness.envelope import StopReason
 from harness.t3_client import TERMINAL, T3Client, T3Error, new_id
 from harness.t3_front_session import FrontSession
 from harness.t3_server import T3Server
@@ -131,7 +132,12 @@ class FrontServer(T3Server):
         history = self.journal.current_thread(row.thread_id)
         if not history or not history.messages:
             return True
-        if history.messages[-1].get("partial") or history.messages[-1]["role"] != "assistant":
+        users = [m for m in history.messages if m["role"] == "user"]
+        if (
+            not users
+            or users[-1].get("state") not in StopReason
+            or history.messages[-1]["role"] != "assistant"
+        ):
             return False
         native = self.journal.front_thread(row.thread_id, client.environment_id)
         if native is None:
@@ -187,13 +193,12 @@ class FrontServer(T3Server):
         projection = await client.call("orchestration.getThreadProjection", {"threadId": native})
         if any(r["status"] not in TERMINAL for r in projection["runs"]):
             return False
-        users = [m for m in history.messages if m["role"] == "user"]
         visible = [m["text"] for m in projection["messages"] if m["role"] == "user"]
         if visible != [m["content"] for m in users[: len(visible)]]:
             return False
         if len(visible) < len(users):
             prompt = users[len(visible)]
-            if prompt.get("state") != "end_turn":
+            if prompt.get("state") not in StopReason:
                 return False
             # ACP sees the original journal ID and replays the settled answer without a run.
             await client.message(

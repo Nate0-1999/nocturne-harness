@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
+from harness.envelope import StopReason
 from harness.t3_client import TERMINAL, T3Error
 
 MODELS = {
@@ -231,10 +232,13 @@ class FrontSession:
                     ),
                     None,
                 )
-                if answer and prior.get("state") == "end_turn" and not answer.get("partial", True):
-                    await self.text(answer["content"])
-                    await self.send(id=rid, result={"stopReason": "end_turn"})
-                    return
+                state = prior.get("state")
+                if answer and state in StopReason:
+                    await self.text(answer.get("content", ""))
+                    if state in {"end_turn", "cancelled"}:
+                        await self.send(id=rid, result={"stopReason": state})
+                        return
+                    raise T3Error(f"The Nocturne journal records this turn as {state}.")
                 raise T3Error("Nocturne already accepted this turn. Open its journal to review it.")
             self.run = await loop.submit(
                 thread_id=self.thread, prompt_id=prompt_id, prompt=message["text"], sink=sink
