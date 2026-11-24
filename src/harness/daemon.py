@@ -123,6 +123,10 @@ from harness.spine_client import (
 )
 from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
+from harness.t3_client import T3Error
+from harness.t3_server import T3Server
+from harness.t3_sources import offers, project_sources, sources
+from harness.t3_turn import SubscriptionTurns
 from harness.tool_inventory import ToolInventory, ToolsetSelection, inventory
 from harness.tools_memory import MemoryToolContext
 from harness.toolset import Crossings
@@ -245,6 +249,7 @@ _RACK_MODULE_IDS = frozenset(
         "recipe",
         "jobs",
         "security",
+        "profiler",
     }
 )
 _RACK_FRAME_CSP = "; ".join(
@@ -940,6 +945,8 @@ def create_dev_app(
     configured = settings or HarnessSettings()
     completion_router = CompletionRouter(configured)
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
+    t3 = T3Server(home)
+    completion_router.subscription_server = t3
     role_policy_path = home / "model-policies.json"
     model_pin_path = home / "model-pins.json"
     local_model_path = home / "local-model.json"
@@ -1195,14 +1202,18 @@ def create_dev_app(
         outbox=outbox,
     )
     runner = MemoryGateTurnRunner(
-        PydanticAITurnRunner(
-            owned_agent,
-            context_factory,
-            spend_walls,
-            receipt_queue=receipt_queue,
-            context_windows=context_windows,
-            extraction=extraction,
-            overwhelm=overwhelm,
+        SubscriptionTurns(
+            PydanticAITurnRunner(
+                owned_agent,
+                context_factory,
+                spend_walls,
+                receipt_queue=receipt_queue,
+                context_windows=context_windows,
+                extraction=extraction,
+                overwhelm=overwhelm,
+            ),
+            t3,
+            journal,
         ),
         owned_spine,
         context_factory,
@@ -1523,6 +1534,8 @@ def create_dev_app(
         ):
             try:
                 parsed = parse_model_policy(body.policy)
+                if str(parsed.value).startswith("subscription:"):
+                    raise ValueError("Subscription choices belong to one conversation.")
                 if role != "curator" and parsed.kind == "pinned":
                     completion_router.model_for(str(parsed.value))
             except ValueError as exc:
@@ -1547,8 +1560,15 @@ def create_dev_app(
                 model_resolver.set_policy(body.policy)
             return {"policies": role_policies}
 
+        @app.get("/v1/subscription-sources")
+        async def subscription_sources():
+            try:
+                return {"sources": await sources(t3)}
+            except T3Error as exc:
+                raise HTTPException(503, str(exc)) from None
+
         @app.get("/v1/models")
-        async def model_browser(thread_id: str | None = None):
+        async def model_browser(thread_id: str | None = None, subscriptions: bool = False):
             """FL-202: the token source's models, the owner's pins, the four policies now."""
             catalog = completion_router.catalog
             current = None
@@ -1574,14 +1594,43 @@ def create_dev_app(
                     browser = await browse_models(
                         catalog,
                         chat_policy=role_policies["chat"],
-                        current_model=None if current is None else current["model"],
+                        current_model=(
+                            None
+                            if current is None or current["model"].startswith("subscription:")
+                            else current["model"]
+                        ),
                         fallback_model=configured.chat_model,
                         burn=await measured_token_burn(owned_spine),
                     )
                     if not browser["models"] and completion_router.remote_catalog is None:
                         browser["unavailable"] = "This model source publishes no model list."
                 except ModelCatalogUnavailable as exc:
-                    raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
+                    if not (subscriptions and t3.binary.is_file() or t3.running):
+                        raise HTTPException(503, f"The model list is unavailable: {exc}.") from None
+                    browser["unavailable"] = "The broker model list is unavailable."
+            if subscriptions and t3.binary.is_file() or t3.running:
+                try:
+                    native = await sources(t3)
+                except T3Error:
+                    native = project_sources([])
+                browser["subscriptions"] = [
+                    {k: source[k] for k in ("tool", "name", "availability", "limited_until")}
+                    for source in native
+                ]
+                for key, source, model in offers(native):
+                    browser["models"].append(
+                        {
+                            "model": key,
+                            "name": f"{source['name']} · {model['name']}",
+                            "context_tokens": None,
+                            "prompt_price": None,
+                            "completion_price": None,
+                            "score": None,
+                            "reasoning": bool(model.get("thinking")),
+                            "effort_levels": (model.get("thinking") or {}).get("levels", []),
+                            "parameters": [],
+                        }
+                    )
             return {
                 **browser,
                 "local": {
@@ -1821,6 +1870,7 @@ def create_dev_app(
         app.router.add_event_handler("startup", flush_receipt_queue)
         app.router.add_event_handler("startup", start_local_copy)
         app.router.add_event_handler("shutdown", stop_local_copy)
+        app.router.add_event_handler("shutdown", t3.close)
         app.router.add_event_handler("startup", restore_symphonies)
         app.router.add_event_handler("startup", extraction.backfill_projects)
         if idle_extraction is not None:

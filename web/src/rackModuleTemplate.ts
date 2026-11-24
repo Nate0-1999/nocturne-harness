@@ -18,6 +18,7 @@ export type StageRackModuleId =
   | 'recipe'
   | 'jobs'
   | 'security'
+  | 'profiler'
 
 export type RackResizeDirection = 'n' | 'e' | 's' | 'w' | 'ne' | 'se' | 'sw' | 'nw'
 
@@ -53,6 +54,7 @@ export const STAGE_RACK_MODULE_IDS: readonly StageRackModuleId[] = [
   'recipe',
   'jobs',
   'security',
+  'profiler',
 ]
 
 export function rackResizeDirections(

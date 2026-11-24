@@ -99,6 +99,7 @@ The two tables are in `web/src/kit.tsx`: ACTION_ICONS (meaning → icon) and ACT
 - A second size for the same icon, or a second size or font for the same
   text role, in any module. One scale, in the tokens.
 - A box around an icon that is not a button.
+- Proposed for gate review (owner 2026-11-23): a row pin stands bare and appears on hover, keyboard focus or a touch hold; a pinned row keeps its filled pin.
 - A change inside the composer function or inside the 3D scenes; peers
   hold unmerged work there. Style around them.
 - A behavior change of any kind.

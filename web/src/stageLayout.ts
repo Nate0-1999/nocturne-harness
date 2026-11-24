@@ -43,13 +43,14 @@ export type StageModuleId =
   | 'recipe'
   | 'jobs'
   | 'security'
+  | 'profiler'
 
 export type ConversationMode = 'focused' | 'stack'
 
 export const STAGE_MODULE_IDS: StageModuleId[] = [
   'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'farm', 'roots', 'injection_console', 'palace_queue',
-  'recipe', 'jobs', 'security',
+  'recipe', 'jobs', 'security', 'profiler',
 ]
 export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
   'conversation', 'vitals', 'context_bars', 'memory_graph',
@@ -104,6 +105,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   recipe: 'ATTUNED',
   jobs: 'GLOBAL',
   security: 'ATTUNED',
+  profiler: 'ATTUNED',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
@@ -129,6 +131,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   recipe: expandLegacyModule({ instance_id: 'recipe', module_id: 'recipe', x: 14, y: 2, width: 12, height: 10 }),
   jobs: expandLegacyModule({ instance_id: 'jobs', module_id: 'jobs', x: 2, y: 2, width: 16, height: 12 }),
   security: expandLegacyModule({ instance_id: 'security', module_id: 'security', x: 2, y: 2, width: 12, height: 10 }),
+  profiler: expandLegacyModule({ instance_id: 'profiler', module_id: 'profiler', x: 2, y: 2, width: 16, height: 12 }),
 }
 
 export function registerStagePlugin(id: CustomRackModuleId) {
@@ -150,7 +153,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 1 }),
       modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
-      removed_modules: [{ ...DEFAULT_MODULES.jobs }, { ...DEFAULT_MODULES.security }],
+      removed_modules: [{ ...DEFAULT_MODULES.jobs }, { ...DEFAULT_MODULES.security }, { ...DEFAULT_MODULES.profiler }],
     },
     {
       layer_id: 'graph',
@@ -940,6 +943,7 @@ function expandLegacyStageLayout(layout: ParsedStageLayout): StageLayoutSet {
 function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet {
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'jobs', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'security', 'work')
+  layout = addFactoryRemovedModuleToExistingLayout(layout, 'profiler', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(addFactoryRemovedModuleToExistingLayout(layout, 'farm', 'graph'), 'roots', 'graph')
   return addFactoryRemovedModuleToExistingLayout(
     addFactoryModuleToExistingLayout(
@@ -1080,7 +1084,7 @@ function parseScopes(
 function isStageModuleId(value: unknown): value is StageModuleId {
   return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'threads' || value === 'conversation' || value === 'memory' ||
     value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' || value === 'farm' || value === 'roots' ||
-    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs' || value === 'security'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler'
 }
 
 function isLegacyRackModuleId(value: unknown): value is 'threads' | 'chat' | 'memory' {

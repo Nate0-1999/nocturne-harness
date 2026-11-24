@@ -16,6 +16,7 @@ import {
 } from 'react'
 
 import { AssistantMarkdown } from './AssistantMarkdown'
+import { ReplyReader } from './ReplyReader'
 import { failureMessage, RequestFailure, serverMessage } from './requestFailure'
 import { OutLoud } from './OutLoud'
 import { browserScreenshotDataUrl, elideBinaryPayload, toolCallLines } from './runEventDisplay'
@@ -32,6 +33,7 @@ import { RackPluginUpload } from './RackPluginUpload'
 import { MemoryGraph } from './MemoryGraph'
 import { PalaceNebula } from './PalaceNebula'
 import { WorkVisualization } from './WorkVisualization'
+import { ProfilerModule } from './ProfilerModule'
 import { InjectionConsole } from './InjectionConsole'
 import { RecipeModule } from './RecipeModule'
 import { JobsModule } from './JobsModule'
@@ -1859,6 +1861,8 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
         <JobsModule />
       ) : moduleId === 'security' ? (
         <SecurityModule />
+      ) : moduleId === 'profiler' ? (
+        <ProfilerModule />
       ) : moduleId === 'recipe' ? (
         <RecipeModule />
       ) : (
@@ -3805,7 +3809,11 @@ function MessageRow({
         </section>
       )}
       {message.content ? (
-        <AssistantMarkdown content={message.content} />
+        <>
+          <AssistantMarkdown content={message.content} />
+          <ReplyReader id={`chat:${message.run_id}`} text={message.content}
+            finished={!message.partial || message.run_id !== activeRunId} />
+        </>
       ) : activeRunId === message.run_id && (
         <p className="message__content message__content--quiet">Working…</p>
       )}

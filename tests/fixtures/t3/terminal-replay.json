@@ -1,0 +1,35 @@
+[
+  {
+    "kind": "event",
+    "sequence": 46,
+    "event": {
+      "type": "run.updated",
+      "payload": {
+        "id": "second-run",
+        "status": "running"
+      }
+    }
+  },
+  {
+    "kind": "event",
+    "sequence": 54,
+    "event": {
+      "type": "run.updated",
+      "payload": {
+        "id": "second-run",
+        "status": "interrupted"
+      }
+    }
+  },
+  {
+    "kind": "event",
+    "sequence": 60,
+    "event": {
+      "type": "run.updated",
+      "payload": {
+        "id": "second-run",
+        "status": "interrupted"
+      }
+    }
+  }
+]

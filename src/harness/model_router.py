@@ -34,6 +34,9 @@ from harness.model_policy import (
 )
 from harness.openrouter_runtime import PreservingOpenRouterModel
 from harness.spend_walls import SpendWallModel
+from harness.t3_client import T3Error
+from harness.t3_server import T3Server
+from harness.t3_sources import resolve_offer
 
 
 class ModelConfigurationError(ValueError):
@@ -347,6 +350,7 @@ class CompletionRouter:
 
     def __init__(self, settings: HarnessSettings) -> None:
         self.settings = settings
+        self.subscription_server: T3Server | None = None
         openrouter_key = (
             settings.openrouter_api_key.get_secret_value()
             if settings.openrouter_api_key is not None
@@ -383,12 +387,16 @@ class CompletionRouter:
         return replace(catalog, listing=catalog.listing + local.listing)
 
     def qualify_model(self, model: str) -> str:
+        if model.startswith("subscription:"):
+            return model
         if model.startswith("local:"):
             return model
         remote = self.remote_catalog
         return remote.qualify_model(model) if remote else model
 
     def parse_named_model(self, model: str) -> str:
+        if model.startswith("subscription:"):
+            return model
         if model.startswith("local:") and model.removeprefix("local:"):
             return model
         remote = self.remote_catalog
@@ -397,6 +405,16 @@ class CompletionRouter:
         return remote.parse_named_model(model)
 
     async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
+        if model.startswith("subscription:") and self.subscription_server is not None:
+            try:
+                key, _, offered = await resolve_offer(self.subscription_server, model)
+            except T3Error as exc:
+                raise NamedModelResolutionError(str(exc)) from None
+            # T3 publishes no window. Use the configured Nocturne memory budget internally.
+            levels = (offered.get("thinking") or {}).get("levels", [])
+            return ModelRoute(
+                key, self.settings.model_context_tokens, effort_levels=tuple(levels)
+            ), datetime.now(UTC)
         if model.startswith("local:"):
             return await self.local.load_named_route(model)
         remote = self.remote_catalog

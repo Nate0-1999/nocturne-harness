@@ -4636,6 +4636,41 @@ file touches say "touched"; they do not claim that an agent is still editing the
 The look is kept in browser storage, as the module's scope is; folders fold locally.
 No file action or new trace behavior. Pair 0.1.107 was absent from PyPI, release
 tags and all fetched branch versions; the open peers reserve 0.1.104–106 and 108.
+## M8PF — A profiler of agents at work (P2, P3)
+
+PRECEDENT: PLAN M8PF; SD-098, SD-097; A-093; A-090 (draft M8SA); ADR-008, ADR-018; D.2 153;
+FL-198; reports 230, 322. The journal already timed every step of a conversation's agent and
+kept a sub-agent's whole message list at its return; nothing was recorded while a sub-agent
+worked. One projection (`agent_profile`, beside the farm's in `visualization.py`) reads a
+thread's journal from where its last read stopped: a tool or skill call is a step as long as
+it took, and wherever none of an agent's calls runs it waits on its model, so no new timing is
+recorded for the conversation's agent. A sub-agent's start and tool steps are announced by a
+capability on its own run (`WorkerStepsCapability`), not by a stream handler: a handler would
+have turned its model requests into streamed ones. A run journaled before this reads its
+sub-agents' steps from their returned message lists. A Symphony's workers keep their tool
+steps in their own observation file; the farm's feed drops them. The route is `/v1/profile`,
+apart from the farm's feed, which by ADR-018 carries no content: what an agent was given is
+content, served only when asked for one thread. Not recorded, and said so in the view: the
+conversation agent's instructions and tool list, memories given without a gate, a Symphony
+worker's tool list. The module follows the selected conversation.
+Pair 0.1.108 was unused in releases, PyPI, open PRs and the BOARD at selection (M8SA, M8DM,
+M8MP and M8FX hold 0.1.104 to 0.1.107).
+## M8RA — Read replies through the browser's sentence queue [P1.2]
+
+SD-106 extends M3OU. Focused replies and Deck cards share one reader per conversation frame.
+The reader parses the same GFM as the rendered reply and holds the unfinished sentence
+until more text or the end arrives. A rate change cancels the active utterance and
+resumes at its last reported word, or from the sentence start on engines without word events.
+Playback speed uses the existing home/principal preference scope.
+
+## M8TB — Keep finished Nocturne conversations out of Codex’s active history [P4]
+
+SD-103 permits one Codex-specific call outside T3. After a confirmed terminal
+run, the subscription client follows that run’s provider-thread reference and
+sends `thread/archive` to the installed Codex app-server over local stdio.
+T3 remains responsible for prompts, permissions and resume. A failed archive
+is logged and the conversation keeps its outcome. Claude Code has no native
+archive operation here.
 
 ## M8XF — Account for each compaction fact [P1.5]
 
