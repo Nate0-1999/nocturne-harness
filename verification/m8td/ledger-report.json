@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "fbb52e3a5a6ab17465c821a0aab7c3a9774c5560",
-      "head": "85a17f0253dc2f7c3640ac505469dc6defbff71b"
+      "head": "952a86b8dd05c160d7c83539a8837d0c686312bb"
     }
   ],
   "unmapped": {
@@ -76,7 +76,10 @@
     "harness/web/dist/assets/index-Dl5jRwi1.css": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
     "harness/web/dist/index.html": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
     "harness/web/tests/rackModuleTemplate.test.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
-    "harness/web/tests/stageLayout.test.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk."
+    "harness/web/tests/stageLayout.test.mjs": "M8TD record, test, built asset, version or frozen law copy; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-BBhQ1WZz.js": "Built web assets, including intermediate bundles; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-BlkDahZv.js": "Built web assets, including intermediate bundles; FL-216 carries the walk.",
+    "harness/web/dist/assets/index-DdDeaeem.js": "Built web assets, including intermediate bundles; FL-216 carries the walk."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
