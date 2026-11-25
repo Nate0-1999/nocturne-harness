@@ -962,8 +962,8 @@ def test_t3_frame_link_is_handed_only_to_this_homes_own_page(tmp_path, monkeypat
     monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path))
     asked = []
 
-    async def frame_url(_front, page):
-        asked.append(page)
+    async def frame_url(_front, page, thread, paired):
+        asked.append((page, thread, paired))
         return "http://127.0.0.1:1/#token=one-time"
 
     monkeypatch.setattr("harness.daemon.FrontServer.frame_url", frame_url)
@@ -989,7 +989,7 @@ def test_t3_frame_link_is_handed_only_to_this_homes_own_page(tmp_path, monkeypat
     assert [response.status_code for response in refused] == [403, 403, 403]
     assert all("token" not in response.text for response in refused)
     assert own.json() == {"url": "http://127.0.0.1:1/#token=one-time"}
-    assert asked == ["http://127.0.0.1:80"]
+    assert asked == [("http://127.0.0.1:80", None, False)]
 
 
 def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(

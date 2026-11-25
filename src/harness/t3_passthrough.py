@@ -6,9 +6,11 @@ Requests pass through here unchanged; the one answer becomes "only Nocturne's ow
 
 import asyncio
 import contextlib
+import re
 from pathlib import Path
 
 _LIMIT = 64 * 1024
+_THREAD = re.compile(rb"[0-9A-Za-z-]{1,64}")
 
 
 def hosting_answer(headers: list[tuple[bytes, bytes]], page: str) -> list[tuple[bytes, bytes]]:
@@ -29,6 +31,20 @@ def hosting_answer(headers: list[tuple[bytes, bytes]], page: str) -> list[tuple[
         answer.append((name, value))
     answer.append((b"Content-Security-Policy", ours))
     return answer
+
+
+def shown_thread(headers: list[tuple[bytes, bytes]], origin: str, environment: str) -> str | None:
+    """The thread T3's page is on, by its own address on a request it sends (SD-124).
+
+    T3 does not promise this: its page happens to send requests after it moves, and the browser
+    names the page's address on them. Only the thread id is read, and only from an address that
+    is exactly <this pass-through>/<this T3's environment>/<thread>; anything else says nothing.
+    """
+    prefix = f"{origin}/{environment}/".encode()
+    for value in _values(headers, b"referer"):
+        if environment and value.startswith(prefix) and _THREAD.fullmatch(value[len(prefix) :]):
+            return value[len(prefix) :].decode()
+    return None
 
 
 def _parse(head: bytes) -> tuple[bytes, list[tuple[bytes, bytes]]]:
@@ -66,6 +82,8 @@ class T3PassThrough:
         self.port = 0
         self.upstream = 0
         self.page = ""
+        self.environment = ""
+        self.thread = None
         self._server = None
         self._tasks = set()
 
@@ -73,8 +91,10 @@ class T3PassThrough:
     def origin(self) -> str:
         return f"http://127.0.0.1:{self.port}"
 
-    async def start(self, upstream: int, page: str, remembered: Path) -> None:
-        self.upstream, self.page = upstream, page
+    async def start(
+        self, upstream: int, page: str, remembered: Path, environment: str = ""
+    ) -> None:
+        self.upstream, self.page, self.environment = upstream, page, environment
         if self._server is not None:
             return
         # T3's page keeps its own setup by address, so a restart asks for the same port again.
@@ -99,6 +119,7 @@ class T3PassThrough:
         await self._server.wait_closed()
         self._server = None
         self.port = 0
+        self.thread = None
 
     async def _accept(self, reader, writer):
         task = asyncio.current_task()
@@ -123,6 +144,7 @@ class T3PassThrough:
             # Another name for this address (a rebound domain) is not this machine's own page.
             await self._refuse(writer, b"421 Misdirected Request")
             return
+        self.thread = shown_thread(headers, self.origin, self.environment) or self.thread
         if _values(headers, b"transfer-encoding"):
             await self._refuse(writer, b"411 Length Required")
             return

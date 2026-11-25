@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from harness.t3_passthrough import T3PassThrough, hosting_answer
+from harness.t3_passthrough import T3PassThrough, hosting_answer, shown_thread
 
 PAGE = "http://127.0.0.1:8765"
 
@@ -76,3 +76,66 @@ async def test_pass_through_is_loopback_only_and_reads_every_request_before_t3_d
         await through.close()
         upstream.close()
         await upstream.wait_closed()
+
+
+def test_only_this_t3s_own_thread_address_names_the_open_thread():
+    """A-104 / SD-124: any other address says nothing, so a silent T3 breaks nothing."""
+    origin = "http://127.0.0.1:9"
+
+    def read(*addresses, environment="env-1"):
+        return shown_thread([(b"Referer", value) for value in addresses], origin, environment)
+
+    assert read(b"http://127.0.0.1:9/env-1/thread-7") == "thread-7"
+    for address in (
+        b"http://127.0.0.1:9/",  # the origin alone
+        b"http://127.0.0.1:9",
+        b"http://127.0.0.1:9/env-2/thread-7",  # another T3's environment
+        b"http://127.0.0.1:99/env-1/thread-7",  # another port or name
+        b"http://localhost:9/env-1/thread-7",
+        b"http://127.0.0.1:9/draft/thread-7",
+        b"http://127.0.0.1:9/env-1/",
+        b"http://127.0.0.1:9/env-1/thread-7/",
+        b"http://127.0.0.1:9/env-1/thread-7/files",
+        b"http://127.0.0.1:9/env-1/thread-7?token=secret",
+        b"http://127.0.0.1:9/env-1/..%2fthread",
+        b"\xff\xfe",
+    ):
+        assert read(address) is None, address
+    assert read() is None
+    assert read(b"http://127.0.0.1:9//thread-7", environment="") is None
+
+
+@pytest.mark.asyncio
+async def test_a_request_that_names_no_thread_passes_and_leaves_the_open_thread(tmp_path):
+    """A-104 / A-101: the address is read, never changed; without it the Stage stays where it is."""
+    seen = []
+
+    async def t3(reader, writer):
+        seen.append(await reader.readuntil(b"\r\n\r\n"))
+        writer.write(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
+        await writer.drain()
+        writer.close()
+
+    upstream = await asyncio.start_server(t3, "127.0.0.1", 0)
+    through = T3PassThrough()
+    try:
+        port = upstream.sockets[0].getsockname()[1]
+        await through.start(port, PAGE, tmp_path / "port", "env-1")
+        host = f"Host: 127.0.0.1:{through.port}\r\n".encode()
+        here = f"Referer: {through.origin}/env-1/thread-7\r\n".encode()
+        assert through.thread is None
+        for referer, thread in (
+            (b"", None),
+            (here, "thread-7"),
+            (b"", "thread-7"),
+            (f"Referer: {through.origin}/env-2/thread-8\r\n".encode(), "thread-7"),
+            (b"Referer: \xff/env-1/x y\r\n", "thread-7"),
+        ):
+            answer = await _ask(through.port, b"GET /api HTTP/1.1\r\n" + host + referer + b"\r\n")
+            assert answer.endswith(b"\r\n\r\nok") and through.thread == thread
+        assert here in seen[1] and len(seen) == 5
+    finally:
+        await through.close()
+        upstream.close()
+        await upstream.wait_closed()
+    assert through.thread is None
