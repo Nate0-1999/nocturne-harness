@@ -4695,3 +4695,19 @@ would have a second host of another site, and T3's sign-in cookie would be withh
 signed-in link is handed only to a request from this home's own page. Fitted, the module
 covers the window below a gate, which must stay visible. A layout the owner already arranged
 gets the module beside its modules. Report 340 records the look-first and the walk.
+
+## M8TS — T3 where the chat window was, in step with Threads and Memory [P2.5]
+
+SD-124, draft A-104. An untouched Work layer is arranged for the window: Threads, T3 and
+Memory whole at 100%, Nocturne's own Conversation one tap away; a phone window is filled by
+T3. A layer the owner has panned, zoomed or rearranged is kept. No type step is under 11px.
+T3's code is not ours to change, so the two stay in step by T3's own page address for a
+thread. A pick in Threads sets the T3 frame to that address. For the other way the
+pass-through reads the address from the Referer on requests T3's page sends, keeps the thread
+id alone, and Nocturne's page learns it from the poll it already made. T3 does not promise
+this: its page happens to send a request after it moves. If that stops, the Stage stays on
+its thread and nothing else changes. The ACP session carries nothing when a thread is only
+opened, and T3's server does not know which thread a page shows. A thread born in T3 becomes
+the open thread once the journal holds it. A crossing asked for from T3 is the Deck's own
+card, drawn on the T3 module as well. The open thread is one value per home, so two windows
+on one home move each other. Report 347 records the look-first and the walk.
