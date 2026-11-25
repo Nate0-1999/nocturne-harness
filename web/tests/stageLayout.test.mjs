@@ -18,7 +18,7 @@ import {
   moduleFitsViewport,
   moduleIsOffscreen,
   moveStageModule,
-  openingStageCamera,
+  openingStageArrangement,
   persistStageLayout,
   reframeUntouchedWork,
   recoverStageModule,
@@ -435,36 +435,61 @@ test('whole stage fits the modules and library adds land clear of others', () =>
   }
 })
 
-/** P2.5 / F158: a fresh Stage opens with its conversation whole at a readable size, whatever
- * the window: the widest core set that fits at 75% or more, else the conversation's width. */
-test('a fresh work layer opens readable at laptop sizes', () => {
-  const modules = activeStageLayer(cloneFactoryStageLayout()).modules
-  const conversation = modules.find((module) => module.module_id === 'conversation')
-  const inView = (camera, module, width) => camera.x + module.x * STAGE_UNIT_WIDTH * camera.zoom >= 0 &&
-    camera.x + (module.x + module.width) * STAGE_UNIT_WIDTH * camera.zoom <= width
-  for (const [width, height] of [[1440, 800], [1280, 620], [1200, 700]]) {
-    const camera = openingStageCamera(width, height, modules)
-    assert.ok(camera.zoom >= 0.75 && camera.zoom <= 1, `${width}: zoom ${camera.zoom}`)
-    assert.ok(inView(camera, conversation, width), `${width}: conversation in view`)
-    assert.ok(camera.y + (conversation.y + conversation.height) * STAGE_UNIT_HEIGHT * camera.zoom <= height)
+/** PLAN M8TS (1) and (2), SD-124: a fresh Stage opens on Threads, T3 and Memory, whole and at
+ * 100%, with no empty band above; Nocturne's own Conversation is out of the window, one tap away.
+ * A phone-width window opens filled by T3 alone, never under 100%. */
+test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window', () => {
+  const factory = activeStageLayer(cloneFactoryStageLayout()).modules
+  const screen = (camera, module) => ({
+    left: camera.x + module.x * STAGE_UNIT_WIDTH * camera.zoom,
+    right: camera.x + (module.x + module.width) * STAGE_UNIT_WIDTH * camera.zoom,
+    top: camera.y + module.y * STAGE_UNIT_HEIGHT * camera.zoom,
+    bottom: camera.y + (module.y + module.height) * STAGE_UNIT_HEIGHT * camera.zoom,
+  })
+  const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+  for (const [width, height] of [[1267, 780], [1440, 800], [1920, 950], [390, 700]]) {
+    const { modules, camera } = openingStageArrangement(width, height, factory)
+    const box = (id) => screen(camera, modules.find((module) => module.instance_id === id))
+    const shown = width < 600 ? ['t3'] : ['threads', 't3', 'memory']
+    assert.ok(camera.zoom >= 1, `${width}: zoom ${camera.zoom}`)
+    for (const id of shown) {
+      const at = box(id)
+      assert.ok(at.left >= 0 && at.right <= width, `${width}: ${id} whole across`)
+      assert.equal(Math.round(at.top), 24, `${width}: ${id} starts under the toolbar`)
+      assert.ok(at.bottom <= height - 56, `${width}: ${id} clear of the Off-screen bar`)
+    }
+    for (const module of modules.filter((item) => !shown.includes(item.instance_id))) {
+      const at = screen(camera, module)
+      assert.ok(at.left >= width || at.right <= 0 || at.top >= height, `${width}: ${module.instance_id} out of the window`)
+    }
+    if (width >= 600) assert.ok(box('threads').right <= box('t3').left && box('t3').right <= box('memory').left)
+    for (const [index, module] of modules.entries()) {
+      for (const other of modules.slice(index + 1)) {
+        assert.ok(!overlaps(module, other), `${width}: ${module.instance_id} overlaps ${other.instance_id}`)
+      }
+    }
   }
-  const wide = openingStageCamera(1440, 800, modules)
-  for (const module of modules.filter((item) => ['threads', 'memory'].includes(item.module_id))) {
-    assert.ok(inView(wide, module, 1440), `1440: ${module.module_id} in view`)
-  }
-  const small = openingStageCamera(800, 500, modules)
-  assert.ok(inView(small, conversation, 800) && small.zoom > 0.7, `800: zoom ${small.zoom}`)
-  assert.deepEqual(openingStageCamera(390, 700, modules), activeStageLayer(cloneFactoryStageLayout()).camera)
 })
 
-/** P2.5 (M3W5B-33): the Work layer is framed for the window until the owner moves its camera. */
-test('an untouched work camera follows the window; a moved one is kept', () => {
+/** PLAN M8TS (1), M3W5B-33: the Work layer is arranged for the window until the owner makes it
+ * his own; a camera he moved or a module he moved, resized, added or removed is kept. */
+test('an untouched work layer follows the window; an arranged one is kept', () => {
   const storage = memoryStorage()
   const framed = reframeUntouchedWork(cloneFactoryStageLayout(), 1440, 800, storage)
-  const camera = activeStageLayer(framed).camera
-  assert.notDeepEqual(camera, activeStageLayer(cloneFactoryStageLayout()).camera)
+  assert.notDeepEqual(activeStageLayer(framed), activeStageLayer(cloneFactoryStageLayout()))
   const reframed = reframeUntouchedWork(framed, 1200, 700, storage)
-  assert.notDeepEqual(activeStageLayer(reframed).camera, camera)
-  const moved = updateStageCamera(reframed, { ...activeStageLayer(reframed).camera, x: 10 })
-  assert.equal(reframeUntouchedWork(moved, 800, 500, storage), moved)
+  assert.notDeepEqual(activeStageLayer(reframed), activeStageLayer(framed))
+  assert.equal(reframeUntouchedWork(reframed, 1200, 700, storage), reframed)
+  const panned = updateStageCamera(reframed, { ...activeStageLayer(reframed).camera, x: 10 })
+  assert.equal(reframeUntouchedWork(panned, 800, 500, storage), panned)
+  for (const arrange of [
+    (layout) => moveStageModule(layout, 'memory', activeStageLayer(layout).modules[2].x + 1, activeStageLayer(layout).modules[2].y),
+    (layout) => removeStageModule(layout, 'memory'),
+    (layout) => addStageModuleInstance(layout, 'conversation', null),
+  ]) {
+    for (const start of [cloneFactoryStageLayout(), reframed]) {
+      const arranged = arrange(start)
+      assert.equal(reframeUntouchedWork(arranged, 800, 500, storage), arranged)
+    }
+  }
 })

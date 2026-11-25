@@ -201,7 +201,8 @@ function sourceTarget(
   threadIds: string[],
   selectedThreadId: string | null,
 ): AttunementTarget | null {
-  if (module.module_id === 'conversation' && module.conversation_mode === 'focused') {
+  // M8TS: T3 shows the Stage's open thread, so it is a source like a focused Conversation.
+  if (module.module_id === 't3' || (module.module_id === 'conversation' && module.conversation_mode === 'focused')) {
     const threadId = module.source_thread_id ?? selectedThreadId
     const thread = threadId === null ? undefined : threadById.get(threadId)
     return thread === undefined ? null : {
