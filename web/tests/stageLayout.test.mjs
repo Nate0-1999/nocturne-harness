@@ -447,12 +447,15 @@ test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window',
     bottom: camera.y + (module.y + module.height) * STAGE_UNIT_HEIGHT * camera.zoom,
   })
   const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
-  for (const [width, height] of [[1267, 780], [1440, 800], [1920, 950], [1024, 700], [768, 774], [390, 700]]) {
+  for (const [width, height] of [
+    [1267, 780], [1440, 800], [1920, 950], [1024, 700], [768, 774],
+    [390, 700], [390, 686], [360, 640], [414, 780], [430, 760],
+  ]) {
     const { modules, camera } = openingStageArrangement(width, height, factory)
     const box = (id) => screen(camera, modules.find((module) => module.instance_id === id))
     // At his laptop window and wider the three stand together; narrower, T3 is not squeezed for them.
     const shown = width < 1267 ? ['t3'] : ['threads', 't3', 'memory']
-    assert.ok(box('t3').right - box('t3').left >= Math.min(480, width - 25), `${width}: T3 keeps a usable width`)
+    assert.ok(box('t3').right - box('t3').left >= Math.min(480, width - 27), `${width}: T3 keeps a usable width`)
     assert.ok(camera.zoom >= 1, `${width}: zoom ${camera.zoom}`)
     for (const id of shown) {
       const at = box(id)
@@ -469,7 +472,7 @@ test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window',
       // A trip along the Off-screen bar brings T3 back at the size it opened, clear of the bar.
       let layout = cloneFactoryStageLayout()
       layout = updateStageCamera({ ...layout, layers: layout.layers.map((layer, index) => index === 0 ? { ...layer, modules } : layer) }, camera)
-      for (const id of ['threads', 't3']) layout = recoverStageModule(layout, id, width, height)
+      for (const id of ['threads', 'conversation', 'memory', 't3']) layout = recoverStageModule(layout, id, width, height)
       const back = activeStageLayer(layout)
       const t3 = back.modules.find((module) => module.instance_id === 't3')
       assert.deepEqual([t3.width, t3.height, back.camera.zoom], [modules.find((module) => module.instance_id === 't3').width, modules.find((module) => module.instance_id === 't3').height, camera.zoom])

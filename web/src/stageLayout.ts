@@ -529,8 +529,9 @@ export function openingStageArrangement(
 ): { modules: StageModuleLayout[], camera: StageCamera } {
   const phone = viewportWidth < 600
   // A phone's margins are the ones a module recalled from the Off-screen bar is checked against,
-  // so a trip along the bar brings each module back at this size, clear of the bar.
-  const edge = phone ? STAGE_RECOVERY_INSET : 24
+  // so a trip along the bar brings each module back at this size, clear of the bar. One more
+  // pixel, because the recall rounds its camera.
+  const edge = phone ? STAGE_RECOVERY_INSET + 1 : 24
   const columns = Math.max(6, Math.floor((viewportWidth - edge * 2) / STAGE_UNIT_WIDTH))
   // A phone has no room for margins: the frame is zoomed (never under 100%) until it fills the width.
   const zoom = phone ? Math.max(1, (viewportWidth - edge * 2) / (columns * STAGE_UNIT_WIDTH)) : 1
