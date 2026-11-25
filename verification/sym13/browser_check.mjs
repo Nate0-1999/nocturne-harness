@@ -129,6 +129,8 @@ function assertDiagnostics({ consoleProblems, pageErrors, failedResponses }) {
     if (status === 503 && parsed.pathname === '/v1/rack/query') {
       return ['scorer_console', 'context_window'].includes(parsed.searchParams.get('resource'))
     }
+    // M8TD: this fixture has no front T3 server; its app refuses the module's request for T3's screen.
+    if (status === 405 && parsed.pathname === '/v1/t3/front/frame') return true
     return status === 404 && [
       '/v1/model-policies',
       '/v1/approval-queue',

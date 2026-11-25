@@ -733,6 +733,31 @@ button.rack-module__resize-handle--nw {
   color-scheme: dark;
 }
 
+/* SD-114: T3's own screen. Its one line when T3 is not running; fitted, the module covers the
+   window. A transformed canvas would hold a fixed child inside itself, so it rests meanwhile. */
+.t3-module__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+  color: var(--muted);
+  font-size: var(--text-md);
+}
+
+.stage-canvas:has(> .rack-module[data-filled]) {
+  transform: none !important;
+  will-change: auto;
+}
+
+.stage-viewport .stage-canvas > .rack-module[data-filled] {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 95; /* over the header, toolbar and strips; under a gate, which must still be seen */
+  width: auto !important;
+  height: auto !important;
+}
+
 .rack-overlay-module {
   position: fixed;
   z-index: 100;
@@ -3327,7 +3352,7 @@ button.rack-module__resize-handle--nw {
   grid-row: 4;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: clip; /* a hidden box still scrolls when the browser brings a control into view; the camera alone moves the Stage */
   cursor: grab;
   touch-action: none;
 }
@@ -3412,6 +3437,7 @@ button.rack-module__resize-handle--nw {
   font-size: var(--text-base);
 }
 
+.rack-module__fill,
 .rack-module__remove {
   align-self: stretch;
   min-width: 1.8rem;
@@ -3424,11 +3450,15 @@ button.rack-module__resize-handle--nw {
   font: inherit;
 }
 
+.rack-module__fill:hover,
+.rack-module__fill:focus-visible,
 .rack-module__remove:hover,
 .rack-module__remove:focus-visible {
   background: var(--accent-soft);
   color: var(--ink);
 }
+
+.rack-module__fill { margin-right: 0; }
 
 .stage-recall {
   position: absolute;

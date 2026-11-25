@@ -37,7 +37,7 @@ try {
 
   const factoryModules = await mountedModules(page)
   assertJsonEqual(factoryModules, [
-    'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue',
+    'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 't3',
   ])
   observations.push({ factory_work_modules: factoryModules })
 
@@ -141,6 +141,26 @@ try {
   if (!intersects) throw new Error('recall did not return Conversation to the viewport')
   observations.push({ offscreen_recall: recalledNames })
 
+  // The Stage moves by its camera alone (M8TD return, report 340). A browser brings a focused
+  // control into view by scrolling its box (Tab, find in page, a screen reader, a tool's click);
+  // that native scroll under the camera threw the whole Stage and the off-screen bar aside.
+  const stageBefore = await stagePlace(page)
+  const focused = await page.locator('.stage-canvas .rack-module__drag').evaluateAll((controls) => {
+    const box = document.querySelector('[data-testid="stage-viewport"]').getBoundingClientRect()
+    const control = controls.find((candidate) => {
+      const rect = candidate.getBoundingClientRect()
+      return rect.left > box.right || rect.right < box.left || rect.top > box.bottom || rect.bottom < box.top
+    })
+    control?.focus()
+    return control?.getAttribute('aria-label') ?? null
+  })
+  if (focused === null) throw new Error('no module was off screen for the focus check')
+  const stageAfter = await stagePlace(page)
+  if (JSON.stringify(stageAfter) !== JSON.stringify({ ...stageBefore, scroll: [0, 0] })) {
+    throw new Error(`focus on an off-screen control moved the Stage natively: ${JSON.stringify({ focused, stageBefore, stageAfter })}`)
+  }
+  observations.push({ focus_offscreen_control: focused, stage_place: stageAfter })
+
   await page.reload({ waitUntil: 'domcontentloaded' })
   await waitForRack(page)
   await expectGeometry(page, 'memory', initialMemory)
@@ -179,6 +199,13 @@ async function activeCamera(targetPage) {
   return targetPage.evaluate(() => {
     const layout = JSON.parse(localStorage.getItem('nocturne.stage.layout.v5'))
     return layout.layers.find((layer) => layer.layer_id === layout.active_layer_id).camera
+  })
+}
+
+async function stagePlace(targetPage) {
+  return targetPage.getByTestId('stage-viewport').evaluate((viewport) => {
+    const canvas = viewport.querySelector('.stage-canvas').getBoundingClientRect()
+    return { scroll: [viewport.scrollLeft, viewport.scrollTop], canvas: [canvas.left, canvas.top] }
   })
 }
 

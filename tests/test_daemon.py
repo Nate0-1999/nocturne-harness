@@ -943,6 +943,55 @@ def test_catalog_answers_after_the_launch_folder_moves(tmp_path, monkeypatch) ->
     assert response.json()["running"] == []  # F179: no thread is running
 
 
+def test_t3_frame_link_is_handed_only_to_this_homes_own_page(tmp_path, monkeypatch) -> None:
+    """A-101 / SD-114: another local page is never given the signed-in link to T3's screen."""
+
+    async def stream(_messages, _info):
+        yield "unused"
+
+    settings = HarnessSettings(
+        _env_file=None,
+        spine_token="test-token",
+        principal_id="principal-test",
+        machine_id="machine-test",
+        agent_id="agent-test",
+        anthropic_api_key=None,
+        openai_api_key=None,
+        openrouter_api_key=None,
+    )
+    monkeypatch.setenv("NOCTURNE_HOME", str(tmp_path))
+    asked = []
+
+    async def frame_url(_front, page):
+        asked.append(page)
+        return "http://127.0.0.1:1/#token=one-time"
+
+    monkeypatch.setattr("harness.daemon.FrontServer.frame_url", frame_url)
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        agent=HarnessAgent(settings, model=FunctionModel(stream_function=stream)),
+        spine=GateSpine(),  # type: ignore[arg-type]
+        transcript_journal=TranscriptJournal(tmp_path / "transcripts"),
+    )
+
+    with TestClient(app) as client:  # the test server's own port is 80
+        refused = [
+            client.post("/v1/t3/front/frame", headers=headers)
+            for headers in (
+                {},
+                {"Origin": "http://127.0.0.1:81"},
+                {"Origin": "http://localhost:80"},
+            )
+        ]
+        own = client.post("/v1/t3/front/frame", headers={"Origin": "http://127.0.0.1:80"})
+
+    assert [response.status_code for response in refused] == [403, 403, 403]
+    assert all("token" not in response.text for response in refused)
+    assert own.json() == {"url": "http://127.0.0.1:1/#token=one-time"}
+    assert asked == ["http://127.0.0.1:80"]
+
+
 def test_dev_app_wires_the_owned_spine_into_the_public_rack_query(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

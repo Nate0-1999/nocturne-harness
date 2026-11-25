@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlsplit
 from uuid import NAMESPACE_URL, uuid5
 
 import httpx
@@ -15,6 +15,7 @@ import httpx
 from harness.envelope import StopReason
 from harness.t3_client import TERMINAL, T3Client, T3Error, new_id
 from harness.t3_front_session import FrontSession
+from harness.t3_passthrough import T3PassThrough
 from harness.t3_server import T3Server
 
 BROWSER_SCOPES = (
@@ -39,6 +40,7 @@ class FrontServer(T3Server):
         self.directory = None
         self.connections = set()
         self.sync = None
+        self.through = T3PassThrough()
 
     def _settings(self):
         # The entire inventory at the pin. No native binary discovery on this server.
@@ -94,7 +96,7 @@ class FrontServer(T3Server):
         await client.authenticate(code, scopes=" ".join([*BROWSER_SCOPES, "access:write"]))
         return client
 
-    async def browser_url(self):
+    async def browser_url(self, through=None):
         client = await self.client()
         config = await client.call("server.getConfig", {})
         enabled = [row["instanceId"] for row in config["providers"] if row["enabled"]]
@@ -111,7 +113,14 @@ class FrontServer(T3Server):
             )
         if response.status_code != 200:
             raise T3Error("T3 could not pair the conversation window.")
-        return client.origin + "/#" + urlencode({"token": response.json()["credential"]})
+        origin = through or client.origin
+        return origin + "/#" + urlencode({"token": response.json()["credential"]})
+
+    async def frame_url(self, page):
+        """The same paired window, for the one Nocturne page allowed to host it (A-101)."""
+        client = await self.client()
+        await self.through.start(urlsplit(client.origin).port, page, self.root / "frame-port")
+        return await self.browser_url(self.through.origin)
 
     async def follow_catalog(self, client):
         """Use T3's published project and session imports while its window is available."""
@@ -219,6 +228,7 @@ class FrontServer(T3Server):
             self.sync.cancel()
             await asyncio.gather(self.sync, return_exceptions=True)
             self.sync = None
+        await self.through.close()
         try:
             await super().close()
         finally:
