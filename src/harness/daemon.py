@@ -124,6 +124,7 @@ from harness.spine_client import (
 from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.t3_client import T3Error
+from harness.t3_front import FrontServer
 from harness.t3_server import T3Server
 from harness.t3_sources import offers, project_sources, sources
 from harness.t3_turn import SubscriptionTurns
@@ -1476,8 +1477,31 @@ def create_dev_app(
         toolset_for=workspace_toolset_for,
     )
 
+    front = FrontServer(home, loop, journal, discovery_root)
+
     def configure_extraction_routes(app: FastAPI) -> None:
         job_scheduler.mount(app)
+
+        @app.post("/v1/t3/front/open")
+        async def open_front_window(request: Request):
+            import webbrowser
+
+            if (
+                request.client is None
+                or request.client.host not in {"127.0.0.1", "::1"}
+                or request.headers.get("origin")
+                or request.headers.get("x-nocturne-window") != machine_id
+            ):
+                # WALL owner files / SD-114: only the local home's launcher opens its browser.
+                raise HTTPException(403, "Open the T3 window from this Nocturne home.")
+            try:
+                url = await front.browser_url()
+                opened = await asyncio.to_thread(webbrowser.open_new, url)
+            except T3Error as exc:
+                raise HTTPException(503, str(exc)) from None
+            if not opened:
+                raise HTTPException(503, "The T3 window could not be opened.")
+            return {"opened": True}
 
         @app.post("/v1/threads/{thread_id}/rewind")
         async def rewind_thread(thread_id: UUID, request: RewindRequest):
@@ -1951,6 +1975,7 @@ def create_dev_app(
         app.router.add_event_handler("startup", flush_receipt_queue)
         app.router.add_event_handler("startup", start_local_copy)
         app.router.add_event_handler("shutdown", stop_local_copy)
+        app.router.add_event_handler("shutdown", front.close)
         app.router.add_event_handler("shutdown", t3.close)
         app.router.add_event_handler("startup", restore_symphonies)
         app.router.add_event_handler("startup", extraction.backfill_projects)

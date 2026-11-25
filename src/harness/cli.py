@@ -68,7 +68,9 @@ def build_parser() -> argparse.ArgumentParser:
     seed = commands.add_parser("seed", help="add Markdown documents to the Palace review queue")
     seed.add_argument("paths", nargs="+", help="Markdown files or glob patterns")
     t3 = commands.add_parser("t3", help="manage the local subscription server")
-    t3.add_subparsers(dest="t3_action", required=True).add_parser(
+    t3_actions = t3.add_subparsers(dest="t3_action", required=True)
+    t3_actions.add_parser("open", help="open the private conversation window")
+    t3_actions.add_parser(
         "install", help="install the pinned, verified server inside this Nocturne home"
     )
     commands.add_parser("doctor", help="inspect Palace health and startup readiness")
@@ -243,6 +245,27 @@ def main(
             return restore_nocturne(args.backup_id, stdout=stdout)
         elif args.command == "seed":
             return seed_nocturne(args.paths, stdout=stdout)
+        elif args.command == "t3" and args.t3_action == "open":
+            import httpx
+
+            config = load_config()
+            try:
+                with httpx.Client(trust_env=False, timeout=100) as client:
+                    response = client.post(
+                        f"http://127.0.0.1:{config.daemon_port}/v1/t3/front/open",
+                        headers={"X-Nocturne-Window": config.machine_id},
+                    )
+                    response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                raise OnboardingError(
+                    exc.response.json().get("detail", "T3 could not open.")
+                ) from None
+            except httpx.HTTPError:
+                raise OnboardingError("The local daemon is unavailable. Run nocturne up.") from None
+            print(
+                "T3’s terminal, Git, file controls and Add environment are your own actions.",
+                file=stdout,
+            )
         elif args.command == "t3":
             from harness.t3_install import InstallError, install
 
