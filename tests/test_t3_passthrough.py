@@ -8,7 +8,10 @@ PAGE = "http://127.0.0.1:8765"
 
 
 def test_only_nocturnes_own_page_is_named_in_place_of_t3s_refusal():
-    """A-101 / SD-114: the one changed answer admits this home's page and no other."""
+    """A-101 / SD-114: the one changed answer admits this home's page and no other.
+
+    Report 348: T3's page names T3 Connect and Axiom, so it may connect to this address alone.
+    """
     answer = hosting_answer(
         [
             (b"Content-Type", b"text/html"),
@@ -21,7 +24,7 @@ def test_only_nocturnes_own_page_is_named_in_place_of_t3s_refusal():
     assert answer == [
         (b"Content-Type", b"text/html"),
         (b"content-security-policy", b"default-src 'self'"),
-        (b"Content-Security-Policy", b"frame-ancestors " + PAGE.encode()),
+        (b"Content-Security-Policy", b"frame-ancestors " + PAGE.encode() + b"; connect-src 'self'"),
     ]
 
 
@@ -68,7 +71,7 @@ async def test_pass_through_is_loopback_only_and_reads_every_request_before_t3_d
         smuggled = b"GET /second HTTP/1.1\r\nHost: rebound.example\r\n\r\n"
         answer = await _ask(through.port, b"GET /first HTTP/1.1\r\n" + host + b"\r\n" + smuggled)
         assert answer.endswith(b"\r\n\r\nok")
-        assert b"frame-ancestors " + PAGE.encode() in answer
+        assert b"frame-ancestors " + PAGE.encode() + b"; connect-src 'self'\r\n" in answer
         assert b"'none'" not in answer and b"X-Frame-Options" not in answer
         await asyncio.wait_for(finished.wait(), 5)
         assert seen[0].startswith(b"GET /first ") and seen[1] == b""
