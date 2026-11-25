@@ -7,14 +7,16 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "f237d104e3ad69c2e5d4555bb933861e7c3489ab"
+      "head": "a5d386199b27bab3c1cc1bd980bc9801aea1e1b6"
     }
   ],
   "unmapped": {
     "harness/DECISIONS.md": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
     "harness/src/harness/__init__.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
     "harness/src/harness/t3_front.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/src/harness/t3_server.py": "Second return: three more telemetry switches in the environment every T3 server is started with (Garden report 348). No row maps this file; tests/test_t3_client.py pins the environment of both servers, and the fenced runs record what T3 was handed (Garden report 340, second return).",
     "harness/tests/test_daemon.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
+    "harness/tests/test_t3_client.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
     "harness/tests/test_t3_passthrough.py": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
     "harness/verification/m2st1/browser_check.mjs": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
     "harness/verification/m8td/FL-007.png": "M8TD record, test, built asset, version, frozen law copy or coverage evidence; FL-216 carries the walk.",
@@ -558,7 +560,7 @@
       "verdict": "PASS",
       "screenshot": "FL-216.png",
       "flag": "",
-      "observed": "Walked whole again on 2026-11-25 on the installed 0.1.116 wheels of the fixed head (the install checked against that head's build), in Stage at 1267 by 928 and 390 by 844: open, resize, fit and return, a prompt answered by Nocturne's agent, restart, T3 stopped, a second local page refused; in the return's own walk the Stage stayed where its camera puts it through recall, fit, typing, minimize and a second module. Garden report 340."
+      "observed": "Walked whole again on 2026-11-25 in the second return, on the installed 0.1.116 wheels of the head that adds the connect lock to the pass-through's answer (Harness 71b8a3fc; the install checked against that head's build), every T3 and the walk's browser behind loopback-only fences, in Stage at 1267 by 928 and 390 by 844: open, resize, fit and return, a prompt answered by Nocturne's agent, restart, T3 stopped, a second local page refused by the framing rule the answer still carries; in the same return's five-minute run through the module two turns were answered live over T3's own socket and T3's page asked for nothing but its own address. Garden report 340, second return."
     }
   },
   "not_run": {
