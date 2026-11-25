@@ -435,7 +435,7 @@ test('whole stage fits the modules and library adds land clear of others', () =>
   }
 })
 
-/** PLAN M8TS (1) and (2), SD-124: a fresh Stage opens on Threads, T3 and Memory, whole and at
+/** P2.5 / A-104 (SD-124): a fresh Stage opens on Threads, T3 and Memory, whole and at
  * 100%, with no empty band above; Nocturne's own Conversation is out of the window, one tap away.
  * A phone-width window opens filled by T3 alone, never under 100%. */
 test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window', () => {
@@ -487,7 +487,7 @@ test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window',
   }
 })
 
-/** PLAN M8TS (1), M3W5B-33: the Work layer is arranged for the window until the owner makes it
+/** P2.5 / A-104 (M3W5B-33): the Work layer is arranged for the window until the owner makes it
  * his own; a camera he moved or a module he moved, resized, added or removed is kept. */
 test('an untouched work layer follows the window; an arranged one is kept', () => {
   const storage = memoryStorage()
