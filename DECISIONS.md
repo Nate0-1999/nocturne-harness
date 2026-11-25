@@ -4699,8 +4699,11 @@ gets the module beside its modules. Report 340 records the look-first and the wa
 ## M8TS — T3 where the chat window was, in step with Threads and Memory [P2.5]
 
 SD-124, draft A-104. An untouched Work layer is arranged for the window: Threads, T3 and
-Memory whole at 100%, Nocturne's own Conversation one tap away; a phone window is filled by
-T3. A layer the owner has panned, zoomed or rearranged is kept. No type step is under 11px.
+Memory whole at 100%, Nocturne's own Conversation one tap away. A window too narrow to leave
+T3 480px between the other two (a phone, a tablet) is T3's alone. Threads is seven units wide
+because at six its title row cuts its own tag short. A layer the owner has panned, zoomed or
+rearranged is kept. The 11px type floor of report 345 is not in this change: at 11px the
+standing sweep finds cut-off text in the phone header, Palace State and the Conversation.
 T3's code is not ours to change, so the two stay in step by T3's own page address for a
 thread. A pick in Threads sets the T3 frame to that address. For the other way the
 pass-through reads the address from the Referer on requests T3's page sends, keeps the thread

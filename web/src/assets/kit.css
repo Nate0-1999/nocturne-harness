@@ -4,11 +4,9 @@
    lives on the border and the ink, never as chrome on a control. */
 :root {
   /* Six sizes. Mono caps for labels (xs, sm); sans for content (md and up). */
-  /* M8TS (SD-117): nothing under 11px. The three small steps were 9, 10.2 and 11.5px; the toolbar
-     and the strips sit outside the Stage and never zoom, so only the scale can lift their text. */
-  --text-xs: 0.6875rem;
-  --text-sm: 0.72rem;
-  --text-md: 0.75rem;
+  --text-xs: 0.56rem;
+  --text-sm: 0.64rem;
+  --text-md: 0.72rem;
   --text-base: 0.82rem;
   --text-lg: 1.05rem;
   --text-xl: clamp(1.35rem, 3vw, 2.1rem);

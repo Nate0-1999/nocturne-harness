@@ -520,37 +520,47 @@ export function fitStageCamera(
 /** M8TS (SD-124): an untouched Work layer is fitted to this window in whole grid units, at 100%:
  * Threads, T3 and Memory side by side, 24px under the toolbar with a 56px strip kept for the
  * Off-screen bar. Nocturne's own Conversation waits just right of Memory and the other four start
- * under the window's foot, two rows of two. A phone-width window is filled by T3 alone. */
+ * under the window's foot, two rows of two. A window too narrow for the three (a phone, a
+ * tablet) is T3's alone. */
 export function openingStageArrangement(
   viewportWidth: number,
   viewportHeight: number,
   modules: readonly StageModuleLayout[],
 ): { modules: StageModuleLayout[], camera: StageCamera } {
-  const narrow = viewportWidth < 600
+  const phone = viewportWidth < 600
   // A phone's margins are the ones a module recalled from the Off-screen bar is checked against,
   // so a trip along the bar brings each module back at this size, clear of the bar.
-  const edge = narrow ? STAGE_RECOVERY_INSET : 24
+  const edge = phone ? STAGE_RECOVERY_INSET : 24
   const columns = Math.max(6, Math.floor((viewportWidth - edge * 2) / STAGE_UNIT_WIDTH))
   // A phone has no room for margins: the frame is zoomed (never under 100%) until it fills the width.
-  const zoom = narrow ? Math.max(1, (viewportWidth - edge * 2) / (columns * STAGE_UNIT_WIDTH)) : 1
-  const rows = Math.max(8, Math.floor((viewportHeight - (narrow ? 96 : 80)) / (STAGE_UNIT_HEIGHT * zoom)))
-  const side = narrow ? columns : clamp(Math.round(columns * 0.22), 5, 8)
-  const middle = narrow ? columns : Math.min(columns - side * 2, 24)
-  // On a phone only T3 is in the window; Threads and Memory sit one unit off its edges.
-  const t3 = narrow ? 0 : side
-  const memory = t3 + middle + (narrow ? 1 : 0)
-  const right = narrow ? columns : memory + side
+  const zoom = phone ? Math.max(1, (viewportWidth - edge * 2) / (columns * STAGE_UNIT_WIDTH)) : 1
+  const rows = Math.max(8, Math.floor((viewportHeight - (phone ? 96 : 80)) / (STAGE_UNIT_HEIGHT * zoom)))
+  const flank = clamp(Math.round(columns * 0.22), 5, 8)
+  // Threads and Memory stand beside T3 while T3 keeps ten units (480px) between them. In a
+  // narrower window T3 has the window alone and they sit one unit off its edges. Threads is
+  // never under seven units: narrower, its title row cuts its own tag short.
+  const alone = columns - Math.max(flank, 7) - flank < 10
+  const side = alone ? Math.min(columns, 8) : flank
+  const threads = alone ? side : Math.max(flank, 7)
+  const middle = Math.min(alone ? columns : columns - threads - side, 24)
+  const t3 = alone ? 0 : threads
+  const memory = t3 + middle + (alone ? 1 : 0)
+  const right = alone ? middle : memory + side
+  // The other four start under the window's foot: two rows of two, or under a lone T3 one under another.
   const half = Math.floor(right / 2)
   const second = Math.ceil((viewportHeight - 24) / (STAGE_UNIT_HEIGHT * zoom))
+  const [vitals, contextBars, palaceState, palaceQueue] = alone
+    ? [[0, 0, right], [0, 8, right], [0, 16, right], [0, 26, right]]
+    : [[0, 0, half], [half, 0, right - half], [0, 8, half], [half, 8, right - half]]
   const boxes: Partial<Record<StageModuleId, Pick<StageModuleLayout, 'x' | 'y' | 'width' | 'height'>>> = {
-    threads: { x: narrow ? -side - 1 : 0, y: 0, width: side, height: rows },
+    threads: { x: alone ? -threads - 1 : 0, y: 0, width: threads, height: rows },
     t3: { x: t3, y: 0, width: middle, height: rows },
     memory: { x: memory, y: 0, width: side, height: rows },
     conversation: { x: memory + side + 1, y: 0, width: middle, height: rows },
-    vitals: { x: 0, y: second, width: half, height: 8 },
-    context_bars: { x: half, y: second, width: right - half, height: 8 },
-    palace_state: { x: 0, y: second + 8, width: half, height: 10 },
-    palace_queue: { x: half, y: second + 8, width: right - half, height: 10 },
+    vitals: { x: vitals[0], y: second + vitals[1], width: vitals[2], height: 8 },
+    context_bars: { x: contextBars[0], y: second + contextBars[1], width: contextBars[2], height: 8 },
+    palace_state: { x: palaceState[0], y: second + palaceState[1], width: palaceState[2], height: 10 },
+    palace_queue: { x: palaceQueue[0], y: second + palaceQueue[1], width: palaceQueue[2], height: 10 },
   }
   const left = STAGE_ORIGIN_X + 2
   const top = STAGE_ORIGIN_Y + 2

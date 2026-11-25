@@ -41,6 +41,13 @@ try {
   evidence.data_bearing = await assertDataBearingState(page)
 
   for (const width of widths) {
+    // M8TS: each width is swept from a fresh Stage. A tap at one width (the phone's Threads
+    // button) makes the arrangement the owner's, and it would be carried to the next width.
+    await page.evaluate(() => {
+      for (const key of Object.keys(localStorage)) if (key.startsWith('nocturne.stage.')) localStorage.removeItem(key)
+    })
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await waitForRack(page)
     await page.setViewportSize({ width, height: width < 768 ? 844 : 900 })
     await waitForSavedFrame(page)
     await resetRack(page)
