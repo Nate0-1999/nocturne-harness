@@ -4695,3 +4695,8 @@ would have a second host of another site, and T3's sign-in cookie would be withh
 signed-in link is handed only to a request from this home's own page. Fitted, the module
 covers the window below a gate, which must stay visible. A layout the owner already arranged
 gets the module beside its modules. Report 340 records the look-first and the walk.
+
+Return, 2026-11-25. A browser that brings a control into view scrolled the Stage viewport's
+hidden overflow under the camera and threw the whole Stage aside. The viewport now clips
+(`overflow: clip`), so it cannot scroll at all; this replaces Decision 092's scroll reset on
+Recipe and Deck recall. The Sheet still scrolls.

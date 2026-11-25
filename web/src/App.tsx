@@ -810,13 +810,6 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
   }
 
   function focusModule(module: StageModuleLayout) {
-    if (module.module_id === 'recipe' || module.module_id === 'conversation') {
-      const viewport = viewportRef.current
-      if (viewport !== null) {
-        viewport.scrollLeft = 0
-        viewport.scrollTop = 0
-      }
-    }
     setLayout((current) => recoverStageModule(
       current,
       module.instance_id,

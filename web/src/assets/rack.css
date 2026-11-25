@@ -3352,7 +3352,7 @@ button.rack-module__resize-handle--nw {
   grid-row: 4;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: clip; /* a hidden box still scrolls when the browser brings a control into view; the camera alone moves the Stage */
   cursor: grab;
   touch-action: none;
 }
