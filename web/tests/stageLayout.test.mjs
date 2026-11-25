@@ -463,6 +463,17 @@ test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window',
       assert.ok(at.left >= width || at.right <= 0 || at.top >= height, `${width}: ${module.instance_id} out of the window`)
     }
     if (width >= 600) assert.ok(box('threads').right <= box('t3').left && box('t3').right <= box('memory').left)
+    else {
+      // A trip along the Off-screen bar brings T3 back at the size it opened, clear of the bar.
+      let layout = cloneFactoryStageLayout()
+      layout = updateStageCamera({ ...layout, layers: layout.layers.map((layer, index) => index === 0 ? { ...layer, modules } : layer) }, camera)
+      for (const id of ['threads', 't3']) layout = recoverStageModule(layout, id, width, height)
+      const back = activeStageLayer(layout)
+      const t3 = back.modules.find((module) => module.instance_id === 't3')
+      assert.deepEqual([t3.width, t3.height, back.camera.zoom], [modules.find((module) => module.instance_id === 't3').width, modules.find((module) => module.instance_id === 't3').height, camera.zoom])
+      const at = screen(back.camera, t3)
+      assert.ok(at.left >= 0 && at.right <= width && at.top >= 0 && at.bottom <= height - 48, `${width}: T3 whole after the trip`)
+    }
     for (const [index, module] of modules.entries()) {
       for (const other of modules.slice(index + 1)) {
         assert.ok(!overlaps(module, other), `${width}: ${module.instance_id} overlaps ${other.instance_id}`)

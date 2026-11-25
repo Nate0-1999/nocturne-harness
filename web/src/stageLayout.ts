@@ -527,11 +527,13 @@ export function openingStageArrangement(
   modules: readonly StageModuleLayout[],
 ): { modules: StageModuleLayout[], camera: StageCamera } {
   const narrow = viewportWidth < 600
-  const edge = narrow ? 8 : 24
+  // A phone's margins are the ones a module recalled from the Off-screen bar is checked against,
+  // so a trip along the bar brings each module back at this size, clear of the bar.
+  const edge = narrow ? STAGE_RECOVERY_INSET : 24
   const columns = Math.max(6, Math.floor((viewportWidth - edge * 2) / STAGE_UNIT_WIDTH))
   // A phone has no room for margins: the frame is zoomed (never under 100%) until it fills the width.
   const zoom = narrow ? Math.max(1, (viewportWidth - edge * 2) / (columns * STAGE_UNIT_WIDTH)) : 1
-  const rows = Math.max(8, Math.floor((viewportHeight - 80) / (STAGE_UNIT_HEIGHT * zoom)))
+  const rows = Math.max(8, Math.floor((viewportHeight - (narrow ? 96 : 80)) / (STAGE_UNIT_HEIGHT * zoom)))
   const side = narrow ? columns : clamp(Math.round(columns * 0.22), 5, 8)
   const middle = narrow ? columns : Math.min(columns - side * 2, 24)
   // On a phone only T3 is in the window; Threads and Memory sit one unit off its edges.
