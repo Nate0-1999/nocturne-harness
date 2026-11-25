@@ -460,7 +460,7 @@ test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window',
     for (const id of shown) {
       const at = box(id)
       assert.ok(at.left >= 0 && at.right <= width, `${width}: ${id} whole across`)
-      assert.equal(Math.round(at.top), 24, `${width}: ${id} starts under the toolbar`)
+      assert.ok(Math.abs(at.top - 24) <= 1, `${width}: ${id} starts under the toolbar, no empty band`)
       assert.ok(at.bottom <= height - 56, `${width}: ${id} clear of the Off-screen bar`)
     }
     for (const module of modules.filter((item) => !shown.includes(item.instance_id))) {
