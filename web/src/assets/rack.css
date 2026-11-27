@@ -998,6 +998,7 @@ button.rack-module__resize-handle--nw {
 .model-bans button { flex: none; }
 .model-countries { margin-block: 1rem; }
 .model-countries fieldset { display: grid; gap: .75rem; margin: .5rem 0; padding: 0; border: 0; }
+.model-countries:not([open]) > fieldset { display: none; }
 .model-countries small, .model-row__countries, .model-row__countries strong { display: block; }
 .model-countries fieldset > button { justify-self: start; }
 .country-rule { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
