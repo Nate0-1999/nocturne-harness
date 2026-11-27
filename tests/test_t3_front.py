@@ -1,10 +1,34 @@
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 
 from harness.t3_front_session import FrontSession
 from harness.transcript import TranscriptJournal
+
+
+@pytest.mark.asyncio
+async def test_new_window_pairs_with_only_the_permissions_needed_to_chat(tmp_path, monkeypatch):
+    """P2.5 / SD-128: a paired window must not act on owner files outside the wall."""
+    from harness.t3_front import FrontServer
+
+    front = FrontServer(tmp_path, None, None, tmp_path)
+    client = SimpleNamespace(
+        origin="http://127.0.0.1",
+        session="fixture",
+        call=AsyncMock(return_value={"providers": [{"instanceId": "nocturne", "enabled": True}]}),
+    )
+    monkeypatch.setattr(front, "client", AsyncMock(return_value=client))
+    pairing = AsyncMock(return_value=httpx.Response(200, json={"credential": "fixture"}))
+    monkeypatch.setattr(httpx.AsyncClient, "post", pairing)
+    try:
+        await front.browser_url()
+        pairing.assert_awaited_once()
+        grant = pairing.await_args.kwargs["json"]["scopes"]
+        assert set(grant) == {"orchestration:read", "orchestration:operate"}
+    finally:
+        await front.close()
 
 
 @pytest.mark.asyncio
