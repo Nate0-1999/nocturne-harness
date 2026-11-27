@@ -7,34 +7,34 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "c02f2c1725be283e2f356f5551eb798266a7196e"
+      "head": "b09743d600d5dd07b42afa1c00325ccd5c8192e1"
     }
   ],
   "unmapped": {
     "harness/src/harness/__init__.py": "Paired release metadata.",
     "harness/tests/test_agent.py": "Regression expectations for the lost save response.",
     "harness/verification/m8rm/FL-002.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-014.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-038.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-042.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-069.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-187.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-190.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-191.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/FL-194.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-006.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-007.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-009.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-010.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-014.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-038.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-042.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-061.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-069.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-080.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-084.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-170.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-186.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-187.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-190.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/FL-191.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-192.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
     "harness/verification/m8rm/FL-193.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/ledger-report.json": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
-    "harness/verification/m8rm/SHA256SUMS": "Repository-specific copy of the M8RM evidence for hosted handoff verification."
+    "harness/verification/m8rm/FL-194.png": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/SHA256SUMS": "Repository-specific copy of the M8RM evidence for hosted handoff verification.",
+    "harness/verification/m8rm/ledger-report.json": "Repository-specific copy of the M8RM evidence for hosted handoff verification."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
