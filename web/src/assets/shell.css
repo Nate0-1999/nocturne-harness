@@ -2121,7 +2121,6 @@
 .feature-radar svg {
   width: 15rem;
   height: 15rem;
-  overflow: visible; /* a side label may run into the figure's padding */
 }
 
 .feature-radar__ring,

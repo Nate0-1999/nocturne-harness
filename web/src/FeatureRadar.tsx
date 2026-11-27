@@ -18,7 +18,7 @@ const RADAR_AXES: readonly { key: keyof MemoryFeatures; label: string }[] = [
 
 const SIZE = 260
 const CENTER = SIZE / 2
-const RADIUS = 88
+const RADIUS = 80 // the labels are 11px as drawn (SD-129) and still sit inside the drawing
 
 function point(index: number, magnitude: number): [number, number] {
   const angle = -Math.PI / 2 + (index / RADAR_AXES.length) * Math.PI * 2
