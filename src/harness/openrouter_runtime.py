@@ -9,12 +9,14 @@ from typing import Any, override
 
 from openai import APIError, APITimeoutError
 from pydantic_ai.exceptions import ModelAPIError, ModelHTTPError
-from pydantic_ai.models import DEFAULT_HTTP_TIMEOUT
+from pydantic_ai.models import DEFAULT_HTTP_TIMEOUT, ModelRequestParameters
 from pydantic_ai.models.openrouter import (
     OpenRouterModel,
     OpenRouterStreamedResponse,
     _OpenRouterChatCompletionChunk,
 )
+from pydantic_ai.settings import ModelSettings
+from spine.model_countries import HomeCountries
 
 
 class PreservingOpenRouterStreamedResponse(OpenRouterStreamedResponse):
@@ -49,6 +51,30 @@ class ModelStalled(ModelAPIError):
 
 class PreservingOpenRouterModel(OpenRouterModel):
     """Use the metadata-preserving stream wrapper for every Harness OpenRouter route."""
+
+    countries: HomeCountries | None = None
+
+    @override
+    def prepare_request(
+        self, model_settings: ModelSettings | None, model_request_parameters: ModelRequestParameters
+    ):
+        settings, parameters = super().prepare_request(model_settings, model_request_parameters)
+        if self.countries:
+            reason, only = self.countries.catalog().assess(f"openrouter:{self.model_name}")
+            if reason:
+                raise ModelAPIError(self.model_name, reason)
+            if only:
+                body = dict((settings or {}).get("extra_body") or {})
+                provider = body.get("provider") or {}
+                if "only" in provider:
+                    only = [slug for slug in provider["only"] if slug.partition("/")[0] in only]
+                    if not only:
+                        raise ModelAPIError(
+                            self.model_name, "No allowed provider serves this model."
+                        )
+                body["provider"] = {**provider, "only": only}
+                settings = {**(settings or {}), "extra_body": body}
+        return settings, parameters
 
     @property
     @override

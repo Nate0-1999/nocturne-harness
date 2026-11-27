@@ -20,6 +20,7 @@ from pydantic_ai.providers.anthropic import AnthropicProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.settings import ModelSettings
+from spine.model_countries import HomeCountries
 
 from harness.config import HarnessSettings
 from harness.model_policy import (
@@ -43,6 +44,10 @@ class ModelConfigurationError(ValueError):
     """The selected model cannot be constructed from its adapter configuration."""
 
 
+class CountryExcluded(ModelConfigurationError):
+    """A configured source exists but the current home filter refuses its use."""
+
+
 class CompletionAdapter(Protocol):
     """One provider/router implementation behind Nocturne's model seam."""
 
@@ -60,7 +65,13 @@ class CompletionAdapter(Protocol):
 class OpenRouterCompletionAdapter:
     """OpenRouter adapter #1: model construction, catalog, and request metadata."""
 
-    def __init__(self, api_key: str | None, request_timeout_seconds: float = 60.0) -> None:
+    def __init__(
+        self,
+        api_key: str | None,
+        request_timeout_seconds: float = 60.0,
+        countries: HomeCountries | None = None,
+    ) -> None:
+        self.countries = countries
         self._api_key = api_key.strip() if api_key is not None else None
         self._request_timeout_seconds = request_timeout_seconds
         self._catalog: ModelCatalogLoader | None = (
@@ -76,13 +87,15 @@ class OpenRouterCompletionAdapter:
 
     def build_model(self, model: str) -> Model:
         api_key = _required_key(self._api_key, "OPENROUTER_API_KEY")
-        return PreservingOpenRouterModel(
+        result = PreservingOpenRouterModel(
             model.removeprefix("openrouter:"),
             provider=OpenRouterProvider(api_key=api_key),
             # F169: OpenRouter sends a byte at least every few seconds while it works (2026-10-03
             # probe), so this many silent seconds means the request stalled.
             settings={"timeout": self._request_timeout_seconds},
         )
+        result.countries = self.countries
+        return result
 
     def request_settings(
         self,
@@ -118,6 +131,10 @@ class OpenRouterCompletionAdapter:
         if self._catalog is None:
             raise ModelCatalogUnavailable("OPENROUTER_API_KEY is unavailable for catalog lookup")
         return await self._catalog.load()
+
+    async def load_countries(self, model_ids: list[str]) -> None:
+        if self.countries and isinstance(self._catalog, OpenRouterCatalogClient):
+            await self._catalog.load_countries(self.countries, model_ids)
 
     async def load_named_route(self, model_id: str) -> tuple[ModelRoute, datetime]:
         if self._catalog is None:
@@ -360,7 +377,7 @@ class CompletionRouter:
             else None
         )
         self._openrouter = OpenRouterCompletionAdapter(
-            openrouter_key, settings.model_request_timeout_seconds
+            openrouter_key, settings.model_request_timeout_seconds, settings.model_choices.countries
         )
         self._direct = DirectCompletionAdapter(settings)
         self.local = LocalCompletionAdapter(settings)
@@ -383,11 +400,21 @@ class CompletionRouter:
             return local
         try:
             catalog = await remote.load()
+            if (
+                remote is self._openrouter
+                and self.settings.model_choices.countries.filters().active
+            ):
+                await self.load_countries([row.model_id for row in catalog.listing])
         except ModelCatalogUnavailable:
             if local.listing:
                 return local
             raise
         return replace(catalog, listing=catalog.listing + local.listing)
+
+    async def load_countries(self, model_ids: list[str]) -> None:
+        await self._openrouter.load_countries(
+            [key for key in model_ids if not key.startswith("local:")]
+        )
 
     def qualify_model(self, model: str) -> str:
         if model.startswith("subscription:"):
@@ -408,6 +435,12 @@ class CompletionRouter:
         return remote.parse_named_model(model)
 
     async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
+        if (
+            self.remote_catalog is self._openrouter
+            and not model.startswith(("local:", "subscription:"))
+            and self.settings.model_choices.countries.filters().active
+        ):
+            await self.load_countries([model])
         if model.startswith("subscription:") and self.subscription_server is not None:
             try:
                 key, _, offered = await resolve_offer(self.subscription_server, model)
@@ -435,6 +468,9 @@ class CompletionRouter:
             # An HTTP refusal (including a spent key) is reachable, never an offline signal.
             return resolution
         except httpx.TransportError:
+            countries = self.settings.model_choices.countries.catalog()
+            if reason := countries.assess(resolution.model)[0]:
+                raise ModelConfigurationError(reason) from None
             catalog = await self.local.load()
             model = self.settings.local_model
             if model and not model.startswith("local:"):
@@ -447,9 +483,12 @@ class CompletionRouter:
                         if not self.settings.model_choices.excluded(
                             self.settings.model_choices.bans(), entry.model_id
                         )
+                        and not countries.assess(entry.model_id)[0]
                     ),
                     None,
                 )
+            if model and (reason := countries.assess(model)[0]):
+                raise ModelConfigurationError(reason)
             if model and self.settings.model_choices.excluded(
                 self.settings.model_choices.bans(), model
             ):
@@ -479,6 +518,8 @@ class CompletionRouter:
                 "chat model must be nonblank without surrounding whitespace"
             )
         adapter = self._adapter_for(model)
+        if reason := self.settings.model_choices.countries.catalog().assess(model)[0]:
+            raise CountryExcluded(reason)
         try:
             return SpendWallModel(adapter.build_model(model))
         except ModelConfigurationError:

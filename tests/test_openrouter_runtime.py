@@ -85,3 +85,51 @@ async def test_f169_a_silent_model_request_ends_at_the_bound_naming_the_model_an
         "openai/gpt-4.1-mini stopped answering: nothing arrived for 0.3 s ("
     )
     assert stalled.value.waited_seconds < 15
+
+
+@pytest.mark.asyncio
+async def test_filtered_request_keeps_only_providers_with_eligible_locations(tmp_path):
+    """SPEC C.5 / SD-100: a restricted model turn cannot escape through another provider
+    or a provider whose other datacenter would violate the owner's country rule."""
+    import httpx
+    from pydantic_ai.exceptions import ModelAPIError
+    from pydantic_ai.models import ModelRequestParameters
+    from spine.model_countries import CountryFilters
+    from spine.model_policy import HomeModelChoices
+
+    countries = HomeModelChoices(tmp_path).countries
+    providers = [
+        {"slug": "one", "headquarters": "US", "datacenters": ["US"]},
+        {"slug": "mixed", "headquarters": "US", "datacenters": ["US", "FR"]},
+        {"slug": "unknown", "headquarters": "US", "datacenters": []},
+    ]
+
+    def catalog(request):
+        if request.url.path.endswith("/providers"):
+            return httpx.Response(200, json={"data": providers})
+        endpoints = [{"tag": p["slug"] + "/fast", "status": 0} for p in providers]
+        return httpx.Response(200, json={"data": {"endpoints": endpoints}})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(catalog)) as client:
+        await countries.refresh(["mistralai/example"], client, "https://broker.test")
+    model = model_router.OpenRouterCompletionAdapter("test", countries=countries).build_model(
+        "openrouter:mistralai/example"
+    )
+
+    def routing():
+        settings, _ = model.prepare_request(
+            {"openrouter_provider": {"sort": "price"}}, ModelRequestParameters()
+        )
+        return settings["extra_body"]["provider"]
+
+    assert routing() == {"sort": "price"}
+    filters = CountryFilters.model_validate({"serving": {"mode": "allow", "countries": ["US"]}})
+    countries.save(filters)
+    assert routing() == {"sort": "price", "only": ["one"]}
+    countries.save(filters.model_copy(update={"keep_unknown": True}))
+    assert routing()["only"] == ["one", "unknown"]
+    countries.save(
+        CountryFilters.model_validate({"serving": {"mode": "allow", "countries": ["FR"]}})
+    )
+    with pytest.raises(ModelAPIError, match="No allowed provider serves this model"):
+        routing()

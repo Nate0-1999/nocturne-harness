@@ -2551,8 +2551,9 @@ def test_built_static_mode_rejects_unknown_websocket_path(tmp_path: Path, path: 
     assert caught.value.reason == "unknown WebSocket route"
 
 
+@pytest.mark.parametrize("explicit_model", [True, False])
 def test_model_browser_lists_the_source_and_pins_persist_in_the_home(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, explicit_model: bool
 ) -> None:
     """P4 is defended by serving FL-202's model browser from the source the daemon already
     routes through, with the owner's pins kept in the home beside the role policies.
@@ -2572,7 +2573,7 @@ def test_model_browser_lists_the_source_and_pins_persist_in_the_home(
         _env_file=None,
         spine_token="test-token",
         nocturne_home=tmp_path / "home",
-        chat_model="openai:gpt-4.1-mini",
+        chat_model="openai:gpt-4.1-mini" if explicit_model else None,
         anthropic_api_key=None,
         openai_api_key="direct-key",
         openrouter_api_key=None,
@@ -2595,7 +2596,11 @@ def test_model_browser_lists_the_source_and_pins_persist_in_the_home(
     ]
     assert browser["pins"] == ["openai:gpt-4.1"]
     assert browser["configurations"] == []
-    assert browser["chat_policy"] == "pinned:openai:gpt-4.1-mini"
+    if explicit_model:
+        assert browser["chat_policy"] == "pinned:openai:gpt-4.1-mini"
+    else:
+        assert browser["chat_policy"] == "elbow"
+        assert "Pick a model in the Model Device" in browser["unavailable"]
     assert json.loads((tmp_path / "home" / "model-pins.json").read_text()) == ["openai:gpt-4.1"]
 
 

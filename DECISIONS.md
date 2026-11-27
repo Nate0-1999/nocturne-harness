@@ -4682,3 +4682,7 @@ elbow over eligible models. If the owner's pin is banned, new conversations use 
 until the ban is lifted. Established conversations retain their model. The settings show
 when the pick changed separately from the catalog date used for a saved pick. In the six
 retained observations the elbow picked six different models. Report 336 records the walk.
+
+## M8RG · Country selection (P4)
+
+SD-100 and draft A-111. Show the reported maker, provider headquarters and datacenters in the Model Device. Check the current home policy again while preparing the broker request so changing a filter also binds a running conversation's next request.
