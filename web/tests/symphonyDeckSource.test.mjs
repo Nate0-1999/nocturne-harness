@@ -2,6 +2,12 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+/** ADR-012 §3 and B.6: the judge's inputs explain why its memory list is empty. */
+test('the Deck explains what judges read beside their memory observation', async () => {
+  const context = await readFile(new URL('../src/WorkerContext.tsx', import.meta.url), 'utf8')
+  assert.match(context, /worker\.stage === 'judge'\s*\? <p>Judges read the signed charge and the work without Palace memories\.<\/p>/u)
+})
+
 /** ADR-014 and G19-G20 require one current Deck surface for typed steering and exact lineage. */
 test('The Deck exposes all three conductor interventions and an owner demand lineage', async () => {
   const [deck, rack, stage, daemon] = await Promise.all([

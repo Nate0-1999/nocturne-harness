@@ -52,8 +52,9 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
       <summary>{worker.attempt_id} · {worker.stage} · {worker.state} · {worker.agent_id}</summary>
       <ContextBars workerSnapshot={worker.observation} />
       <h4>Injected memories</h4>
-      {worker.injection === null ? <p>{worker.stage === 'judge'
-        ? 'This judge received no Palace memories.' : 'No injection recorded yet.'}</p>
+      {worker.stage === 'judge'
+        ? <p>Judges read the signed charge and the work without Palace memories.</p>
+        : worker.injection === null ? <p>No injection recorded yet.</p>
         : worker.injection.injected.length === 0 && <p>No memories were injected.</p>}
       {worker.injection?.injected.map((card) => <MemoryCard key={card.memory_id} memoryId={card.memory_id} label={card.label}
         body={card.body} score={card.score} pin={card.pin} features={card.features} tone="injected"
