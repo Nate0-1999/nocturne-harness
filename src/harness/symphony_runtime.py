@@ -864,6 +864,23 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
             if step.is_dir() and not step.is_symlink():
                 for child in step.iterdir():
                     if child.is_dir() and not child.is_symlink():
+                        evidence = run_home / child.relative_to(target)
+                        if (
+                            child.name.startswith("judge-")
+                            and (evidence / "assignment.json").is_file()
+                        ):
+                            for name in (
+                                "JUDGE_BRIEF.json",
+                                "JUDGE_SESSION.json",
+                                "judge-verdict.json",
+                            ):
+                                source, saved = child / name, evidence / name
+                                if (
+                                    source.is_file()
+                                    and not source.is_symlink()
+                                    and not saved.exists()
+                                ):
+                                    shutil.move(source, saved)
                         _remove_empty(child)
                 _remove_empty(step)
         if _remove_empty(target):

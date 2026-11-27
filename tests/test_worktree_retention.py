@@ -42,12 +42,17 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
             attempt, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", symphony_id
         )
         commits[symphony_id] = _git(attempt, "rev-parse", "HEAD")
-        (attempt.parent / "judge-motivation").mkdir()
+        judge = attempt.parent / "judge-motivation"
+        judge.mkdir()
+        (judge / "judge-verdict.json").write_text('{"outcome": "pass"}')
         assignment = (
             home / "symphonies" / symphony_id / "step-1-round-1" / "attempt-1" / "completion"
         )
         assignment.mkdir(parents=True)
         (assignment / "assignment.json").write_text(json.dumps({"project_key": str(root)}))
+        judge_evidence = assignment.parent.parent / judge.name
+        judge_evidence.mkdir()
+        (judge_evidence / "assignment.json").write_text(json.dumps({"project_key": str(root)}))
         products[symphony_id] = _git(
             root,
             "-c",
@@ -70,6 +75,8 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     worktrees = root / ".nocturne-worktrees"
     assert removed == [worktrees / "older"]
     assert not (worktrees / "older").exists()
+    verdict = home / "symphonies/older/step-1-round-1/judge-motivation/judge-verdict.json"
+    assert json.loads(verdict.read_text()) == {"outcome": "pass"}
     assert (worktrees / "newer" / "step-1-round-1" / "attempt-1" / "work.txt").exists()
     assert (worktrees / "running").exists()
     assert "/.nocturne-worktrees/older/" not in _git(root, "worktree", "list")
