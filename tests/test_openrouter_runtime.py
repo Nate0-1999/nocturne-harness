@@ -123,10 +123,16 @@ async def test_filtered_request_keeps_only_providers_with_eligible_locations(tmp
         return settings["extra_body"]["provider"]
 
     assert routing() == {"sort": "price"}
+    countries.save(CountryFilters.model_validate({"maker": {"countries": ["CN"]}}))
+    assert routing() == {"sort": "price"}
     filters = CountryFilters.model_validate({"serving": {"mode": "allow", "countries": ["US"]}})
     countries.save(filters)
     assert routing() == {"sort": "price", "only": ["one"]}
-    countries.save(filters.model_copy(update={"keep_unknown": True}))
+    countries.save(
+        CountryFilters.model_validate(
+            {"serving": {"mode": "allow", "countries": ["US"], "keep_unknown": True}}
+        )
+    )
     assert routing()["only"] == ["one", "unknown"]
     countries.save(
         CountryFilters.model_validate({"serving": {"mode": "allow", "countries": ["FR"]}})

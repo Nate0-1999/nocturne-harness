@@ -402,7 +402,7 @@ class CompletionRouter:
             catalog = await remote.load()
             if (
                 remote is self._openrouter
-                and self.settings.model_choices.countries.filters().active
+                and self.settings.model_choices.countries.filters().serving.countries
             ):
                 await self.load_countries([row.model_id for row in catalog.listing])
         except ModelCatalogUnavailable:
@@ -438,7 +438,7 @@ class CompletionRouter:
         if (
             self.remote_catalog is self._openrouter
             and not model.startswith(("local:", "subscription:"))
-            and self.settings.model_choices.countries.filters().active
+            and self.settings.model_choices.countries.filters().serving.countries
         ):
             await self.load_countries([model])
         if model.startswith("subscription:") and self.subscription_server is not None:

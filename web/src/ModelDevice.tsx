@@ -26,21 +26,23 @@ function ModelCountries({ item }: { item: ListedModel }) {
   </small>
 }
 
-function CountryControls({ filters, options, save }: {
-  filters: CountryFilters; options: string[]; save: (filters: CountryFilters) => Promise<void>
+function CountryControls({ filters, options, models, save }: {
+  filters: CountryFilters; options: string[]; models: ListedModel[]; save: (filters: CountryFilters) => Promise<void>
 }) {
-  const [draft, setDraft] = useState(filters)
   const [saving, setSaving] = useState(false)
-  const count = filters.maker.countries.length + filters.serving.countries.length
-  function update(key: 'maker' | 'serving', rule: Partial<CountryRule>) {
-    setDraft(current => ({ ...current, [key]: { ...current[key], ...rule } }))
+  const homeModels = models.filter(item => !item.model.startsWith('subscription:'))
+  const eligible = homeModels.filter(item => !item.country_exclusion).length
+  async function update(key: 'maker' | 'serving', rule: Partial<CountryRule>) {
+    setSaving(true)
+    try { await save({ ...filters, [key]: { ...filters[key], ...rule } }) } finally { setSaving(false) }
   }
   return <details className="model-countries">
-    <summary>Country filters · {count ? count : 'Off'}</summary>
+    <summary>Country filters · <span aria-live="polite">{eligible} of {homeModels.length} models</span></summary>
     <fieldset disabled={saving}>
+      <small>Filter this home’s chat, sub-agents, judges and background calls while the Palace curator uses its own settings.</small>
       {(['maker', 'serving'] as const).map(key => {
         const label = key === 'maker' ? 'Maker country' : 'Provider countries'
-        const rule = draft[key]
+        const rule = filters[key]
         return <div key={key}>
           <strong>{label}</strong>
           {key === 'serving' && <small>Applies to the provider’s reported headquarters and datacenters.</small>}
@@ -54,13 +56,9 @@ function CountryControls({ filters, options, save }: {
             </Select>
             {rule.countries.map(code => <Button key={code} action="remove" type="button" aria-label={'Remove ' + regions.of(code) + ' from ' + label} onClick={() => update(key, { countries: rule.countries.filter(c => c !== code) })}>{regions.of(code)}</Button>)}
           </div>
+          <label><input type="checkbox" checked={rule.keep_unknown} onChange={e => { void update(key, { keep_unknown: e.target.checked }) }} /> Keep unknown {key === 'maker' ? 'maker' : 'provider'} countries</label>
         </div>
       })}
-      <label><input type="checkbox" checked={draft.keep_unknown} onChange={e => setDraft({ ...draft, keep_unknown: e.target.checked })} /> Keep unknown countries when filtering</label>
-      <Button type="button" disabled={JSON.stringify(draft) === JSON.stringify(filters)} onClick={async () => {
-        setSaving(true)
-        try { await save(draft) } finally { setSaving(false) }
-      }}>Save country filters</Button>
     </fieldset>
   </details>
 }
@@ -526,7 +524,7 @@ export function ModelDevice() {
         </div>
       </section>}
       {browser?.country_error && <p role="status">{browser.country_error}</p>}
-      {browser?.country_filters && <CountryControls filters={browser.country_filters} options={browser.country_options ?? []} save={async filters => {
+      {browser?.country_filters && <CountryControls filters={browser.country_filters} options={browser.country_options ?? []} models={browser.models} save={async filters => {
         try {
           await events.dispatch({ type: 'models.countries', filters })
           await loadBrowser()

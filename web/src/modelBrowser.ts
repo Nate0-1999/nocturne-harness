@@ -1,7 +1,7 @@
 import { formatHumanCount, formatHumanUsd } from './humanNumbers.ts'
 
-export type CountryRule = { mode: 'allow' | 'exclude'; countries: string[] }
-export type CountryFilters = { maker: CountryRule; serving: CountryRule; keep_unknown: boolean }
+export type CountryRule = { mode: 'allow' | 'exclude'; countries: string[]; keep_unknown: boolean }
+export type CountryFilters = { maker: CountryRule; serving: CountryRule }
 
 /** FL-202: one source model as the browser lists it; prices are USD per million tokens. */
 export interface ListedModel {
