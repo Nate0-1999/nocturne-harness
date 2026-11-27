@@ -1,8 +1,17 @@
 import { formatHumanCount, formatHumanUsd } from './humanNumbers.ts'
 
+export type CountryRule = { mode: 'allow' | 'exclude'; countries: string[] }
+export type CountryFilters = { maker: CountryRule; serving: CountryRule; keep_unknown: boolean }
+
 /** FL-202: one source model as the browser lists it; prices are USD per million tokens. */
 export interface ListedModel {
   banned_by?: string | null
+  maker_country?: string | null
+  headquarters?: string[]
+  datacenters?: string[]
+  unknown_headquarters?: boolean
+  unknown_datacenters?: boolean
+  country_exclusion?: string | null
   model: string
   name: string
   context_tokens: number | null
@@ -22,6 +31,9 @@ export interface Configuration {
 }
 
 export interface ModelBrowser {
+  country_filters?: CountryFilters
+  country_options?: string[]
+  country_error?: string | null
   subscriptions?: { tool: string, name: string, availability: string, limited_until: string | null }[]
   local?: { url: string | null, model: string | null, when_offline: boolean }
   models: ListedModel[]
