@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { failureMessage, responseFailure, serverMessage } from '../src/requestFailure.ts'
 
-/** SD-100: a country refusal tells the person which setting to change. */
+/** SPEC C.5 / FL-202 / SD-100: a country refusal tells the person which setting to change. */
 test('the conversation displays the authored country and direct-source guidance', () => {
   for (const sentence of [
     'No allowed provider serves this model. Change the filters or pick another model.',
