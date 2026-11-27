@@ -555,6 +555,11 @@ class SymphonyExecution:
                             brief.attempt_id,
                             TypedDistillate.model_validate_json(path.read_text()),
                         )
+                        lesson_error = path.with_name("lesson-error.json")
+                        if lesson_error.is_file():
+                            await update(
+                                "running", {"evidence": [json.loads(lesson_error.read_text())]}
+                            )
                     await update(
                         "running",
                         {

@@ -11,9 +11,9 @@ from pathlib import Path, PurePosixPath
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, ValidationError, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
-from pydantic_ai.exceptions import AgentRunError
+from pydantic_ai.exceptions import AgentRunError, ModelHTTPError, ModelTimeoutError
 from pydantic_ai.messages import (
     ModelMessagesTypeAdapter,
     ModelRequest,
@@ -113,6 +113,21 @@ def _write(path: Path, value: str) -> None:
     temporary.write_text(value, encoding="utf-8")
     temporary.chmod(0o600)
     temporary.replace(path)
+
+
+def _lesson_failure(exc: Exception) -> str:
+    cause = exc
+    while cause is not None:
+        if isinstance(cause, ValidationError):
+            error = cause.errors(include_input=False)[0]
+            field = ".".join(map(str, error["loc"]))
+            return f"No lessons proposed. Invalid {field}: {error['msg']}."
+        if isinstance(cause, (TimeoutError, ModelTimeoutError)):
+            return "No lessons proposed. The model request timed out."
+        if isinstance(cause, ModelHTTPError):
+            return f"No lessons proposed. The model provider returned HTTP {cause.status_code}."
+        cause = cause.__cause__
+    return f"No lessons proposed. Extraction failed: {str(exc) or type(exc).__name__}."
 
 
 def _capture_product(root: Path, base: str, title: str) -> str:
@@ -386,14 +401,6 @@ async def run(assignment_path: Path) -> None:
             )
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
             artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
-            transcript, _ = located_transcript(captured)
-            extractor = HarnessAgent(settings, router=router)
-            draft = await extractor.extract_thread(
-                transcript,
-                on_result=record_extraction,
-                memory_size=settings.memory_max_tokens,
-                worker_memories=sorted(worker_context.given_memories),
-            )
             sources = {
                 f"m{index}"
                 for index, message in enumerate(captured)
@@ -402,12 +409,26 @@ async def run(assignment_path: Path) -> None:
                     isinstance(part, (UserPromptPart, ToolReturnPart)) for part in message.parts
                 )
             }
-            _write(
-                output / "memories.json",
-                json.dumps(
-                    [item.model_dump() for item in sourced_candidates(draft, sources, extractor)]
-                ),
-            )
+            try:
+                transcript, _ = located_transcript(captured)
+                extractor = HarnessAgent(settings, router=router)
+                draft = await extractor.extract_thread(
+                    transcript,
+                    on_result=record_extraction,
+                    memory_size=settings.memory_max_tokens,
+                    worker_memories=sorted(worker_context.given_memories),
+                )
+                lessons = [m.model_dump() for m in sourced_candidates(draft, sources, extractor)]
+            except Exception as exc:
+                # M8SY / ADR-021: a failed proposal cannot invalidate the captured work.
+                lessons = []
+                _write(
+                    output / "lesson-error.json",
+                    json.dumps(
+                        {"attempt_id": assignment["attempt_id"], "reason": _lesson_failure(exc)}
+                    ),
+                )
+            _write(output / "memories.json", json.dumps(lessons))
             value = TypedDistillate.model_validate_json(
                 json.dumps(
                     {
