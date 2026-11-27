@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "dc2c96e1482d5b014ffcd94c3f08bc6ed04d9d02"
+      "head": "f474293684c044fcdabd9bc5e7b0af1b85b8df8f"
     }
   ],
   "unmapped": {
@@ -18,6 +18,7 @@
     "harness/tests/test_symphony_runtime.py": "Automated regression or package-version assertion.",
     "harness/tests/test_symphony_worker.py": "Automated regression or package-version assertion.",
     "harness/tests/test_worktree_retention.py": "Automated regression or package-version assertion.",
+    "harness/verification/m2ux1/browser_check.mjs": "Phone-width browser regression for the completed Symphony question, controls and refusal.",
     "harness/verification/m8sb/FL-002.png": "M8SB verification evidence or its checksum.",
     "harness/verification/m8sb/FL-006.png": "M8SB verification evidence or its checksum.",
     "harness/verification/m8sb/FL-007.png": "M8SB verification evidence or its checksum.",
@@ -91,12 +92,14 @@
     "harness/verification/m8sb/FL-215.png": "M8SB verification evidence or its checksum.",
     "harness/verification/m8sb/SHA256SUMS": "M8SB verification evidence or its checksum.",
     "harness/verification/m8sb/ledger-report.json": "M8SB verification evidence or its checksum.",
-    "harness/web/dist/assets/index-4vpLQGv_.css": "Generated assets of the installed Harness web build.",
+    "harness/web/dist/assets/index-BJsTX1jW.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated assets of the installed Harness web build.",
-    "harness/web/dist/assets/index-CrM4Z2Vc.js": "Generated assets of the installed Harness web build.",
+    "harness/web/dist/assets/index-CnuQGOMs.css": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated assets of the installed Harness web build.",
     "harness/web/dist/index.html": "Generated assets of the installed Harness web build.",
     "harness/web/tests/symphonyDeckSource.test.mjs": "Inherited from the M8SY base of this stacked draft.",
+    "harness/web/dist/assets/index-4vpLQGv_.css": "Generated assets of the installed Harness web build.",
+    "harness/web/dist/assets/index-CrM4Z2Vc.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-DNy4rzWj.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-DMtAxV-0.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-QzJLbNeD.css": "Generated assets of the installed Harness web build.",
@@ -256,7 +259,7 @@
       "verdict": "PASS",
       "screenshot": "FL-085.png",
       "flag": "",
-      "observed": "An installed real worker completed in its own worktree. All three judges passed and the Deck returned the result to the human. The project stayed at its original SHA until explicit approval."
+      "observed": "An installed real worker completed in its own worktree. All three judges passed and the Deck returned the result to the human. The project stayed at its original SHA until explicit approval. Reopening review in the installed merged build showed the question and both choices at phone width without a swipe."
     },
     "FL-098": {
       "label": "The symphony lifecycle shows its human touchpoints, the human prompt and any interjection or steering, so they can be seen.",
