@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "68dc4e6d4570035e2d3844604c7d0c08d9669169"
+      "head": "67957289ab07a0d5bb38eec61105734a8f7303ad"
     }
   ],
   "unmapped": {
@@ -19,8 +19,12 @@
     "harness/verification/m8rg/FL-061.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-067.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-069.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-070.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-074.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-075.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-083.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-102.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-104.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-105.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-106.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-107.png": "Packet walk evidence, ledger verdicts or hash inventory.",
@@ -31,8 +35,10 @@
     "harness/verification/m8rg/FL-113.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-115.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-116.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-117.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-118.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-119.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-120.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-123.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-124.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-125.png": "Packet walk evidence, ledger verdicts or hash inventory.",
@@ -58,8 +64,10 @@
     "harness/verification/m8rg/FL-192.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-193.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-194.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-199.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-201.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-202.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-205.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-206.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-213.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-215.png": "Packet walk evidence, ledger verdicts or hash inventory.",
@@ -67,10 +75,12 @@
     "harness/verification/m8rg/ledger-report.json": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-BuOuy9Ou.js": "Intermediate generated Model Device bundle superseded by the handoff build.",
+    "harness/web/dist/assets/index-CVMcPMyu.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-CitP46G3.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-Cq_-xKdY.css": "Intermediate generated Model Device bundle superseded by the handoff build.",
     "harness/web/dist/assets/index-Ctivfuv7.css": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-DA3z-UUu.js": "Intermediate generated Model Device bundle superseded by the handoff build.",
+    "harness/web/dist/assets/index-DkYOhAIN.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/index.html": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/tests/requestFailure.test.mjs": "Regression coverage of the existing model-policy or request-message contract."
@@ -95,6 +105,15 @@
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-069 walk (The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.) was outside this packet. The screenshot identifies the scope walked."
     },
+    "FL-070": {
+      "label": "Image input: paste an image and the agent reviews it.",
+      "walk": "Paste an image; the agent reviews it.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-070.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-070 walk (Image input: paste an image and the agent reviews it.) was outside this packet. The screenshot identifies the scope walked."
+    },
     "FL-074": {
       "label": "A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration).",
       "walk": "Start a new thread from inside a subfolder of a repository: the thread shows the repository root as its project and the subfolder as WHERE (v2.125: the project is the git root; the folder is the location); outside any repository the folder itself is the project.",
@@ -104,6 +123,15 @@
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-074 walk (A new thread starts in a project folder with the location rule in effect; how a thread's project is specified was his open question (maybe configuration).) was outside this packet. The screenshot identifies the scope walked."
     },
+    "FL-075": {
+      "label": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
+      "walk": "Queue a prompt during a run and interject once; the queued prompt runs after and the interjection steers the run.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-075.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-075 walk (Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.) was outside this packet. The screenshot identifies the scope walked."
+    },
     "FL-083": {
       "label": "The current token count of the context window comes from OpenRouter sending us that information.",
       "walk": "Send one turn and compare Context Bars to the usage OpenRouter returned for it; the counts match.",
@@ -112,6 +140,24 @@
       "screenshot": "FL-083.png",
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-083 walk (The current token count of the context window comes from OpenRouter sending us that information.) was outside this packet. The screenshot identifies the scope walked."
+    },
+    "FL-102": {
+      "label": "The Deck: a flashcard stack of terminals, cards colored to match their agents, only one card on top at a time (that project's agent's last response) to interact with, the next card popping up once you respond, ordered purely by which finished first.",
+      "walk": "Answer the top card; it pops and the next card, the earliest to finish, comes up in its agent's color.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-102.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-102 walk (The Deck: a flashcard stack of terminals, cards colored to match their agents, only one card on top at a time (that project's agent's last response) to interact with, the next card popping up once you respond, ordered purely by which finished first.) was outside this packet. The screenshot identifies the scope walked."
+    },
+    "FL-104": {
+      "label": "A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.",
+      "walk": "Tweak the draft on the top card and fire it; the stack moves to the agent that has waited longest.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-104.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-104 walk (A draft response to the final synthesis that you tweak and fire, after which the stack switches to the agent that has waited longest for your attention.) was outside this packet. The screenshot identifies the scope walked."
     },
     "FL-105": {
       "label": "An Ableton-like rack: the shipped layout is only version one of the default opinion, and people can easily roll and add their own plugins and visualizers to the views from the ground up.",
@@ -194,6 +240,15 @@
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-116 walk (A module not set to global attunes by proximity, measured across tabs (a tab counting one unit) and grid position, ties picked at random, and it shows which thread or stack it is attuned to.) was outside this packet. The screenshot identifies the scope walked."
     },
+    "FL-117": {
+      "label": "A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.",
+      "walk": "Press Enter in the prefilled proposed reply; the next queued prompt comes up and the queue scrolls.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-117.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-117 walk (A proposed reply prefilled and editable; queued prompts advance on Enter with a scrollable queue.) was outside this packet. The screenshot identifies the scope walked."
+    },
     "FL-119": {
       "label": "A Palace State module holding the general state stats.",
       "walk": "Open the Palace State module; the general state stats are there, not in the Spend table.",
@@ -202,6 +257,15 @@
       "screenshot": "FL-119.png",
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-119 walk (A Palace State module holding the general state stats.) was outside this packet. The screenshot identifies the scope walked."
+    },
+    "FL-120": {
+      "label": "One conversation module with stack and focused modes.",
+      "walk": "Toggle the conversation module between stack and focused; the one module shows the stack or a single thread.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-120.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-120 walk (One conversation module with stack and focused modes.) was outside this packet. The screenshot identifies the scope walked."
     },
     "FL-124": {
       "label": "Threads removable or archivable; a back-to-the-stage control on every view.",
@@ -347,6 +411,15 @@
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-194 walk (The Pydantic toolset and skills as the tool layer.) was outside this packet. The screenshot identifies the scope walked."
     },
+    "FL-199": {
+      "label": "Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.",
+      "walk": "Open any module; every common action (send, stop, add, remove, delete, refresh, open, settings, play, pause) has its icon from the one set in the theme's ink; primary buttons pair it with a word; row actions show the icon alone with a tip; an unusual action still reads as a word.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-199.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-199 walk (Icons on buttons for the common things people would understand: a button whose meaning has a known icon (send, stop, add, remove, delete, refresh, open, settings, play, pause) carries it; primary actions show icon and word, row actions the icon alone with a tip; unusual actions keep their word; one icon set across every module and theme.) was outside this packet. The screenshot identifies the scope walked."
+    },
     "FL-201": {
       "label": "One scale across modules: an icon reused anywhere is one size, text of one role is one size and one font, and a box belongs only to an icon that is a button.",
       "walk": "Measure every module: each reused icon renders at one size, each text role (module header, row label, body, caption, tip) at one size and font; markers and status glyphs stand bare, only icon buttons are boxed.",
@@ -363,7 +436,16 @@
       "verdict": "PASS",
       "screenshot": "FL-202.png",
       "flag": "",
-      "observed": "Walked the ranked model browser with price and context, pin to top, switch, fresh-thread persistence and one-click return to Elbow. Low thinking persisted on the paid thread. The model ban changed the new pick and preserved the first thread. Banned pins returned 422. Lifting the ban restored the original pick. Desktop and phone country exclusions, choices and role-and-policy-controls.json are in Garden."
+      "observed": "Return 1: independently changed maker and serving rules on both widths and compared all displayed counts to the installed listing. Timed the matching refusal and inspected the paid provider receipt. The earlier installed walk covered the ranked model browser with price and context, pin to top, switch, fresh-thread persistence and one-click return to Elbow. Low thinking persisted on the paid thread. The model ban changed the new pick and preserved the first thread. Banned pins returned 422. Lifting the ban restored the original pick. Desktop and phone country exclusions, choices and role-and-policy-controls.json are in Garden."
+    },
+    "FL-205": {
+      "label": "The thread list tells you where and how: each thread shows its project by name and the model and thinking level in force, and the list reads cleaner.",
+      "walk": "Open the thread list with threads in two projects on two models: each row names its project (not a path), its model and thinking level, with the same marks wherever that thread is named (the Deck, the conversation header); nothing repeats, nothing truncates.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-205.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-205 walk (The thread list tells you where and how: each thread shows its project by name and the model and thinking level in force, and the list reads cleaner.) was outside this packet. The screenshot identifies the scope walked."
     },
     "FL-009": {
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
@@ -576,11 +658,9 @@
     "FL-065": "horizon",
     "FL-066": "outside diff",
     "FL-068": "outside diff",
-    "FL-070": "outside diff",
     "FL-071": "outside diff",
     "FL-072": "outside diff",
     "FL-073": "outside diff",
-    "FL-075": "outside diff",
     "FL-076": "outside diff",
     "FL-077": "horizon",
     "FL-078": "outside diff",
@@ -606,13 +686,9 @@
     "FL-099": "outside diff",
     "FL-100": "outside diff",
     "FL-101": "unverified",
-    "FL-102": "outside diff",
     "FL-103": "outside diff",
-    "FL-104": "outside diff",
     "FL-109": "outside diff",
     "FL-114": "outside diff",
-    "FL-117": "outside diff",
-    "FL-120": "outside diff",
     "FL-121": "outside diff",
     "FL-122": "outside diff",
     "FL-126": "outside diff",
@@ -666,11 +742,9 @@
     "FL-195": "outside diff",
     "FL-196": "outside diff",
     "FL-198": "outside diff",
-    "FL-199": "outside diff",
     "FL-200": "outside diff",
     "FL-203": "outside diff",
     "FL-204": "horizon",
-    "FL-205": "outside diff",
     "FL-207": "outside diff",
     "FL-208": "outside diff",
     "FL-209": "outside diff",
