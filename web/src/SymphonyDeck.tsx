@@ -500,7 +500,7 @@ function SymphonyResult({ id }: { id: string }) {
     <Button type="button" disabled={busy} onClick={() => void review()}>Review result for project</Button>
     {preview && <>
       <p>Result <code>symphony/{id}</code></p>
-      <p>Project <code>{preview.review.project}</code> · {preview.review.branch || 'Detached HEAD'}</p>
+      <p>Project <code>{preview.review.project}</code> · {preview.review.branch || 'No branch selected'}</p>
       <pre>{preview.files || 'No file changes.'}</pre>
       {!preview.message && <>
         <p>Bring the judged result into {preview.review.branch}? This advances it from <code>{preview.review.head.slice(0, 12)}</code> to <code>{preview.review.commit.slice(0, 12)}</code>.</p>

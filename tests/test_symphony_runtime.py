@@ -169,19 +169,27 @@ def test_only_the_reviewed_checkout_can_receive_the_judged_commit(tmp_path):
     approved = ResultReview(**preview["review"])
 
     (root / "draft").write_text("owner")
-    assert "uncommitted" in project_result(stack, approved)["message"]
+    assert "commit" in project_result(stack, approved)["message"].lower()
     assert (root / "draft").read_text() == "owner"
     (root / "draft").unlink()
     (root / "result.txt").write_text("ignored owner work")
-    assert "refused" in project_result(stack, approved)["message"]
+    assert "local files" in project_result(stack, approved)["message"]
     assert (root / "result.txt").read_text() == "ignored owner work"
     (root / "result.txt").unlink()
 
+    git("switch", "--detach", before)
+    detached = project_result(stack)
+    assert not detached["review"]["branch"] and "choose" in detached["message"].lower()
+    git("switch", approved.branch)
+    git("bisect", "start")
+    assert "finish" in project_result(stack, approved)["message"].lower()
+    git("bisect", "reset")
     git("switch", "-c", "other")
     assert "changed" in project_result(stack, approved)["message"]
     (root / "different").write_text("new owner commit")
     other = _commit(root, "Owner advanced")
-    assert "diverged" in project_result(stack)["message"]
+    message = project_result(stack)["message"]
+    assert "changed" in message and branch in message and "review" in message.lower()
     assert git("rev-parse", "HEAD") == other
     git("switch", approved.branch)
     assert "Brought" in project_result(stack, approved)["message"]

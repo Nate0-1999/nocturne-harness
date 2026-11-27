@@ -40,7 +40,8 @@ def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = N
         raise ValueError("The run has no verifiable project and result commit.")
     root = roots.pop()
     commit = match[1]
-    source = f"refs/heads/symphony/{stack.symphony_id}"
+    result_branch = f"symphony/{stack.symphony_id}"
+    source = f"refs/heads/{result_branch}"
 
     def git(*args):
         return subprocess.run(["git", "-C", root, *args], capture_output=True, text=True)
@@ -56,19 +57,20 @@ def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = N
     diff = git("diff", "--no-ext-diff", "--stat", base, commit, "--")
     message = ""
     if approved and approved != review:
-        message = "The checkout changed after review. Review the result again."
+        message = "The project changed after your review. Review the result again."
     elif base == commit:
         message = "This result is already in the project."
     elif not branch:
-        message = "Check out the project branch you want to update, then review again."
+        message = "No project branch is selected. Choose the branch you want to update."
     elif base != head:
-        message = "The histories have diverged. The result branch is available for manual review."
+        message = (
+            f"The project changed since this Symphony started. Review the saved result on "
+            f"{result_branch}."
+        )
     else:
         status = git("status", "--porcelain", "--untracked-files=all", "--ignore-submodules=none")
         git_dir = Path(git("rev-parse", "--absolute-git-dir").stdout.strip())
-        if status.returncode or status.stdout:
-            message = "The project has uncommitted work or could not be checked. Review it first."
-        elif any(
+        if any(
             (git_dir / name).exists()
             for name in (
                 "MERGE_HEAD",
@@ -80,7 +82,11 @@ def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = N
                 "BISECT_START",
             )
         ):
-            message = "Finish the Git operation already in progress, then review again."
+            message = "A Git operation is in progress. Finish it before bringing in this result."
+        elif status.returncode:
+            message = "Git could not check the project. Open the project and check its status."
+        elif status.stdout:
+            message = "The project has uncommitted changes. Commit your work and review again."
     if diff.returncode and not message:
         message = "Git could not preview the result. Check the project before trying again."
     if approved and not message:
@@ -97,6 +103,6 @@ def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = N
         message = (
             f"Brought the result into {branch} at {commit[:12]}."
             if not merged.returncode
-            else "Git refused the fast-forward. Check for local files in the way and review again."
+            else "Git could not update the project. Check for local files at the listed paths."
         )
     return {"review": review.model_dump(), "files": diff.stdout, "message": message}
