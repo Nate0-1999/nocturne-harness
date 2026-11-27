@@ -96,6 +96,12 @@ export interface RackSnapshot {
   attunement: AttunementTarget | null
 }
 
+export type SymphonyResultPreview = {
+  review: { project: string; branch: string; head: string; commit: string }
+  files: string
+  message: string
+}
+
 export type RackAction =
   | { type: 'jobs.save'; job_id?: string; definition: JsonValue; expected_revision: number; enabled: boolean }
   | { type: 'jobs.run'; job_id: string }
@@ -110,6 +116,7 @@ export type RackAction =
   | { type: 'prompt.interject'; run_id: string; prompt: string }
   | { type: 'boundary.decide'; run_id: string; decision: 'allowed_once' | 'allowed_thread' | 'denied' }
   | { type: 'symphony.context'; symphony_id: string }
+  | { type: 'symphony.result'; symphony_id: string; approved?: SymphonyResultPreview['review'] }
   | { type: 'symphony.memory'; symphony_id: string; worker_id: string; memory_id: string; added: boolean }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
   | { type: 'spend.reconcile' }
@@ -250,6 +257,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
+  Action['type'] extends 'symphony.result' ? SymphonyResultPreview :
   Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'jobs.deliver' | 'scorer.retrain.status' | 'compaction.backtest'
     ? JsonValue
     : Action['type'] extends 'thread.create' | 'project.select'
@@ -339,6 +347,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
       'thread.rewind', 'thread.compactions',
       'symphony.context', 'symphony.memory',
+      'symphony.result',
       'policies.load', 'policies.save', 'models.load',
       // SD-101: the header's list of pinned models switches this conversation's model.
       'parameter.write',
@@ -675,6 +684,11 @@ function dispatchRackAction<Action extends RackAction>(
         return fetchJson(`/v1/model-policies/${encodeURIComponent(action.role)}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ policy: action.policy }),
+        }) as Promise<RackActionResult<Action>>
+      case 'symphony.result':
+        return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/result`, action.approved && {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(action.approved),
         }) as Promise<RackActionResult<Action>>
       case 'symphony.context':
         return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/context`) as Promise<RackActionResult<Action>>

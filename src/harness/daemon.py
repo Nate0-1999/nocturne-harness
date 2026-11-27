@@ -122,6 +122,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.symphony_experience import SymphonyExperience
+from harness.symphony_result import ResultReview, project_result
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.t3_client import T3Error
 from harness.t3_front import FrontServer
@@ -1780,6 +1781,21 @@ def create_dev_app(
                     detail="Symphony stack was not found.",
                 )
             return stack
+
+        async def reviewed_result(symphony_id: str, approved: ResultReview | None):
+            stack = await read_symphony(symphony_id)
+            try:
+                return project_result(stack, approved)
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from exc
+
+        @app.get("/v1/symphonies/{symphony_id}/result")
+        async def preview_symphony_result(symphony_id: str):
+            return await reviewed_result(symphony_id, None)
+
+        @app.post("/v1/symphonies/{symphony_id}/result")
+        async def apply_symphony_result(symphony_id: str, body: ResultReview):
+            return await reviewed_result(symphony_id, body)
 
         @app.get("/v1/symphonies/{symphony_id}/context")
         async def symphony_context(symphony_id: str):
