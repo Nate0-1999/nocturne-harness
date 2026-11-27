@@ -81,3 +81,18 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     assert f"refs/heads/{branches['running']}" in remaining
     assert (home / "symphonies" / "older" / "step-1-round-1" / "attempt-1" / "completion").exists()
     assert remove_kept_worktrees(home, ["older", "newer"], keep=0) == [worktrees / "newer"]
+
+    # M8SB / ADR-017: leave a live neighbour and loose work alone, remove the empty parent last.
+    live = worktrees / "running" / "step-1-round-1" / "attempt-1"
+    (live / "draft.txt").write_text("unfinished")
+    assert remove_kept_worktrees(home, ["running"], keep=0) == []
+    assert (live / "draft.txt").read_text() == "unfinished"
+    (live / "draft.txt").unlink()
+    (worktrees / "owner.txt").write_text("keep me")
+    assert remove_kept_worktrees(home, ["running"], keep=0) == [worktrees / "running"]
+    assert (worktrees / "owner.txt").read_text() == "keep me"
+    (worktrees / "owner.txt").unlink()
+    empty_run = worktrees / "older"
+    empty_run.mkdir()
+    assert remove_kept_worktrees(home, ["older"], keep=0) == [empty_run]
+    assert not worktrees.exists()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import hashlib
 import json
 import os
@@ -771,6 +772,16 @@ class SymphonyExecution:
         _json(self.home / "symphonies" / symphony_id / "followups.json", state["followups"])
 
 
+def _remove_empty(path: Path) -> bool:
+    try:
+        path.rmdir()
+    except OSError as exc:
+        if exc.errno not in (errno.ENOENT, errno.ENOTEMPTY, errno.EEXIST, errno.ENOTDIR):
+            raise
+        return False
+    return True
+
+
 def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[Path]:
     """M3HW (M3W5B-13): seven small Symphonies left 17 GB of worktrees, each with its own
     environment. A completed Symphony's result is already on the branch, so its worktrees go,
@@ -784,9 +795,29 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
             continue
         root = Path(json.loads(assignments[0].read_text())["project_key"])
         target = root / ".nocturne-worktrees" / symphony_id
-        if target.is_symlink() or not target.is_dir():
+        if not root.is_absolute() or target.parent.is_symlink() or target.is_symlink():
+            continue
+        if not target.is_dir():
+            _remove_empty(target.parent)
             continue
         for marker in sorted(target.glob("*/*/.git")):
+            if marker.parent.is_symlink() or marker.parent.parent.is_symlink():
+                continue
+            ignored = subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(marker.parent),
+                    "ls-files",
+                    "--others",
+                    "--ignored",
+                    "--exclude-standard",
+                    "--directory",
+                ],
+                capture_output=True,
+            )
+            if ignored.returncode or ignored.stdout:
+                continue
             name = marker.parent.relative_to(target).as_posix()
             head = subprocess.run(
                 ["git", "-C", str(marker.parent), "rev-parse", "HEAD"],
@@ -801,12 +832,24 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
                     commit = json.loads(result.read_text())["product"]["commit"]
                     _git(root, "update-ref", f"{ref}-product", commit)
                 git_dir = Path(_git(marker.parent, "rev-parse", "--absolute-git-dir"))
-                namespace = f"refs/heads/nocturne-worktrees/{git_dir.name}/"
-                for branch in _git(
-                    root, "for-each-ref", "--format=%(refname)", namespace
-                ).splitlines():
-                    _git(root, "update-ref", "-d", branch)
-        shutil.rmtree(target)
-        subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True)
-        removed.append(target)
+                branch = f"refs/heads/nocturne-worktrees/{git_dir.name}/work"
+                release = subprocess.run(
+                    ["git", "-C", str(root), "worktree", "remove", str(marker.parent)],
+                    capture_output=True,
+                )
+                if release.returncode == 0:
+                    # F154: only retire the private ref if its tip is the commit just archived.
+                    subprocess.run(
+                        ["git", "-C", str(root), "update-ref", "-d", branch, head.stdout.strip()],
+                        capture_output=True,
+                    )
+        for step in target.iterdir():
+            if step.is_dir() and not step.is_symlink():
+                for child in step.iterdir():
+                    if child.is_dir() and not child.is_symlink():
+                        _remove_empty(child)
+                _remove_empty(step)
+        if _remove_empty(target):
+            removed.append(target)
+            _remove_empty(target.parent)
     return removed
