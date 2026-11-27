@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "a8fbeb7732c9b620a36dccc86a4761607831a276"
+      "head": "d57bdc45268ce09ad96934b394b491c72704c7f6"
     }
   ],
   "unmapped": {
@@ -159,10 +159,11 @@
     "harness/verification/sym13/browser_check.mjs": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
     "harness/web/dist/assets/index-BIq0pa5_.css": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
+    "harness/web/dist/assets/index-C0wVzERc.js": "M8TS record, test, standing check, built asset, version or coverage evidence; garden report 347 carries the walk.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
-    "harness/web/dist/assets/index-XDMdYY_0.js": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
     "harness/web/dist/index.html": "M8TS record, test, standing check, built asset, version or coverage evidence; garden report 347 carries the walk.",
     "harness/web/tests/layoutAudit.test.mjs": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
+    "harness/web/tests/rackBridge.test.mjs": "M8TS record, test, standing check, built asset, version or coverage evidence; garden report 347 carries the walk.",
     "harness/web/tests/rackModuleTemplate.test.mjs": "M8TD's change, beneath this packet in the stack; covered by M8TD's own report 340.",
     "harness/web/tests/stageLayout.test.mjs": "M8TS record, test, standing check, built asset, version or coverage evidence; garden report 347 carries the walk.",
     "harness/web/dist/assets/index-B8tieEOw.css": "M8TS record, test, standing check, built asset, version or coverage evidence; garden report 347 carries the walk.",
@@ -667,7 +668,7 @@
       "verdict": "PASS",
       "screenshot": "FL-216.png",
       "flag": "",
-      "observed": "Walked again on the installed 0.1.120 wheels in Stage, because the pass-through and the module changed: the T3 module in the first view at 1267 by 928 and filling the phone at 390 by 844; resized by keyboard and back; fitted to the window and returned at both sizes; prompts typed in T3 answered by Nocturne's agent; after an app restart the module was back, signed in, without T3's welcome; with T3 stopped the module read 'T3 stopped.' and Run T3 brought it back; a second local page was refused from another port and from localhost, and the signed-in link was refused to it. Garden report 347. Sync return, 2026-11-27: after M8TD's two returns were merged in (the Stage viewport clips, three more switches on T3's usage data, connect-src 'self' on the pass-through's answer) the same steps were walked again on wheels built from the merged heads; the pass-through answered frame-ancestors with connect-src 'self' and refused the second page as before."
+      "observed": "Walked again on the installed 0.1.120 wheels in Stage, because the pass-through and the module changed: the T3 module in the first view at 1267 by 928 and filling the phone at 390 by 844; resized by keyboard and back; fitted to the window and returned at both sizes; prompts typed in T3 answered by Nocturne's agent; after an app restart the module was back, signed in, without T3's welcome; with T3 stopped the module read 'T3 stopped.' and Run T3 brought it back; a second local page was refused from another port and from localhost, and the signed-in link was refused to it. Garden report 347. Sync return, 2026-11-27: after M8TD's two returns were merged in (the Stage viewport clips, three more switches on T3's usage data, connect-src 'self' on the pass-through's answer) the same steps were walked again on wheels built from the merged heads; the pass-through answered frame-ancestors with connect-src 'self' and refused the second page as before. Return 1 of the same day (each module page marks its own request ids) changed neither of this row's files; the row was not walked again for it."
     }
   },
   "not_run": {
