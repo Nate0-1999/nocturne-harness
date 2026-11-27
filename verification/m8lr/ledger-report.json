@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "e9432ff3a85292a89c9a5a120feaa282e2bca12f"
+      "head": "cd2e003816da333dfffcf826b4eaad3e0c6607ed"
     }
   ],
   "unmapped": {
@@ -214,15 +214,17 @@
     "harness/verification/m8ts/ledger-report.json": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/verification/m8ts/rules-control.txt": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/verification/sym13/browser_check.mjs": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
-    "harness/web/dist/assets/index-9aXJngIY.js": "M8LR record, test, standing check, built asset, version or coverage evidence; garden report 353 carries the walk.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-BzJkaqOs.css": "M8LR record, test, standing check, built asset, version or coverage evidence; garden report 353 carries the walk.",
+    "harness/web/dist/assets/index-CBPYTR8M.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/index.html": "M8LR record, test, standing check, built asset, version or coverage evidence; garden report 353 carries the walk.",
     "harness/web/tests/layoutAudit.test.mjs": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
+    "harness/web/tests/rackBridge.test.mjs": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/tests/rackModuleTemplate.test.mjs": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/tests/stageLayout.test.mjs": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/tests/stagePolish.test.mjs": "M8LR record, test, standing check, built asset, version or coverage evidence; garden report 353 carries the walk.",
+    "harness/web/dist/assets/index-9aXJngIY.js": "M8LR record, test, standing check, built asset, version or coverage evidence; garden report 353 carries the walk.",
     "harness/web/dist/assets/index-B1E3__9n.css": "M8LR record, test, standing check, built asset, version or coverage evidence; garden report 353 carries the walk.",
     "harness/web/dist/assets/index-B8tieEOw.css": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-BBhQ1WZz.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
@@ -231,6 +233,7 @@
     "harness/web/dist/assets/index-BNHPl3N9.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-BlGWo4cz.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-BlkDahZv.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
+    "harness/web/dist/assets/index-C0wVzERc.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-CMQuIrg4.css": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-ClKLPTo7.css": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
     "harness/web/dist/assets/index-CoypEbx9.js": "M8TD's or M8TS's change, beneath this packet in the stack; covered by their own reports 340 and 347.",
