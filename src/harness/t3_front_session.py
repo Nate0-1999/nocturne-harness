@@ -90,14 +90,15 @@ class FrontSession:
                 elif method in {"session/new", "session/load"}:
                     cwd = Path(params["cwd"]).resolve(strict=True)
                     if cwd.is_relative_to((self.front.root / "state/worktrees").resolve()):
-                        await self.send(
-                            id=rid,
-                            error={
-                                "code": -32602,
-                                "message": "A worktree conversation is unavailable here. "
-                                "Use the project's own folder.",
-                            },
+                        # T3 hides session-open errors. Keep only an ACP id to display the refusal.
+                        self.cwd = self.workspace_root = self.thread = None
+                        self.session = (
+                            params["sessionId"] if method == "session/load" else str(uuid4())
                         )
+                        result = dict(MODELS)
+                        if method == "session/new":
+                            result["sessionId"] = self.session
+                        await self.send(id=rid, result=result)
                         continue
                     self.cwd = cwd
                     self.workspace_root = str(self.cwd)
@@ -166,7 +167,7 @@ class FrontSession:
                                 },
                             )
                             continue
-                elif params.get("sessionId") != self.session:
+                elif self.session is None or params.get("sessionId") != self.session:
                     if rid is not None:
                         await self.send(
                             id=rid, error={"code": -32602, "message": "Unknown conversation."}
@@ -176,7 +177,12 @@ class FrontSession:
                     await self.cancel()
                     continue
                 elif method == "session/prompt":
-                    if self.turn is not None and not self.turn.done():
+                    if self.cwd is None:
+                        await self.text(
+                            "A worktree conversation is unavailable here. Use the project's own folder."
+                        )
+                        await self.send(id=rid, result={"stopReason": "refusal"})
+                    elif self.turn is not None and not self.turn.done():
                         await self.send(
                             id=rid, error={"code": -32600, "message": "A turn is already running."}
                         )

@@ -25,14 +25,28 @@ async def test_front_refuses_its_own_worktree_before_opening_a_conversation(tmp_
     reader = asyncio.StreamReader()
     params = {"cwd": str(alias), "sessionId": "prior-thread"}
     reader.feed_data(json.dumps({"id": 1, "method": method, "params": params}).encode() + b"\n")
-    reader.feed_eof()
     session = FrontSession(front, None, reader, None)
-    session.send = AsyncMock()
+
+    async def prompt_after_setup(**reply):
+        if reply.get("id") == 1:
+            prompt = {
+                "sessionId": reply["result"].get("sessionId", "prior-thread"),
+                "prompt": [{"type": "text", "text": "Hello"}],
+            }
+            reader.feed_data(
+                json.dumps({"id": 2, "method": "session/prompt", "params": prompt}).encode() + b"\n"
+            )
+            reader.feed_eof()
+
+    session.send = AsyncMock(side_effect=prompt_after_setup)
     await session.serve()
-    assert session.send.await_args.kwargs["error"]["message"] == (
+    update = session.send.await_args_list[1].kwargs["params"]["update"]
+    assert update["sessionUpdate"] == "agent_message_chunk"
+    assert update["content"]["text"] == (
         "A worktree conversation is unavailable here. Use the project's own folder."
     )
-    assert session.session is None
+    session.send.assert_awaited_with(id=2, result={"stopReason": "refusal"})
+    assert session.workspace_root is None and session.turn is None
 
 
 def test_t3_open_explains_the_worktree_limit(monkeypatch):
