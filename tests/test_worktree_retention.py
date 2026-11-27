@@ -88,9 +88,17 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     assert remove_kept_worktrees(home, ["running"], keep=0) == []
     assert (live / "draft.txt").read_text() == "unfinished"
     (live / "draft.txt").unlink()
+    # The real worker stages the result and records commit-tree without moving its branch.
+    from harness.symphony_worker import _capture_product
+
+    (live / "work.txt").write_text("judged final text")
+    saved = _capture_product(live, commits["running"], "Judged result")
+    receipt = home / "symphonies/running/step-1-round-1/attempt-1/completion/result.json"
+    receipt.write_text(json.dumps({"product": {"kind": "commit", "commit": saved}}))
     (worktrees / "owner.txt").write_text("keep me")
     assert remove_kept_worktrees(home, ["running"], keep=0) == [worktrees / "running"]
     assert (worktrees / "owner.txt").read_text() == "keep me"
+    assert _git(root, "show", f"{saved}:work.txt") == "judged final text"
     (worktrees / "owner.txt").unlink()
     empty_run = worktrees / "older"
     empty_run.mkdir()

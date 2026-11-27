@@ -37,6 +37,7 @@ from harness.rounds import AcceptedWork, GraftReceipt, RoundAttemptPlan, Symphon
 from harness.spine_client import JudgedContext, MemoryKind, MemoryStatus, PatchMemoryRequest
 from harness.supervisor import WorkerSupervisor
 from harness.symphony_experience import SymphonyAttemptRecord
+from harness.symphony_result import worktree_project
 
 
 def _git(root: Path, *args: str) -> str:
@@ -793,7 +794,10 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
         assignments = sorted(run_home.rglob("assignment.json"))
         if not assignments:
             continue
-        root = Path(json.loads(assignments[0].read_text())["project_key"])
+        assignment = json.loads(assignments[0].read_text())
+        root = worktree_project(assignment.get("workspace_root", ""), symphony_id)
+        if root is None:
+            root = Path(assignment["project_key"])
         target = root / ".nocturne-worktrees" / symphony_id
         if not root.is_absolute() or target.parent.is_symlink() or target.is_symlink():
             continue
@@ -803,20 +807,11 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
         for marker in sorted(target.glob("*/*/.git")):
             if marker.parent.is_symlink() or marker.parent.parent.is_symlink():
                 continue
-            ignored = subprocess.run(
-                [
-                    "git",
-                    "-C",
-                    str(marker.parent),
-                    "ls-files",
-                    "--others",
-                    "--ignored",
-                    "--exclude-standard",
-                    "--directory",
-                ],
+            untracked = subprocess.run(
+                ["git", "-C", str(marker.parent), "ls-files", "--others", "--directory"],
                 capture_output=True,
             )
-            if ignored.returncode or ignored.stdout:
+            if untracked.returncode or untracked.stdout:
                 continue
             name = marker.parent.relative_to(target).as_posix()
             head = subprocess.run(
@@ -831,6 +826,28 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
                 if result.is_file():
                     commit = json.loads(result.read_text())["product"]["commit"]
                     _git(root, "update-ref", f"{ref}-product", commit)
+                    # F154: the worker snapshots its staged files with commit-tree. Let Git
+                    # recognize that saved tree only when both index and files still match.
+                    if commit != head.stdout.strip() and all(
+                        subprocess.run(
+                            ["git", "-C", str(marker.parent), "diff", "--quiet", *args, "--"],
+                            capture_output=True,
+                        ).returncode
+                        == 0
+                        for args in (("--cached", commit), ())
+                    ):
+                        subprocess.run(
+                            [
+                                "git",
+                                "-C",
+                                str(marker.parent),
+                                "switch",
+                                "--detach",
+                                "--no-overwrite-ignore",
+                                commit,
+                            ],
+                            capture_output=True,
+                        )
                 git_dir = Path(_git(marker.parent, "rev-parse", "--absolute-git-dir"))
                 branch = f"refs/heads/nocturne-worktrees/{git_dir.name}/work"
                 release = subprocess.run(

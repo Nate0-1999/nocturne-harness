@@ -16,19 +16,25 @@ class ResultReview(BaseModel):
     commit: str
 
 
+def worktree_project(location: str, symphony_id: str) -> Path | None:
+    path = Path(location)
+    if path.is_absolute():
+        for parent in path.parents:
+            if parent.name == symphony_id and parent.parent.name == ".nocturne-worktrees":
+                return parent.parent.parent
+    return None
+
+
 def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = None) -> dict:
     # F154 / ADR-012: completion publishes the judged commit. Only its owner can apply it.
     if stack.state != "completed":
         raise ValueError("Wait for the judges to finish this Symphony.")
     match = re.search(r" Result commit: ([a-f0-9]{40}|[a-f0-9]{64})$", stack.result or "")
     roots = {
-        parent.parent
+        project
         for attempt in stack.attempts
         for location in attempt.partial_evidence
-        for parent in Path(location).parents
-        if parent.name == ".nocturne-worktrees"
-        and Path(location).is_absolute()
-        and Path(location).relative_to(parent).parts[0] == stack.symphony_id
+        if (project := worktree_project(location, stack.symphony_id)) is not None
     }
     if not match or len(roots) != 1:
         raise ValueError("The run has no verifiable project and result commit.")
