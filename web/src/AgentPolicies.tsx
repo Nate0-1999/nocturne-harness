@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createHostPluginApi, RACK_MANIFESTS, useOptionalRackPlugin } from './rack'
 import { Button, Select, TextArea } from './kit'
-import { modelLabel, policyName, shortName, type ModelBrowser } from './modelBrowser'
+import { formatPrice, modelLabel, parseBrowser, policyName, shortName, type ModelBrowser } from './modelBrowser'
 import { failureMessage, serverMessage } from './requestFailure'
 
 const hostPolicies = createHostPluginApi(RACK_MANIFESTS.conversation)
@@ -13,21 +13,40 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
   const plugin = useOptionalRackPlugin()
   const events = plugin?.events ?? hostPolicies.events
   const [policies, setPolicies] = useState<Record<string, string>>({})
+  const [saved, setSaved] = useState<Record<string, string>>({})
+  const [offers, setOffers] = useState<ModelBrowser | null>(null)
   const [status, setStatus] = useState('Loading policies…')
   const [statusRole, setStatusRole] = useState<string | null>(null)
   useEffect(() => {
     events.dispatch({ type: 'policies.load' }).then((value) => {
-      setPolicies((value as { policies: Record<string, string> }).policies)
+      const loaded = (value as { policies: Record<string, string> }).policies
+      setPolicies(loaded)
+      setSaved(loaded)
       const errors = value as { curator_error?: string; policy_errors?: Record<string, string> }
-      setStatus([...Object.values(errors.policy_errors ?? {}), errors.curator_error].filter(Boolean)
+      const roleErrors = Object.entries(errors.policy_errors ?? {}).filter(([role]) =>
+        !level || (level === 'Duet' ? role === 'chat' : role === 'subagent' || role === 'judge'))
+      setStatus([...roleErrors.map(([, message]) => message), !level && errors.curator_error].filter(Boolean)
         .map((message) => serverMessage(message, 'A model policy could not be loaded. Reload to try again.')).join(' '))
     }).catch((error: unknown) => setStatus(failureMessage(error, 'Model policies could not be loaded. Reload to try again.')))
-  }, [events])
+  }, [events, level])
+  useEffect(() => {
+    if (level === 'Duet') return
+    let active = true
+    events.dispatch({ type: 'models.load', thread_id: null, subscriptions: true })
+      .then(value => { if (active) setOffers(parseBrowser(value)) })
+      .catch(() => { if (active) setOffers(null) })
+    return () => { active = false }
+  }, [events, level])
+  const catalog = offers ?? browser
+  const reference = browser?.current?.model ?? catalog?.configurations.find(item => item.policy === saved.chat)?.model
+  const chatModel = catalog?.models.find(item => item.model === reference)
+  const strategies = new Set([...Object.values(saved), ...(catalog?.configurations.map(item => item.policy) ?? [])])
   async function save(role: string) {
     setStatus('')
     setStatusRole(role)
     try {
-      await events.dispatch({ type: 'policies.save', role, policy: policies[role]! })
+      const result = await events.dispatch({ type: 'policies.save', role, policy: policies[role]! })
+      setSaved((result as { policies: Record<string, string> }).policies)
       setStatus(`${ROLES[role as keyof typeof ROLES]} policy saved.`)
     } catch (error) { setStatus(failureMessage(error, 'The model policy was not saved. Check its value and try again.')) }
   }
@@ -39,16 +58,34 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
       if (level === 'Symphony' && (role === 'chat' || role === 'curator')) return null
       const value = policies[role]
       if (value === undefined) return null
+      const symphonyRole = role === 'subagent' || role === 'judge'
       const separator = value.indexOf(':')
       const kind = separator < 0 ? value : value.slice(0, separator)
       const argument = separator < 0 ? '' : value.slice(separator + 1)
       // FL-206: in a conversation the legend reads strategy · the model it picks now.
-      const now = browser?.configurations.find((item) => item.policy === value)?.model ?? (kind === 'pinned' && argument ? argument : null)
-      const pick = level === undefined ? null : [policyName(value), now === null ? null
+      const confirmed = saved[role] ?? value
+      const now = catalog?.configurations.find((item) => item.policy === confirmed)?.model ?? (confirmed.startsWith('pinned:') ? confirmed.slice(7) : null)
+      const pick = level === undefined ? null : [policyName(confirmed), now === null ? null
         : shortName(browser?.models.find((item) => item.model === now)?.name ?? modelLabel(now))].filter(Boolean).join(' · ')
       return <fieldset key={role}>
         <legend>{label}{pick !== null && <span className="agent-policy__pick"> · {pick}</span>}</legend>
-        <label className="theme-control">Token-cost policy
+        {symphonyRole ? <label className="theme-control">Policy or model
+          <Select aria-label={`${label} policy or model`} value={value} onChange={event => setPolicies({ ...policies, [role]: event.target.value })}>
+            <optgroup label="Home policies">{[...strategies].filter(policy =>
+              !policy.startsWith('pinned:') || !catalog?.models.some(item => `pinned:${item.model}` === policy)
+            ).map(policy => <option key={policy} value={policy}>{policy.startsWith('pinned:') ? modelLabel(policy.slice(7)) : policy}</option>)}</optgroup>
+            <optgroup label="Models">{catalog?.models.map(item => {
+              const subscription = item.model.startsWith('subscription:')
+              const cheaper = chatModel && item.prompt_price != null && item.completion_price != null &&
+                chatModel.prompt_price != null && chatModel.completion_price != null &&
+                +item.prompt_price <= +chatModel.prompt_price && +item.completion_price <= +chatModel.completion_price &&
+                (+item.prompt_price < +chatModel.prompt_price || +item.completion_price < +chatModel.completion_price)
+              return <option key={item.model} value={`pinned:${item.model}`} disabled={Boolean(item.banned_by) || subscription}>
+                {item.name} · {subscription ? 'Included with your plan · conversations only' : formatPrice(item)}{cheaper && ' · cheaper than chat'}
+              </option>
+            })}</optgroup>
+          </Select>
+        </label> : <><label className="theme-control">Token-cost policy
           <Select aria-label={`${label} token-cost policy`} data-tooltip-detail={role === 'curator' ? 'How the Palace chooses its curator model. Applies to future passes.' : 'How this role\'s model is chosen. Applies to new threads and future rounds; existing choices stay fixed.'} value={kind} onChange={(event) => {
             const next = event.target.value
             setPolicies({ ...policies, [role]: next === 'pinned' ? 'pinned:' : next === 'floor' || next === 'slope' || next === 'budget' ? `${next}:1` : next })
@@ -61,7 +98,7 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
         </label>
         {separator >= 0 && <label>{kind === 'pinned' ? 'Model' : kind === 'floor' ? 'Intelligence floor' : kind === 'budget' ? 'Dollars per hour' : 'Price slope'}
           <TextArea rows={2} aria-label={`${label} policy value`} data-tooltip-detail="The model id, intelligence floor, dollars per hour or price slope this policy uses. Floor: the cheapest model at or above that score. Budget: the most intelligent model the agents' measured hourly token burn can buy for that much." value={argument} onChange={(event) => setPolicies({ ...policies, [role]: `${kind}:${event.target.value}` })} />
-        </label>}
+        </label>}</>}
         <div className="app-settings-actions"><Button action="save" variant="primary" type="button" data-tooltip-detail={role === 'curator' ? 'Save the curator policy in the Palace for future passes.' : 'Save this role\'s policy for new threads.'} onClick={() => void save(role)}>Save {label.toLowerCase()} policy</Button></div>
         {statusRole === role && <p role="status">{status}</p>}
       </fieldset>

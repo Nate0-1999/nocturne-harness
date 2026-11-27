@@ -2421,6 +2421,7 @@ function ChatModule() {
   const [archiveBusy, setArchiveBusy] = useState(false)
   const [archiveAsking, setArchiveAsking] = useState<string | null>(null) // the thread the question is about
   const [orchestrationChoice, setOrchestration] = useState<'Duet' | 'Symphony' | null>(null)
+  const [configurationOpen, setConfigurationOpen] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
   const composerRef = useRef<HTMLTextAreaElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
@@ -2722,8 +2723,8 @@ function ChatModule() {
             }}>Compose Symphony</Button>
           )}
         </div>
-        <details><summary>{orchestration} configuration</summary>
-          <AgentPolicies level={orchestration} browser={browser} />
+        <details onToggle={event => setConfigurationOpen(event.currentTarget.open)}><summary>{orchestration} configuration</summary>
+          {configurationOpen && <AgentPolicies level={orchestration} browser={browser} />}
         </details>
         <h1 id="thread-title">
           {selectedMeta === undefined ? 'Opening thread' : distinctThreadTitles(snapshot.catalog.filter((entry) => !entry.archived)).get(selectedMeta.thread_id) ?? visibleThreadTitle(selectedMeta.title)}
