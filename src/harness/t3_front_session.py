@@ -265,11 +265,11 @@ class FrontSession:
                         and payload.event.get("event_kind") == "boundary_card"
                     ):
                         if payload.event.get("decision") == "owner_action":
-                            await self.show_card("Review the crossing on Nocturne’s Deck")
+                            await self.show_card("Answer the crossing in Nocturne’s window")
                         else:
                             await self.dismiss_card(client)
                 elif envelope.type == "gate.open":
-                    await self.show_card("Review the memories on Nocturne’s Deck")
+                    await self.show_card("Review the memories in Nocturne’s window")
                 elif envelope.type == "gate.dismiss":
                     await self.dismiss_card(client)
                 elif envelope.type == "run.done":
@@ -325,7 +325,7 @@ class FrontSession:
                             "type": "string",
                             "title": "Nocturne",
                             "description": title,
-                            "enum": ["Review on the Deck"],
+                            "enum": ["Answer in Nocturne’s window"],
                         }
                     },
                     "required": ["review"],

@@ -203,6 +203,60 @@ export function proposedResponseCards(
   ))
 }
 
+/** The open thread's boundary cards and their answers. The Deck draws them, and so does the T3
+ * module (M8TS): a crossing asked for from T3 is answered where the owner is looking. */
+export function BoundaryCards({ onFailure }: { onFailure: (message: string) => void }) {
+  const snapshot = useRackSnapshot()
+  const { events } = useRackPlugin()
+  const selected = snapshot.selectedThreadId === null
+    ? null
+    : snapshot.threads[snapshot.selectedThreadId]
+  const waiting = selected?.activeRun?.state === 'waiting_gate' ? selected.activeRun.run_id : null
+  const boundaries = (selected?.messages ?? []).flatMap((message) => (
+    message.role === 'assistant' ? message.events.filter((event, index, all) => (
+      event.event_kind === 'boundary_card' && event.decision === 'owner_action' &&
+      (event.wall !== 'spend' ? (
+        // F198: a wall card shows while its run waits on it; answered, it leaves the Deck.
+        event.run_id === waiting && !all.slice(index + 1).some((later) => later.card_id === event.card_id)
+      ) : !all.slice(index + 1).some((later) => (
+        later.event_kind === 'boundary_card' && later.wall === 'spend' && later.run_id === event.run_id
+      )))
+    )) : []
+  ))
+  const [deciding, setDeciding] = useState(false)
+  const decide = (card: (typeof boundaries)[number], decision: 'allowed_once' | 'allowed_thread' | 'denied') => {
+    setDeciding(true)
+    void events.dispatch({ type: 'boundary.decide', run_id: String(card.run_id), decision })
+      .catch((error: unknown) => onFailure(failureMessage(error, 'The card was not answered. Keep your reply and try again.')))
+      .finally(() => setDeciding(false))
+  }
+  return boundaries.map((card) => (
+    <article className="deck-proposal-card" data-testid="boundary-card" key={String(card.run_id)}>
+      <h2>{card.wall === 'spend' ? 'Spend boundary · paused' : `Workspace boundary · ${String(card.wall)}`}</h2>
+      <p>{String(card.reason)}</p>
+      {card.wall === 'spend' ? (
+        <>
+          <p>{String(card.action)}</p>
+          <small>{String(card.judge)} · {String(card.policy)} · owner action required</small>
+        </>
+      ) : (
+        <footer>
+          <small>{String(card.judge)} · {String(card.policy)}</small>
+          <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-once"
+            data-tooltip-detail="Let this request cross this wall; the next one asks again."
+            onClick={() => decide(card, 'allowed_once')}>Allow once</Button>
+          <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-thread"
+            data-tooltip-detail="Let every request in this thread cross this wall."
+            onClick={() => decide(card, 'allowed_thread')}>Allow for this thread</Button>
+          <Button action="deny" type="button" disabled={deciding} data-testid="boundary-deny"
+            data-tooltip-detail="Stop this request; nothing crosses the wall."
+            onClick={() => decide(card, 'denied')}>Deny</Button>
+        </footer>
+      )}
+    </article>
+  ))
+}
+
 export function SymphonyDeck() {
   const snapshot = useRackSnapshot()
   const { events } = useRackPlugin()
@@ -227,25 +281,6 @@ export function SymphonyDeck() {
   }
   const cards = useMemo(() => proposedResponseCards(snapshot).filter((card) => !seen.has(card.proposal_run_id)), [snapshot, seen])
   const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
-  const waiting = selected?.activeRun?.state === 'waiting_gate' ? selected.activeRun.run_id : null
-  const boundaries = (selected?.messages ?? []).flatMap((message) => (
-    message.role === 'assistant' ? message.events.filter((event, index, all) => (
-      event.event_kind === 'boundary_card' && event.decision === 'owner_action' &&
-      (event.wall !== 'spend' ? (
-        // F198: a wall card shows while its run waits on it; answered, it leaves the Deck.
-        event.run_id === waiting && !all.slice(index + 1).some((later) => later.card_id === event.card_id)
-      ) : !all.slice(index + 1).some((later) => (
-        later.event_kind === 'boundary_card' && later.wall === 'spend' && later.run_id === event.run_id
-      )))
-    )) : []
-  ))
-  const [deciding, setDeciding] = useState(false)
-  const decide = (card: (typeof boundaries)[number], decision: 'allowed_once' | 'allowed_thread' | 'denied') => {
-    setDeciding(true)
-    void events.dispatch({ type: 'boundary.decide', run_id: String(card.run_id), decision })
-      .catch((error: unknown) => setStatus(failureMessage(error, 'The card was not answered. Keep your reply and try again.')))
-      .finally(() => setDeciding(false))
-  }
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [locallyFired, setLocallyFired] = useState<Set<string>>(() => new Set())
   const [undo, setUndo] = useState<{ card: ProposedResponseCard; text: string } | null>(null)
@@ -335,31 +370,7 @@ export function SymphonyDeck() {
         <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
       </header>
       <p className="symphony-deck__rule" title="The longest-waiting reply stays first. Browse freely; steer the conductor here. Workers are never directly addressable.">Reply to steer the conductor.</p>
-      {boundaries.map((card) => (
-        <article className="deck-proposal-card" data-testid="boundary-card" key={String(card.run_id)}>
-          <h2>{card.wall === 'spend' ? 'Spend boundary · paused' : `Workspace boundary · ${String(card.wall)}`}</h2>
-          <p>{String(card.reason)}</p>
-          {card.wall === 'spend' ? (
-            <>
-              <p>{String(card.action)}</p>
-              <small>{String(card.judge)} · {String(card.policy)} · owner action required</small>
-            </>
-          ) : (
-            <footer>
-              <small>{String(card.judge)} · {String(card.policy)}</small>
-              <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-once"
-                data-tooltip-detail="Let this request cross this wall; the next one asks again."
-                onClick={() => decide(card, 'allowed_once')}>Allow once</Button>
-              <Button action="approve" type="button" disabled={deciding} data-testid="boundary-allow-thread"
-                data-tooltip-detail="Let every request in this thread cross this wall."
-                onClick={() => decide(card, 'allowed_thread')}>Allow for this thread</Button>
-              <Button action="deny" type="button" disabled={deciding} data-testid="boundary-deny"
-                data-tooltip-detail="Stop this request; nothing crosses the wall."
-                onClick={() => decide(card, 'denied')}>Deny</Button>
-            </footer>
-          )}
-        </article>
-      ))}
+      <BoundaryCards onFailure={setStatus} />
       {visibleCards.length === 0 ? (
         <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
       ) : (

@@ -69,7 +69,7 @@ test('stage source keeps rare controls in settings and lets thread titles wrap i
   assert.match(rackCss, /\.rack-stage-header\s*\{[^}]*grid-row:\s*1/s)
   assert.match(rackCss, /\.stage-toolbar\s*\{[^}]*grid-row:\s*2/s)
   assert.match(rackCss, /\.plate-press-status\s*\{[^}]*grid-row:\s*3/s)
-  assert.match(rackCss, /\.stage-viewport\s*\{[^}]*grid-row:\s*4;[^}]*overflow:\s*hidden/s)
+  assert.match(rackCss, /\.stage-viewport\s*\{[^}]*grid-row:\s*4;[^}]*overflow:\s*clip/s)
   assert.match(rackCss, /\.m2c-regression-fixture\s*\{[^}]*grid-row:\s*1;[^}]*grid-column:\s*1;/s)
   assert.match(rackCss, /\.stage-canvas\s*\{[^}]*transform-origin:\s*0 0/s)
   assert.doesNotMatch(rackCss, /\.rack-overlay-module--palace-queue/u)

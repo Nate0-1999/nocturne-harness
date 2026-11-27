@@ -71,6 +71,8 @@ try {
   }
 
   await conversation.getByTestId('composer').fill(prompt)
+  // M8TS: the Conversation opens one tap away, and the Stage no longer scrolls to a control (M8TD).
+  await page.getByRole('navigation', { name: 'Off-screen modules' }).getByRole('button', { name: 'Conversation', exact: true }).click()
   // F077: changing the iframe's Conversation mode must preserve its unsent draft.
   await page.getByRole('button', { name: 'Deck', exact: true }).click()
   await page.getByRole('button', { name: 'Focused', exact: true }).click()

@@ -45,3 +45,29 @@ test('every writing manifest binds what it writes and the header list only switc
   assert.match(headerList, /type: 'parameter\.write', thread_id: threadId, parameter_id: 'model\.slug'/u)
   assert.doesNotMatch(headerList, /policies\.save|models\.pin|models\.local/u)
 })
+
+/** ADR-018 / INCIDENT M3CP (report 347, return 1): a module page that has just reloaded holds the
+ * channel of the page before it. An answer to that earlier page's request is never taken by the
+ * reloaded page's own request, whatever number each gave its request. */
+test("an answer to an earlier page's request is not delivered to the reloaded page's request", async () => {
+  const text = readFileSync(new URL('../src/rackBridge.tsx', import.meta.url), 'utf8')
+  const source = ts.createSourceFile('rackBridge.tsx', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+  const declared = source.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'createRemoteApi')
+  const script = ts.transpileModule(declared.getText(source), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  const createRemoteApi = new Function('notify', 'RequestFailure', 'rackSelectionsEqual', `${script}; return createRemoteApi`)(
+    () => {}, class extends Error {}, () => true)
+  const channelEnd = () => { const sent = []; return { sent, postMessage: message => sent.push(message), start() {}, onmessage: null } }
+  const connection = { manifest: { id: 'conversation' }, snapshot: null, selection: null }
+  const before = channelEnd()
+  const after = channelEnd()
+  void createRemoteApi(connection, before).query.query({ resource: 'catalog' })
+  let taken
+  const asked = createRemoteApi(connection, after).events.dispatch({ type: 'policies.load' }).then(value => { taken = value })
+  // The Stage answers the earlier page late, on the channel the reloaded page now listens to.
+  after.onmessage({ data: { type: 'response', request_id: before.sent[0].request_id, result: 'the earlier page' } })
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(taken, undefined)
+  after.onmessage({ data: { type: 'response', request_id: after.sent[0].request_id, result: 'its own' } })
+  await asked
+  assert.equal(taken, 'its own')
+})

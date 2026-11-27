@@ -153,3 +153,27 @@ async def test_sync_continues_from_full_transcript_when_projection_drops_old_tur
     client.message.assert_awaited_once_with(
         "thread", "nocturne-journal-11", "Prompt 11", {"instanceId": "nocturne", "model": "default"}
     )
+
+
+def test_a_thread_born_in_t3_is_the_open_thread_only_once_the_journal_holds_it(tmp_path):
+    """A-104 / SD-124: until then the Stage keeps its own open thread; nothing goes blank."""
+    from uuid import NAMESPACE_URL, uuid5
+
+    from harness.t3_front import FrontServer
+
+    journal = TranscriptJournal(tmp_path / "journal")
+    front = FrontServer(tmp_path, None, journal, tmp_path)
+    front._client = SimpleNamespace(environment_id="env")
+    assert front.open_thread() is None  # T3's page has named no thread
+    front.through.thread = "native"
+    assert front.open_thread() is None  # a T3 thread the journal does not hold yet
+    born = str(uuid5(NAMESPACE_URL, "nocturne:t3:env/native"))
+    journal.bind_front_prompt(born, "env", "native", "message")
+    assert front.open_thread() == born
+    journal.append_message(
+        "ours", dict(role="user", message_id="1", content="Hello"), parent_id=None
+    )
+    front.through.thread = "ours"
+    assert front.open_thread() is None  # a journal thread with no T3 window is not T3's thread
+    journal.bind_front_window("ours", "env")
+    assert front.open_thread() == "ours"

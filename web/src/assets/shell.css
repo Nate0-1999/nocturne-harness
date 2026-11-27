@@ -1903,8 +1903,11 @@
   width: min(28rem, 90vw);
 }
 
+/* M8TS: beside T3 the Memory module is six units wide. A card's actions drop under its name
+   there instead of squeezing the name to a letter a line. */
 .memory-card__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   min-width: 0;
@@ -1913,6 +1916,7 @@
 
 .memory-card__title {
   display: flex;
+  flex: 1 1 7rem;
   flex-wrap: wrap;
   align-items: baseline;
   min-width: 0;
@@ -1949,6 +1953,7 @@
   display: flex;
   flex: 0 0 auto;
   gap: var(--space-2);
+  margin-left: auto;
 }
 
 .memory-card__remove,

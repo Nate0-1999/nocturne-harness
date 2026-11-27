@@ -4682,3 +4682,50 @@ elbow over eligible models. If the owner's pin is banned, new conversations use 
 until the ban is lifted. Established conversations retain their model. The settings show
 when the pick changed separately from the catalog date used for a saved pick. In the six
 retained observations the elbow picked six different models. Report 336 records the walk.
+
+## M8TD — T3's screen in a Stage module that can fit the window [P2.5]
+
+SD-114 answers 8 to 10, draft A-101. T3 0.1.11 answers every hosting page "nobody may host
+this"; its code is not ours to change. The daemon passes the front T3 server through on its
+own loopback port and changes that one answer to name this home's page alone. Its own port
+keeps T3's page at an address apart from Nocturne's. One request per connection, so each
+request's Host is read before T3 sees it. The port is remembered per home because T3's page
+keeps its setup by address. Nocturne's page frames T3 directly: inside a rack frame the page
+would have a second host of another site, and T3's sign-in cookie would be withheld. The
+signed-in link is handed only to a request from this home's own page. Fitted, the module
+covers the window below a gate, which must stay visible. A layout the owner already arranged
+gets the module beside its modules. Report 340 records the look-first and the walk.
+
+Return, 2026-11-25. A browser that brings a control into view scrolled the Stage viewport's
+hidden overflow under the camera and threw the whole Stage aside. The viewport now clips
+(`overflow: clip`), so it cannot scroll at all; this replaces Decision 092's scroll reset on
+Recipe and Deck recall. The Sheet still scrolls.
+
+Second return, 2026-11-25. Report 348 (M8TT): one switch, `T3CODE_TELEMETRY_ENABLED=false`,
+was all that kept T3's usage data on this machine, and T3's page names T3 Connect and Axiom
+whatever its server is told. Every T3 server now also gets `T3CODE_OTEL_SDK_DISABLED=true` (no
+trace export), `T3CODE_POSTHOG_HOST` on this machine's empty port 9 (usage events have nowhere
+to go) and `DO_NOT_TRACK=1` (T3's analytics obeys it from 0.1.12; set for the next pin). The
+pass-through's changed answer also says `connect-src 'self'`, in the policy line the
+pass-through adds, so nothing T3's own policy forbids is loosened: T3's page in the Stage
+connects to its own address alone. The `nocturne t3 open` window does not pass through and has
+no such lock.
+
+## M8TS — T3 where the chat window was, in step with Threads and Memory [P2.5]
+
+SD-124, draft A-104. An untouched Work layer is arranged for the window: Threads, T3 and
+Memory whole at 100%, Nocturne's own Conversation one tap away. A window too narrow to leave
+T3 480px between the other two (a phone, a tablet) is T3's alone. Threads is seven units wide
+because at six its title row cuts its own tag short. A layer the owner has panned, zoomed or
+rearranged is kept. The 11px type floor of report 345 is not in this change: at 11px the
+standing sweep finds cut-off text in the phone header, Palace State and the Conversation.
+T3's code is not ours to change, so the two stay in step by T3's own page address for a
+thread. A pick in Threads sets the T3 frame to that address. For the other way the
+pass-through reads the address from the Referer on requests T3's page sends, keeps the thread
+id alone, and Nocturne's page learns it from the poll it already made. T3 does not promise
+this: its page happens to send a request after it moves. If that stops, the Stage stays on
+its thread and nothing else changes. The ACP session carries nothing when a thread is only
+opened, and T3's server does not know which thread a page shows. A thread born in T3 becomes
+the open thread once the journal holds it. A crossing asked for from T3 is the Deck's own
+card, drawn on the T3 module as well. The open thread is one value per home, so two windows
+on one home move each other. Report 347 records the look-first and the walk.

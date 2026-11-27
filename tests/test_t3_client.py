@@ -4,20 +4,31 @@ from pathlib import Path
 import pytest
 
 from harness.t3_client import RunTransitions, T3Error
+from harness.t3_front import FrontServer
 from harness.t3_server import T3Server
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("front", [False, True])
 async def test_supervisor_passes_only_native_session_and_private_runtime_settings(
-    tmp_path, monkeypatch
+    front, tmp_path, monkeypatch
 ):
-    """A-095: Claude needs USER for Max, but inheriting API keys risks billing the wrong account."""
+    """A-095: Claude needs USER for Max, but inheriting API keys risks billing the wrong account.
+
+    Report 348: one switch was all that kept T3's usage data here; both servers get every lock.
+    """
 
     class SpawnObserved(Exception):
         pass
 
     async def inspect_spawn(*args, env, **kwargs):
-        assert set(env) == {
+        assert {
+            "T3CODE_TELEMETRY_ENABLED": "false",
+            "T3CODE_OTEL_SDK_DISABLED": "true",
+            "T3CODE_POSTHOG_HOST": "http://127.0.0.1:9",
+            "DO_NOT_TRACK": "1",
+        }.items() <= env.items()
+        assert set(env) - ({"NOCTURNE_HOME"} if front else set()) == {
             "HOME",
             "USER",
             "SHELL",
@@ -27,6 +38,9 @@ async def test_supervisor_passes_only_native_session_and_private_runtime_setting
             "T3CODE_LAN",
             "T3CODE_TAILSCALE_SERVE",
             "T3CODE_TELEMETRY_ENABLED",
+            "T3CODE_OTEL_SDK_DISABLED",
+            "T3CODE_POSTHOG_HOST",
+            "DO_NOT_TRACK",
             "T3CODE_LOG_WS_EVENTS",
             "T3CODE_CODEX_PROBE_TIMEOUT_MS",
             "T3CODE_AUTO_BOOTSTRAP_PROJECT_FROM_CWD",
@@ -43,8 +57,10 @@ async def test_supervisor_passes_only_native_session_and_private_runtime_setting
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-marker")
     monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "test-marker")
     monkeypatch.setattr("asyncio.create_subprocess_exec", inspect_spawn)
+    server = FrontServer(tmp_path, None, None, tmp_path) if front else T3Server(tmp_path)
     with pytest.raises(SpawnObserved):
-        await T3Server(tmp_path)._start()
+        await server._start()
+    await server.close()
 
 
 def test_recorded_interrupt_closes_once_even_after_replay():

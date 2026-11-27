@@ -18,7 +18,7 @@ import {
   moduleFitsViewport,
   moduleIsOffscreen,
   moveStageModule,
-  openingStageCamera,
+  openingStageArrangement,
   persistStageLayout,
   reframeUntouchedWork,
   recoverStageModule,
@@ -319,10 +319,35 @@ test('v4 Chat and Deck layouts migrate cleanly into focused and stack Conversati
       instance_id: 'conversation:2', module_id: 'conversation', source_thread_id: undefined,
       conversation_mode: 'stack', x: 42, y: 11, width: 16, height: 20,
     },
+    FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 't3'),
     FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 'palace_queue'),
   ])
   assert.equal(migrated.scopes.conversation, 'ATTUNED')
   assert.equal(migrated.scopes['conversation:2'], 'GLOBAL')
+})
+
+/** P2.5 / SD-114 (M8TD): an arranged layout keeps its places when T3 joins it, and loads again. */
+test('T3 joins an arranged layout beside its modules and the stored layout loads again', () => {
+  const storage = memoryStorage()
+  const t3 = FACTORY_STAGE_LAYOUT.layers[0].modules.find((module) => module.module_id === 't3')
+  const arranged = cloneFactoryStageLayout()
+  arranged.layers[0].modules = arranged.layers[0].modules
+    .filter((module) => module.module_id !== 't3')
+    .map((module) => module.module_id === 'memory' ? { ...module, x: t3.x, y: t3.y } : module)
+  storage.setItem(STAGE_LAYOUT_STORAGE_KEY, JSON.stringify(arranged))
+
+  const joined = loadStageLayout(storage)
+  const placed = joined.layers[0].modules
+  const memory = placed.find((module) => module.module_id === 'memory')
+  const added = placed.find((module) => module.module_id === 't3')
+  assert.deepEqual([memory.x, memory.y], [t3.x, t3.y])
+  assert.ok(added.x >= Math.max(...placed.filter((module) => module !== added).map((module) => module.x + module.width)))
+
+  persistStageLayout(storage, moveStageModule(joined, 'conversation', 20, 8))
+  const again = loadStageLayout(storage).layers[0].modules
+  const kept = again.find((module) => module.module_id === 't3')
+  assert.deepEqual([kept.x, kept.y, kept.width, kept.height], [added.x, added.y, added.width, added.height])
+  assert.equal(again.find((module) => module.module_id === 'conversation').x, 20)
 })
 
 /** PLAN M2SP / P2 enlarges and recenters the Stage without moving an owner's saved v2 layout on screen. */
@@ -410,36 +435,77 @@ test('whole stage fits the modules and library adds land clear of others', () =>
   }
 })
 
-/** P2.5 / F158: a fresh Stage opens with its conversation whole at a readable size, whatever
- * the window: the widest core set that fits at 75% or more, else the conversation's width. */
-test('a fresh work layer opens readable at laptop sizes', () => {
-  const modules = activeStageLayer(cloneFactoryStageLayout()).modules
-  const conversation = modules.find((module) => module.module_id === 'conversation')
-  const inView = (camera, module, width) => camera.x + module.x * STAGE_UNIT_WIDTH * camera.zoom >= 0 &&
-    camera.x + (module.x + module.width) * STAGE_UNIT_WIDTH * camera.zoom <= width
-  for (const [width, height] of [[1440, 800], [1280, 620], [1200, 700]]) {
-    const camera = openingStageCamera(width, height, modules)
-    assert.ok(camera.zoom >= 0.75 && camera.zoom <= 1, `${width}: zoom ${camera.zoom}`)
-    assert.ok(inView(camera, conversation, width), `${width}: conversation in view`)
-    assert.ok(camera.y + (conversation.y + conversation.height) * STAGE_UNIT_HEIGHT * camera.zoom <= height)
+/** P2.5 / A-104 (SD-124): a fresh Stage opens on Threads, T3 and Memory, whole and at
+ * 100%, with no empty band above; Nocturne's own Conversation is out of the window, one tap away.
+ * A phone-width window opens filled by T3 alone, never under 100%. */
+test('a fresh work layer opens on Threads, T3 and Memory, fitted to the window', () => {
+  const factory = activeStageLayer(cloneFactoryStageLayout()).modules
+  const screen = (camera, module) => ({
+    left: camera.x + module.x * STAGE_UNIT_WIDTH * camera.zoom,
+    right: camera.x + (module.x + module.width) * STAGE_UNIT_WIDTH * camera.zoom,
+    top: camera.y + module.y * STAGE_UNIT_HEIGHT * camera.zoom,
+    bottom: camera.y + (module.y + module.height) * STAGE_UNIT_HEIGHT * camera.zoom,
+  })
+  const overlaps = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+  for (const [width, height] of [
+    [1267, 780], [1440, 800], [1920, 950], [1024, 700], [768, 774],
+    [390, 700], [390, 686], [360, 640], [414, 780], [430, 760],
+  ]) {
+    const { modules, camera } = openingStageArrangement(width, height, factory)
+    const box = (id) => screen(camera, modules.find((module) => module.instance_id === id))
+    // At his laptop window and wider the three stand together; narrower, T3 is not squeezed for them.
+    const shown = width < 1267 ? ['t3'] : ['threads', 't3', 'memory']
+    assert.ok(box('t3').right - box('t3').left >= Math.min(480, width - 27), `${width}: T3 keeps a usable width`)
+    assert.ok(camera.zoom >= 1, `${width}: zoom ${camera.zoom}`)
+    for (const id of shown) {
+      const at = box(id)
+      assert.ok(at.left >= 0 && at.right <= width, `${width}: ${id} whole across`)
+      assert.ok(Math.abs(at.top - 24) <= 1, `${width}: ${id} starts under the toolbar, no empty band`)
+      assert.ok(at.bottom <= height - 56, `${width}: ${id} clear of the Off-screen bar`)
+    }
+    for (const module of modules.filter((item) => !shown.includes(item.instance_id))) {
+      const at = screen(camera, module)
+      assert.ok(at.left >= width || at.right <= 0 || at.top >= height, `${width}: ${module.instance_id} out of the window`)
+    }
+    if (shown.length === 3) assert.ok(box('threads').right <= box('t3').left && box('t3').right <= box('memory').left)
+    else if (width < 600) {
+      // A trip along the Off-screen bar brings T3 back at the size it opened, clear of the bar.
+      let layout = cloneFactoryStageLayout()
+      layout = updateStageCamera({ ...layout, layers: layout.layers.map((layer, index) => index === 0 ? { ...layer, modules } : layer) }, camera)
+      for (const id of ['threads', 'conversation', 'memory', 't3']) layout = recoverStageModule(layout, id, width, height)
+      const back = activeStageLayer(layout)
+      const t3 = back.modules.find((module) => module.instance_id === 't3')
+      assert.deepEqual([t3.width, t3.height, back.camera.zoom], [modules.find((module) => module.instance_id === 't3').width, modules.find((module) => module.instance_id === 't3').height, camera.zoom])
+      const at = screen(back.camera, t3)
+      assert.ok(at.left >= 0 && at.right <= width && at.top >= 0 && at.bottom <= height - 48, `${width}: T3 whole after the trip`)
+    }
+    for (const [index, module] of modules.entries()) {
+      for (const other of modules.slice(index + 1)) {
+        assert.ok(!overlaps(module, other), `${width}: ${module.instance_id} overlaps ${other.instance_id}`)
+      }
+    }
   }
-  const wide = openingStageCamera(1440, 800, modules)
-  for (const module of modules.filter((item) => ['threads', 'memory'].includes(item.module_id))) {
-    assert.ok(inView(wide, module, 1440), `1440: ${module.module_id} in view`)
-  }
-  const small = openingStageCamera(800, 500, modules)
-  assert.ok(inView(small, conversation, 800) && small.zoom > 0.7, `800: zoom ${small.zoom}`)
-  assert.deepEqual(openingStageCamera(390, 700, modules), activeStageLayer(cloneFactoryStageLayout()).camera)
 })
 
-/** P2.5 (M3W5B-33): the Work layer is framed for the window until the owner moves its camera. */
-test('an untouched work camera follows the window; a moved one is kept', () => {
+/** P2.5 / A-104 (M3W5B-33): the Work layer is arranged for the window until the owner makes it
+ * his own; a camera he moved or a module he moved, resized, added or removed is kept. */
+test('an untouched work layer follows the window; an arranged one is kept', () => {
   const storage = memoryStorage()
   const framed = reframeUntouchedWork(cloneFactoryStageLayout(), 1440, 800, storage)
-  const camera = activeStageLayer(framed).camera
-  assert.notDeepEqual(camera, activeStageLayer(cloneFactoryStageLayout()).camera)
+  assert.notDeepEqual(activeStageLayer(framed), activeStageLayer(cloneFactoryStageLayout()))
   const reframed = reframeUntouchedWork(framed, 1200, 700, storage)
-  assert.notDeepEqual(activeStageLayer(reframed).camera, camera)
-  const moved = updateStageCamera(reframed, { ...activeStageLayer(reframed).camera, x: 10 })
-  assert.equal(reframeUntouchedWork(moved, 800, 500, storage), moved)
+  assert.notDeepEqual(activeStageLayer(reframed), activeStageLayer(framed))
+  assert.equal(reframeUntouchedWork(reframed, 1200, 700, storage), reframed)
+  const panned = updateStageCamera(reframed, { ...activeStageLayer(reframed).camera, x: 10 })
+  assert.equal(reframeUntouchedWork(panned, 800, 500, storage), panned)
+  for (const arrange of [
+    (layout) => moveStageModule(layout, 'memory', activeStageLayer(layout).modules[2].x + 1, activeStageLayer(layout).modules[2].y),
+    (layout) => removeStageModule(layout, 'memory'),
+    (layout) => addStageModuleInstance(layout, 'conversation', null),
+  ]) {
+    for (const start of [cloneFactoryStageLayout(), reframed]) {
+      const arranged = arrange(start)
+      assert.equal(reframeUntouchedWork(arranged, 800, 500, storage), arranged)
+    }
+  }
 })

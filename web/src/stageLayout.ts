@@ -22,7 +22,7 @@ export const STAGE_MIN_ZOOM = 0.06
 export const STAGE_MAX_ZOOM = 1.6
 const STAGE_RECOVERY_INSET = 12
 const STAGE_RECOVERY_ZOOM = 1
-const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'conversation']
+const PHONE_REFLOW_MODULE_IDS: readonly StageModuleId[] = ['recipe', 'conversation', 't3']
 const STAGE_ORIGIN_X = (STAGE_COLUMNS - LEGACY_STAGE_COLUMNS * STAGE_COORDINATE_SCALE) / 2
 const STAGE_ORIGIN_Y = (STAGE_ROWS - LEGACY_STAGE_ROWS * STAGE_COORDINATE_SCALE) / 2
 
@@ -44,13 +44,14 @@ export type StageModuleId =
   | 'jobs'
   | 'security'
   | 'profiler'
+  | 't3'
 
 export type ConversationMode = 'focused' | 'stack'
 
 export const STAGE_MODULE_IDS: StageModuleId[] = [
   'threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state',
   'memory_graph', 'palace_nebula', 'farm', 'roots', 'injection_console', 'palace_queue',
-  'recipe', 'jobs', 'security', 'profiler',
+  'recipe', 'jobs', 'security', 'profiler', 't3',
 ]
 export const MULTI_INSTANCE_MODULE_IDS: readonly StageModuleId[] = [
   'conversation', 'vitals', 'context_bars', 'memory_graph',
@@ -106,6 +107,7 @@ const DEFAULT_SCOPES: Record<string, RackScope> = {
   jobs: 'GLOBAL',
   security: 'ATTUNED',
   profiler: 'ATTUNED',
+  t3: 'GLOBAL',
 }
 
 const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
@@ -132,6 +134,7 @@ const DEFAULT_MODULES: Record<StageModuleId, StageModuleLayout> = {
   jobs: expandLegacyModule({ instance_id: 'jobs', module_id: 'jobs', x: 2, y: 2, width: 16, height: 12 }),
   security: expandLegacyModule({ instance_id: 'security', module_id: 'security', x: 2, y: 2, width: 12, height: 10 }),
   profiler: expandLegacyModule({ instance_id: 'profiler', module_id: 'profiler', x: 2, y: 2, width: 16, height: 12 }),
+  t3: expandLegacyModule({ instance_id: 't3', module_id: 't3', x: 25, y: 1, width: 10, height: 10 }),
 }
 
 export function registerStagePlugin(id: CustomRackModuleId) {
@@ -151,7 +154,7 @@ export const FACTORY_STAGE_LAYOUT: StageLayoutSet = {
       name: 'Work',
       // M3EX-27: the factory Work layer opens at full size; 64% was unreadable at 1440 wide.
       camera: expandLegacyCamera({ x: 36, y: 30, zoom: 1 }),
-      modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue']
+      modules: ['threads', 'conversation', 'memory', 'vitals', 'context_bars', 'palace_state', 'palace_queue', 't3']
         .map((moduleId) => ({ ...DEFAULT_MODULES[moduleId as StageModuleId] })),
       removed_modules: [{ ...DEFAULT_MODULES.jobs }, { ...DEFAULT_MODULES.security }, { ...DEFAULT_MODULES.profiler }],
     },
@@ -514,46 +517,73 @@ export function fitStageCamera(
   }
 }
 
-/** M3W5B-33 / Codex 16: a fresh Work layer opens readable in this window: the widest of
- * Threads + Conversation + Memory, Threads + Conversation, or Conversation alone that fits
- * at 75% or more, centered; else the Conversation fills the width if that reads at 75%. */
-export function openingStageCamera(
+/** M8TS (SD-124): an untouched Work layer is fitted to this window in whole grid units, at 100%:
+ * Threads, T3 and Memory side by side, 24px under the toolbar with a 56px strip kept for the
+ * Off-screen bar. Nocturne's own Conversation waits just right of Memory and the other four start
+ * under the window's foot, two rows of two. A window too narrow for the three (a phone, a
+ * tablet) is T3's alone. */
+export function openingStageArrangement(
   viewportWidth: number,
   viewportHeight: number,
   modules: readonly StageModuleLayout[],
-): StageCamera {
-  const byId = (ids: readonly string[]) => modules.filter((module) => ids.includes(module.module_id))
-  const sets = [['threads', 'conversation', 'memory'], ['threads', 'conversation'], ['conversation']]
-    .map(byId)
-    .filter((set) => set.some((module) => module.module_id === 'conversation'))
-  if (sets.length === 0) return fitStageCamera(viewportWidth, viewportHeight, modules)
-  const frame = (set: readonly StageModuleLayout[], fitHeight: boolean) => {
-    const left = Math.min(...set.map((module) => module.x)) * STAGE_UNIT_WIDTH
-    const right = Math.max(...set.map((module) => module.x + module.width)) * STAGE_UNIT_WIDTH
-    const top = Math.min(...set.map((module) => module.y)) * STAGE_UNIT_HEIGHT
-    const bottom = Math.max(...set.map((module) => module.y + module.height)) * STAGE_UNIT_HEIGHT
-    const zoom = Math.min(1, (viewportWidth - 48) / (right - left),
-      fitHeight ? (viewportHeight - 48) / (bottom - top) : 1)
-    // The rows below either fit whole or start under the window, never half under the recall bar.
-    const below = modules.filter((module) => module.y * STAGE_UNIT_HEIGHT >= bottom)
-    const nextTop = Math.min(...below.map((module) => module.y)) * STAGE_UNIT_HEIGHT
-    const nextBottom = Math.max(...below.map((module) => module.y + module.height)) * STAGE_UNIT_HEIGHT
-    const screenTop = below.length === 0 || 24 + (nextBottom - top) * zoom <= viewportHeight
-      ? 24
-      : Math.max(24, viewportHeight + 4 - (nextTop - top) * zoom)
-    return { x: Math.round((viewportWidth - (right - left) * zoom) / 2 - left * zoom), y: Math.round(screenTop - top * zoom), zoom }
+): { modules: StageModuleLayout[], camera: StageCamera } {
+  const phone = viewportWidth < 600
+  // A phone's margins are the ones a module recalled from the Off-screen bar is checked against,
+  // so a trip along the bar brings each module back at this size, clear of the bar. One more
+  // pixel, because the recall rounds its camera.
+  const edge = phone ? STAGE_RECOVERY_INSET + 1 : 24
+  const columns = Math.max(6, Math.floor((viewportWidth - edge * 2) / STAGE_UNIT_WIDTH))
+  // A phone has no room for margins: the frame is zoomed (never under 100%) until it fills the width.
+  const zoom = phone ? Math.max(1, (viewportWidth - edge * 2) / (columns * STAGE_UNIT_WIDTH)) : 1
+  const rows = Math.max(8, Math.floor((viewportHeight - (phone ? 96 : 80)) / (STAGE_UNIT_HEIGHT * zoom)))
+  const flank = clamp(Math.round(columns * 0.22), 5, 8)
+  // Threads and Memory stand beside T3 while T3 keeps ten units (480px) between them. In a
+  // narrower window T3 has the window alone and they sit one unit off its edges. Threads is
+  // never under seven units: narrower, its title row cuts its own tag short.
+  const alone = columns - Math.max(flank, 7) - flank < 10
+  const side = alone ? Math.min(columns, 8) : flank
+  const threads = alone ? side : Math.max(flank, 7)
+  const middle = Math.min(alone ? columns : columns - threads - side, 24)
+  const t3 = alone ? 0 : threads
+  const memory = t3 + middle + (alone ? 1 : 0)
+  const right = alone ? middle : memory + side
+  // The other four start under the window's foot: two rows of two, or under a lone T3 one under another.
+  const half = Math.floor(right / 2)
+  const second = Math.ceil((viewportHeight - 24) / (STAGE_UNIT_HEIGHT * zoom))
+  const [vitals, contextBars, palaceState, palaceQueue] = alone
+    ? [[0, 0, right], [0, 8, right], [0, 16, right], [0, 26, right]]
+    : [[0, 0, half], [half, 0, right - half], [0, 8, half], [half, 8, right - half]]
+  const boxes: Partial<Record<StageModuleId, Pick<StageModuleLayout, 'x' | 'y' | 'width' | 'height'>>> = {
+    threads: { x: alone ? -threads - 1 : 0, y: 0, width: threads, height: rows },
+    t3: { x: t3, y: 0, width: middle, height: rows },
+    memory: { x: memory, y: 0, width: side, height: rows },
+    conversation: { x: memory + side + 1, y: 0, width: middle, height: rows },
+    vitals: { x: vitals[0], y: second + vitals[1], width: vitals[2], height: 8 },
+    context_bars: { x: contextBars[0], y: second + contextBars[1], width: contextBars[2], height: 8 },
+    palace_state: { x: palaceState[0], y: second + palaceState[1], width: palaceState[2], height: 10 },
+    palace_queue: { x: palaceQueue[0], y: second + palaceQueue[1], width: palaceQueue[2], height: 10 },
   }
-  const readable = sets.map((set) => frame(set, true)).find((camera) => camera.zoom >= 0.75) ??
-    frame(sets[sets.length - 1]!, false)
-  // A phone-width window has no readable Stage frame; it keeps the factory camera (the Sheet reads).
-  return readable.zoom >= 0.75 ? readable : FACTORY_STAGE_LAYOUT.layers[0]!.camera
+  const left = STAGE_ORIGIN_X + 2
+  const top = STAGE_ORIGIN_Y + 2
+  return {
+    modules: modules.map((module) => {
+      const box = module.instance_id === module.module_id ? boxes[module.module_id] : undefined
+      return box === undefined ? { ...module } : { ...module, ...box, x: left + box.x, y: top + box.y }
+    }),
+    camera: {
+      x: Math.round((viewportWidth - right * STAGE_UNIT_WIDTH * zoom) / 2 - left * STAGE_UNIT_WIDTH * zoom),
+      y: Math.round(24 - top * STAGE_UNIT_HEIGHT * zoom),
+      zoom,
+    },
+  }
 }
 
 const OPENING_CAMERA_STORAGE_KEY = 'nocturne.stage.opening-camera.v1'
 
-/** M3W5B-33: the Work layer is framed for this window until the owner moves its camera. A
- * camera still equal to the factory one, or to the last automatic frame, is re-framed for the
- * current window (load, resize, Reset); the first pan or zoom makes the camera the owner's. */
+/** M3W5B-33: the Work layer is arranged for this window until the owner makes it his own. While
+ * its camera and its modules are still the factory ones, or the last automatic ones, it is
+ * arranged again for the current window (load, resize, Reset); the first pan, zoom, move, resize,
+ * added or removed module keeps the layer as it is. */
 export function reframeUntouchedWork(
   layout: StageLayoutSet,
   viewportWidth: number,
@@ -562,23 +592,36 @@ export function reframeUntouchedWork(
 ): StageLayoutSet {
   if (layout.active_layer_id !== 'work' || viewportWidth <= 0 || viewportHeight <= 0) return layout
   const layer = activeStageLayer(layout)
+  const factory = FACTORY_STAGE_LAYOUT.layers[0]!
   const same = (left: StageCamera, right: StageCamera | null) => right !== null &&
     left.x === right.x && left.y === right.y && left.zoom === right.zoom
+  const sameBox = (left: StageModuleLayout, right: StageModuleLayout | undefined) => right !== undefined &&
+    left.instance_id === right.instance_id &&
+    left.x === right.x && left.y === right.y && left.width === right.width && left.height === right.height
   const automatic = readAutomaticCamera(storage)
-  if (!same(layer.camera, FACTORY_STAGE_LAYOUT.layers[0]!.camera) && !same(layer.camera, automatic)) return layout
-  const camera = openingStageCamera(viewportWidth, viewportHeight, layer.modules)
-  if (same(layer.camera, camera)) return layout
+  if (!same(layer.camera, factory.camera) && !same(layer.camera, automatic)) return layout
+  const last = automatic?.width === undefined || automatic.height === undefined
+    ? []
+    : openingStageArrangement(automatic.width, automatic.height, factory.modules).modules
+  if (layer.modules.length !== factory.modules.length || !layer.modules.every((module, index) =>
+    sameBox(module, factory.modules[index]) || sameBox(module, last[index]))) return layout
+  const opening = openingStageArrangement(viewportWidth, viewportHeight, layer.modules)
+  if (same(layer.camera, opening.camera) && layer.modules.every((module, index) => sameBox(module, opening.modules[index]))) return layout
   try {
-    storage.setItem(OPENING_CAMERA_STORAGE_KEY, JSON.stringify(camera))
+    storage.setItem(OPENING_CAMERA_STORAGE_KEY, JSON.stringify({ ...opening.camera, width: viewportWidth, height: viewportHeight }))
   } catch {
-    // Without storage the frame is still applied; a reload frames it again from the factory camera.
+    // Without storage the arrangement is still applied; a reload is then the owner's own layout.
   }
-  return updateStageCamera(layout, camera)
+  return updateStageCamera({
+    ...layout,
+    layers: layout.layers.map((item) => item.layer_id === layer.layer_id ? { ...item, modules: opening.modules } : item),
+  }, opening.camera)
 }
 
-function readAutomaticCamera(storage: Storage): StageCamera | null {
+/** The last automatic camera and, since M8TS, the window it was arranged for. */
+function readAutomaticCamera(storage: Storage): (StageCamera & { width?: number, height?: number }) | null {
   try {
-    return JSON.parse(storage.getItem(OPENING_CAMERA_STORAGE_KEY) ?? 'null') as StageCamera | null
+    return JSON.parse(storage.getItem(OPENING_CAMERA_STORAGE_KEY) ?? 'null') as ReturnType<typeof readAutomaticCamera>
   } catch {
     return null
   }
@@ -869,7 +912,8 @@ function parseModule(
   ) return null
   const rawInstanceId = context.version >= 4 ? value.instance_id : rawModuleId
   if (typeof rawInstanceId !== 'string' || (
-    !/^[a-z_]+(?::[1-9][0-9]*)?$/.test(rawInstanceId)
+    // M8TD: 't3' carries a digit; a stored layout holding it was refused whole and reset.
+    !/^[a-z_][a-z0-9_]*(?::[1-9][0-9]*)?$/.test(rawInstanceId)
     && !installedRackPlugins.some((plugin) => plugin.id === rawInstanceId && plugin.id === rawModuleId)
   )) {
     return null
@@ -944,6 +988,8 @@ function addMemoryIngestToExistingLayout(layout: StageLayoutSet): StageLayoutSet
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'jobs', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'security', 'work')
   layout = addFactoryRemovedModuleToExistingLayout(layout, 'profiler', 'work')
+  // SD-114: T3's screen joins a layout the owner already arranged beside its modules, never on top.
+  layout = addFactoryModuleToExistingLayout(layout, 't3', 'work', true)
   layout = addFactoryRemovedModuleToExistingLayout(addFactoryRemovedModuleToExistingLayout(layout, 'farm', 'graph'), 'roots', 'graph')
   return addFactoryRemovedModuleToExistingLayout(
     addFactoryModuleToExistingLayout(
@@ -980,6 +1026,7 @@ function addFactoryModuleToExistingLayout(
   layout: StageLayoutSet,
   moduleId: StageModuleId,
   preferredLayerId: string,
+  clear = false,
 ): StageLayoutSet {
   const alreadyPlaced = [...layout.layers, ...layout.removed_layers].some((layer) =>
     [...layer.modules, ...layer.removed_modules].some(
@@ -997,7 +1044,7 @@ function addFactoryModuleToExistingLayout(
           ...cloneLayer(layer),
           modules: [
             ...layer.modules.map((module) => ({ ...module })),
-            { ...DEFAULT_MODULES[moduleId] },
+            clear ? clearOfOthers({ ...DEFAULT_MODULES[moduleId] }, layer.modules) : { ...DEFAULT_MODULES[moduleId] },
           ],
         }
       : cloneLayer(layer)),
@@ -1084,7 +1131,7 @@ function parseScopes(
 function isStageModuleId(value: unknown): value is StageModuleId {
   return installedRackPlugins.some((plugin) => plugin.id === value) || value === 'threads' || value === 'conversation' || value === 'memory' ||
     value === 'vitals' || value === 'palace_state' || value === 'context_bars' || value === 'memory_graph' || value === 'palace_nebula' || value === 'farm' || value === 'roots' ||
-    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler'
+    value === 'injection_console' || value === 'palace_queue' || value === 'recipe' || value === 'jobs' || value === 'security' || value === 'profiler' || value === 't3'
 }
 
 function isLegacyRackModuleId(value: unknown): value is 'threads' | 'chat' | 'memory' {

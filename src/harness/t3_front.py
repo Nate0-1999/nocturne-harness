@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 from pathlib import Path
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlsplit
 from uuid import NAMESPACE_URL, uuid5
 
 import httpx
@@ -15,6 +15,7 @@ import httpx
 from harness.envelope import StopReason
 from harness.t3_client import TERMINAL, T3Client, T3Error, new_id
 from harness.t3_front_session import FrontSession
+from harness.t3_passthrough import T3PassThrough
 from harness.t3_server import T3Server
 
 BROWSER_SCOPES = (
@@ -39,6 +40,9 @@ class FrontServer(T3Server):
         self.directory = None
         self.connections = set()
         self.sync = None
+        self.syncing = asyncio.Lock()
+        self.shown = (None, None)
+        self.through = T3PassThrough()
 
     def _settings(self):
         # The entire inventory at the pin. No native binary discovery on this server.
@@ -94,7 +98,7 @@ class FrontServer(T3Server):
         await client.authenticate(code, scopes=" ".join([*BROWSER_SCOPES, "access:write"]))
         return client
 
-    async def browser_url(self):
+    async def browser_url(self, through=None, route="/"):
         client = await self.client()
         config = await client.call("server.getConfig", {})
         enabled = [row["instanceId"] for row in config["providers"] if row["enabled"]]
@@ -111,7 +115,51 @@ class FrontServer(T3Server):
             )
         if response.status_code != 200:
             raise T3Error("T3 could not pair the conversation window.")
-        return client.origin + "/#" + urlencode({"token": response.json()["credential"]})
+        origin = through or client.origin
+        return origin + route + "#" + urlencode({"token": response.json()["credential"]})
+
+    async def frame_url(self, page, thread=None, paired=False):
+        """The same paired window, for the one Nocturne page allowed to host it (A-101).
+
+        SD-124: with a journal thread it opens on T3's own address for that thread. A page that
+        is already paired gets the address alone, or nothing when T3 cannot show the thread yet.
+        """
+        client = await self.client()
+        await self.through.start(
+            urlsplit(client.origin).port, page, self.root / "frame-port", client.environment_id
+        )
+        route = None
+        row = next((r for r in self.journal.catalog() if r.thread_id == thread), None)
+        if row is not None and not row.archived:
+            try:
+                async with self.syncing:
+                    await self.sync_thread(client, row, opened=True)
+            except (OSError, T3Error, httpx.HTTPError, TimeoutError):
+                pass  # T3 still opens, on its own first screen.
+            native = self.journal.front_thread(thread, client.environment_id)
+            if native is not None:
+                route = f"/{client.environment_id}/{quote(native, safe='')}"
+        if paired:
+            return route and self.through.origin + route
+        return await self.browser_url(self.through.origin, route or "/")
+
+    def open_thread(self):
+        """The journal thread T3's page is on, once the journal holds that T3 thread (SD-124)."""
+        native = self.through.thread
+        if native is None or self._client is None:
+            return None
+        if self.shown[0] == native:
+            return self.shown[1]
+        environment = self._client.environment_id
+        born_in_t3 = str(uuid5(NAMESPACE_URL, f"nocturne:t3:{environment}/{native}"))
+        for thread in (native, born_in_t3):
+            if (
+                self.journal.path_for_thread(thread).exists()
+                and self.journal.front_thread(thread, environment) == native
+            ):
+                self.shown = (native, thread)
+                return thread
+        return None
 
     async def follow_catalog(self, client):
         """Use T3's published project and session imports while its window is available."""
@@ -121,7 +169,9 @@ class FrontServer(T3Server):
                 if row.archived or seen.get(row.thread_id) == row.updated_at:
                     continue
                 try:
-                    if await self.sync_thread(client, row):
+                    async with self.syncing:
+                        settled = await self.sync_thread(client, row)
+                    if settled:
                         seen[row.thread_id] = row.updated_at
                 except (OSError, T3Error, httpx.HTTPError, TimeoutError) as exc:
                     logging.getLogger(__name__).warning(
@@ -129,13 +179,14 @@ class FrontServer(T3Server):
                     )
             await asyncio.sleep(3)
 
-    async def sync_thread(self, client, row):
+    async def sync_thread(self, client, row, opened=False):
         history = self.journal.current_thread(row.thread_id)
         if not history:
             return True
         native = self.journal.front_thread(row.thread_id, client.environment_id)
         users = [m for m in history.messages if m["role"] == "user"]
-        if not users and native is None:
+        if not users and native is None and not opened:
+            # An empty thread gets its T3 thread only when the owner opens it (SD-124).
             return True
         if users and (
             users[-1].get("state") not in StopReason or history.messages[-1]["role"] != "assistant"
@@ -219,6 +270,7 @@ class FrontServer(T3Server):
             self.sync.cancel()
             await asyncio.gather(self.sync, return_exceptions=True)
             self.sync = None
+        await self.through.close()
         try:
             await super().close()
         finally:
