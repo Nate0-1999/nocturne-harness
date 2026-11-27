@@ -3715,7 +3715,7 @@ function MessageRow({
   if (message.role === 'user') {
     const status = message.state === 'submitting'
       ? 'Sending'
-      : message.state === 'queued'
+      : message.state === 'refused' ? 'Not sent' : message.state === 'queued'
         ? `Queued ${Math.max(queuePosition, 1)}`
         : null
     return (
@@ -3741,7 +3741,7 @@ function MessageRow({
                   ? message.image_preview_data_url
                   : undefined
               }
-              available={message.state !== 'submitting'}
+              available={message.run_id !== null}
             />
           )}
         </div>

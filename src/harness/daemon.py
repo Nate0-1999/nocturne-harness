@@ -815,7 +815,11 @@ def create_app(
                             send,
                             factory.create(
                                 MessageType.ERROR,
-                                {"code": "model_unavailable", "message": str(exc)},
+                                {
+                                    "code": "model_unavailable",
+                                    "message": str(exc),
+                                    "prompt_id": message.id,
+                                },
                                 thread_id=message.thread_id,
                             ),
                         )

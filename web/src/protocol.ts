@@ -173,7 +173,7 @@ export interface OptimisticUserMessage {
   run_id: null
   role: 'user'
   content: string
-  state: 'submitting'
+  state: 'submitting' | 'refused'
   image?: ImageAttachmentView
   image_preview_data_url?: string
 }
