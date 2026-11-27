@@ -202,6 +202,15 @@ def test_single_key_refuses_unavailable_pins_and_explains_saved_pin_fallback(tmp
         rejected = client.put("/v1/model-policies/chat", json={"policy": saved["chat"]})
         assert rejected.status_code == 422
         assert "OPENROUTER_API_KEY" in rejected.json()["detail"]
+        for role in ("subagent", "judge"):
+            refused = client.put(f"/v1/model-policies/{role}", json={"policy": "max"})
+            assert refused.status_code == 422
+            assert "catalog" in refused.json()["detail"].lower()
+            subscription = client.put(
+                f"/v1/model-policies/{role}", json={"policy": "pinned:subscription:tool/example"}
+            )
+            assert subscription.status_code == 422
+            assert "conversations only" in subscription.json()["detail"]
         assert json.loads(policy_file.read_text()) == saved
         accepted = client.put(
             "/v1/model-policies/chat", json={"policy": "pinned:openai:gpt-4o-mini"}

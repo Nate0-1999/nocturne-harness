@@ -1,9 +1,26 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
 from harness.symphony_runtime import _carry_environment, _graft, _publish_result
+
+
+def test_agent_models_name_only_receipted_work(tmp_path: Path) -> None:
+    """P2 / FL-089: only a receipt can identify the model that actually served an agent."""
+    from harness.symphony_runtime import receipted_models
+
+    for stage in ("attempt/completion", "judge-motivation"):
+        output = tmp_path / "round" / stage
+        output.mkdir(parents=True)
+        (output / "assignment.json").write_text(json.dumps({"model_policy": "max"}))
+    events = [{"model": model} for model in ("first", "first", "second")]
+    (tmp_path / "round/attempt/completion/receipts.json").write_text(json.dumps({"events": events}))
+    assert receipted_models(tmp_path) == {
+        "round/attempt/completion": ["first", "second"],
+        "round/judge-motivation": [],
+    }
 
 
 def _repo(root: Path, ignore: str) -> None:

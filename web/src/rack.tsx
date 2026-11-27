@@ -110,6 +110,7 @@ export type RackAction =
   | { type: 'prompt.interject'; run_id: string; prompt: string }
   | { type: 'boundary.decide'; run_id: string; decision: 'allowed_once' | 'allowed_thread' | 'denied' }
   | { type: 'symphony.context'; symphony_id: string }
+  | { type: 'symphony.models'; symphony_id: string }
   | { type: 'symphony.memory'; symphony_id: string; worker_id: string; memory_id: string; added: boolean }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
   | { type: 'spend.reconcile' }
@@ -250,6 +251,7 @@ export interface RackPluginApi {
 }
 
 export type RackActionResult<Action extends RackAction> =
+  Action['type'] extends 'symphony.models' ? Record<string, string[]> :
   Action['type'] extends 'jobs.save' | 'jobs.run' | 'jobs.stop' | 'jobs.deliver' | 'scorer.retrain.status' | 'compaction.backtest'
     ? JsonValue
     : Action['type'] extends 'thread.create' | 'project.select'
@@ -338,7 +340,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
       'project.select', 'prompt.submit', 'prompt.interject', 'boundary.decide', 'draft.update', 'run.cancel', 'thread.archive',
       'queue.load', 'queue.decide', 'thread.select', 'symphony.intervene', 'thread.rename_project',
       'thread.rewind', 'thread.compactions',
-      'symphony.context', 'symphony.memory',
+      'symphony.context', 'symphony.models', 'symphony.memory',
       'policies.load', 'policies.save', 'models.load',
       // SD-101: the header's list of pinned models switches this conversation's model.
       'parameter.write',
@@ -678,6 +680,8 @@ function dispatchRackAction<Action extends RackAction>(
         }) as Promise<RackActionResult<Action>>
       case 'symphony.context':
         return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/context`) as Promise<RackActionResult<Action>>
+      case 'symphony.models':
+        return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/models`) as Promise<RackActionResult<Action>>
       case 'symphony.memory':
         return fetchJson(`/v1/symphonies/${encodeURIComponent(action.symphony_id)}/context/${encodeURIComponent(action.worker_id)}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

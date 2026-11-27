@@ -478,6 +478,17 @@ function ProposedResponseCardView({
 
 function DeckStackCard({ stack }: { stack: DeckStack }) {
   const { events } = useRackPlugin()
+  const [showModels, setShowModels] = useState(false)
+  const [models, setModels] = useState<Record<string, string[]> | null>(null)
+  const [modelError, setModelError] = useState('')
+  useEffect(() => {
+    if (!showModels) return
+    let active = true
+    events.dispatch({ type: 'symphony.models', symphony_id: stack.symphony_id })
+      .then(rows => { if (active) { setModels(rows); setModelError('') } })
+      .catch(() => { if (active) setModelError('Could not read the receipts. Reopen to retry.') })
+    return () => { active = false }
+  }, [showModels, events, stack.symphony_id, stack.state, stack.spend_usd, stack.evidence.length])
   const running = stack.attempts.filter((attempt) => attempt.state === 'running')
   const [attemptId, setAttemptId] = useState(running[0]?.attempt_id ?? '')
   const selectedAttemptId = running.some((attempt) => attempt.attempt_id === attemptId)
@@ -576,6 +587,14 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
       <SymphonyFeedback stack={stack} />
+      <details onToggle={event => setShowModels(event.currentTarget.open)}>
+        <summary>Models used</summary>
+        {modelError ? <p role="status">{modelError}</p> : models && Object.keys(models).length ? (
+          <dl className="deck-lineage deck-models">{Object.entries(models).map(([agent, names]) =>
+            <div key={agent}><dt>{agent.replace(/-round-/g, ' · round ').replace(/round-\d+-attempt-/g, 'attempt ').replace(/\/smoke$/, '/readiness').replaceAll('/', ' · ').replaceAll('-', ' ')}</dt>
+              <dd>{names.join(', ') || 'No receipt'}</dd></div>)}</dl>
+        ) : <p>{models ? 'No agent receipts recorded.' : 'Reading receipts…'}</p>}
+      </details>
       {stack.evidence.map((entry, index) => (
         <details key={index}>
           <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>

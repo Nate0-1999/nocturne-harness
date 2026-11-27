@@ -122,7 +122,7 @@ from harness.spine_client import (
     VitalsSnapshot,
 )
 from harness.symphony_experience import SymphonyExperience
-from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
+from harness.symphony_runtime import SymphonyExecution, receipted_models, remove_kept_worktrees
 from harness.t3_client import T3Error
 from harness.t3_front import FrontServer
 from harness.t3_server import T3Server
@@ -1036,13 +1036,19 @@ def create_dev_app(
     )
     factory = EnvelopeFactory(machine_id=machine_id, agent_id=agent_id)
     owned_symphony_experience = symphony_experience or SymphonyExperience(id_factory=factory.new_id)
-    model_resolver = model_resolver_override or ModelPolicyResolver(
-        policy=configured.effective_model_policy_chat,
-        choices=configured.model_choices,
-        static_model=configured.chat_model,
-        static_context_tokens=configured.model_context_tokens,
-        catalog=completion_router.catalog,
-        burn=lambda: measured_token_burn(owned_spine),
+
+    def policy_resolver(policy: str) -> ModelPolicyResolver:
+        return ModelPolicyResolver(
+            policy=policy,
+            choices=configured.model_choices,
+            static_model=configured.chat_model,
+            static_context_tokens=configured.model_context_tokens,
+            catalog=completion_router.catalog,
+            burn=lambda: measured_token_burn(owned_spine),
+        )
+
+    model_resolver = model_resolver_override or policy_resolver(
+        configured.effective_model_policy_chat
     )
 
     def explain_model_policy(snapshot: ParameterSnapshot) -> str:
@@ -1589,12 +1595,23 @@ def create_dev_app(
             try:
                 parsed = parse_model_policy(body.policy)
                 if str(parsed.value).startswith("subscription:"):
+                    if role in ("subagent", "judge"):
+                        raise ValueError("Subscriptions are available for conversations only.")
                     raise ValueError("Subscription choices belong to one conversation.")
                 if parsed.kind == "pinned" and configured.model_choices.excluded(
                     configured.model_choices.bans(), str(parsed.value)
                 ):
                     raise ValueError("This model is banned. Lift its ban in model settings.")
-                if role != "curator" and parsed.kind == "pinned":
+                if role in ("subagent", "judge"):
+                    try:
+                        pick = await policy_resolver(body.policy).preview()
+                        completion_router.model_for(pick.model)
+                    except (ValueError, ModelCatalogUnavailable) as exc:
+                        raise ValueError(
+                            "No runnable model for this policy in the home's catalog. "
+                            "Refresh the list and choose another."
+                        ) from exc
+                elif role != "curator" and parsed.kind == "pinned":
                     completion_router.model_for(str(parsed.value))
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
@@ -1780,6 +1797,11 @@ def create_dev_app(
                     detail="Symphony stack was not found.",
                 )
             return stack
+
+        @app.get("/v1/symphonies/{symphony_id}/models")
+        async def symphony_agent_models(symphony_id: str):
+            await read_symphony(symphony_id)
+            return receipted_models(home / "symphonies" / symphony_id)
 
         @app.get("/v1/symphonies/{symphony_id}/context")
         async def symphony_context(symphony_id: str):
