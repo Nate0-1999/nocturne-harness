@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "67957289ab07a0d5bb38eec61105734a8f7303ad"
+      "head": "0844b3abbf8b6f9922aa66a94caf35a7303363f4"
     }
   ],
   "unmapped": {
@@ -74,6 +74,7 @@
     "harness/verification/m8rg/SHA256SUMS": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/ledger-report.json": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
+    "harness/web/dist/assets/index-BcCmqX7j.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-BuOuy9Ou.js": "Intermediate generated Model Device bundle superseded by the handoff build.",
     "harness/web/dist/assets/index-CVMcPMyu.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/assets/index-CitP46G3.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
@@ -436,7 +437,7 @@
       "verdict": "PASS",
       "screenshot": "FL-202.png",
       "flag": "",
-      "observed": "Return 1: independently changed maker and serving rules on both widths and compared all displayed counts to the installed listing. Timed the matching refusal and inspected the paid provider receipt. The earlier installed walk covered the ranked model browser with price and context, pin to top, switch, fresh-thread persistence and one-click return to Elbow. Low thinking persisted on the paid thread. The model ban changed the new pick and preserved the first thread. Banned pins returned 422. Lifting the ban restored the original pick. Desktop and phone country exclusions, choices and role-and-policy-controls.json are in Garden."
+      "observed": "Return 2: the installed Stage first showed loading, then the list, then provider locations. With only France allowed, the Mistral Small 4 row and chat named the missing provider information and the specific checkbox. Both widths were walked. Return 1: independently changed maker and serving rules on both widths and compared all displayed counts to the installed listing. Timed the matching refusal and inspected the paid provider receipt. The earlier installed walk covered the ranked model browser with price and context, pin to top, switch, fresh-thread persistence and one-click return to Elbow. Low thinking persisted on the paid thread. The model ban changed the new pick and preserved the first thread. Banned pins returned 422. Lifting the ban restored the original pick. Desktop and phone country exclusions, choices and role-and-policy-controls.json are in Garden."
     },
     "FL-205": {
       "label": "The thread list tells you where and how: each thread shows its project by name and the model and thinking level in force, and the list reads cleaner.",
