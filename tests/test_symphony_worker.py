@@ -343,17 +343,21 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(
     kept = "32345678-1234-5678-1234-567812345678"
     write_json(tmp_path / "memory-selection.json", {"removed": [removed], "added": [kept]})
     assignment["stage"] = "smoke"
-    spine.prepare_injection.side_effect = None
-    spine.prepare_injection.return_value = prepared
+
+    def prepare_leaf(request):
+        if request.mode == "gate":
+            assert not (request.current_memory_ids or request.excluded_memory_ids)
+            return prepared.model_copy(update={"final_block": "Packing checklist"})
+        assert list(map(str, request.confirmed_memory_ids)) == [kept]
+        assert list(map(str, request.excluded_memory_ids)) == [removed]
+        return prepared.model_copy(update={"final_block": "Reorder rule"})
+
+    spine.prepare_injection.side_effect = prepare_leaf
     leaf = WorkerContext(
         assignment=assignment, output=tmp_path, context=context, resolution=worker.resolution
     )
-    await leaf.render([])
-    first, selected = [call.args[0] for call in spine.prepare_injection.call_args_list[-2:]]
-    assert first.mode == "gate" and not first.current_memory_ids
-    assert selected.mode == "autonomous"
-    assert list(map(str, selected.confirmed_memory_ids)) == [kept]
-    assert list(map(str, selected.excluded_memory_ids)) == [removed]
+    first_prompt = await leaf.render([])
+    assert "Reorder rule" in first_prompt and "Packing checklist" not in first_prompt
 
 
 @pytest.mark.asyncio
@@ -459,7 +463,9 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     await symphony_worker.run(out / "assignment.json")
 
     assert "README.md written" in extract.await_args.args[0]
-    assert json.loads((out / "memories.json").read_text()) == [lesson.model_dump()]
+    assert json.loads((out / "memories.json").read_text()) == [
+        {**lesson.model_dump(), "body": f"Unverified: {lesson.body}"}
+    ]
     result = json.loads((out / "result.json").read_text())
     assert result["artifacts"] == ["README.md", "README.md (line 1)"]
     assert result["evidence_refs"][2] == "/elsewhere/n.txt"

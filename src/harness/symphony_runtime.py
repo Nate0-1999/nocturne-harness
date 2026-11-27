@@ -241,7 +241,7 @@ class SymphonyExecution:
             thread_id=UUID(stack.thread_id),
         )
         last_decision = None
-        unresolved = []
+        unresolved = set()
         passed_work = []
         try:
             reviewed = await context.spine.restore_injection(
@@ -648,7 +648,7 @@ class SymphonyExecution:
                                     origin_location=str(root),
                                 )
                                 staged.append(response.memory.memory_id)
-                                unresolved.append(response.memory.memory_id)
+                                unresolved.add(response.memory.memory_id)
                         winner_memories = json.loads(
                             (outputs[decision.winner_attempt_id] / "memories.json").read_text()
                         )
@@ -673,7 +673,7 @@ class SymphonyExecution:
                                     "resolution": resolution.model_dump(mode="json"),
                                 }
                             )
-                            unresolved.clear()
+                            unresolved.difference_update(staged)
                             await update(
                                 "running",
                                 {

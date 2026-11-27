@@ -16,14 +16,18 @@ from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
 from pydantic_ai.exceptions import AgentRunError
 from pydantic_ai.messages import (
     ModelMessagesTypeAdapter,
+    ModelRequest,
     ModelResponse,
     ToolCallPart,
+    ToolReturnPart,
+    UserPromptPart,
 )
 from pydantic_ai.usage import UsageLimits
 
 from harness.agent import HarnessAgent
 from harness.conductor import ProductBaton, SmokeGateResult, TypedDistillate
 from harness.config import HarnessSettings
+from harness.extraction import sourced_candidates
 from harness.judge_panel import (
     JudgeEvidence,
     JudgeFeedback,
@@ -387,9 +391,19 @@ async def run(assignment_path: Path) -> None:
             draft = await extractor.extract_thread(
                 transcript, on_result=record_extraction, memory_size=settings.memory_max_tokens
             )
+            sources = {
+                f"m{index}"
+                for index, message in enumerate(captured)
+                if isinstance(message, ModelRequest)
+                and any(
+                    isinstance(part, (UserPromptPart, ToolReturnPart)) for part in message.parts
+                )
+            }
             _write(
                 output / "memories.json",
-                json.dumps([memory.model_dump() for memory in draft.candidates]),
+                json.dumps(
+                    [item.model_dump() for item in sourced_candidates(draft, sources, extractor)]
+                ),
             )
             value = TypedDistillate.model_validate_json(
                 json.dumps(
