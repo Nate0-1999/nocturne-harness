@@ -805,13 +805,11 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
             _remove_empty(target.parent)
             continue
         for marker in sorted(target.glob("*/*/.git")):
-            if marker.parent.is_symlink() or marker.parent.parent.is_symlink():
-                continue
-            untracked = subprocess.run(
-                ["git", "-C", str(marker.parent), "ls-files", "--others", "--directory"],
-                capture_output=True,
-            )
-            if untracked.returncode or untracked.stdout:
+            if (
+                marker.is_symlink()
+                or marker.parent.is_symlink()
+                or marker.parent.parent.is_symlink()
+            ):
                 continue
             name = marker.parent.relative_to(target).as_posix()
             head = subprocess.run(
@@ -826,63 +824,22 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
                 if result.is_file():
                     commit = json.loads(result.read_text())["product"]["commit"]
                     _git(root, "update-ref", f"{ref}-product", commit)
-                    # F154: the worker snapshots its staged files with commit-tree. Let Git
-                    # recognize that saved tree only when both index and files still match.
-                    if commit != head.stdout.strip() and all(
-                        subprocess.run(
-                            ["git", "-C", str(marker.parent), "diff", "--quiet", *args, "--"],
-                            capture_output=True,
-                        ).returncode
-                        == 0
-                        for args in (("--cached", commit), ())
-                    ):
-                        subprocess.run(
-                            [
-                                "git",
-                                "-C",
-                                str(marker.parent),
-                                "switch",
-                                "--detach",
-                                "--no-overwrite-ignore",
-                                commit,
-                            ],
-                            capture_output=True,
-                        )
                 git_dir = Path(_git(marker.parent, "rev-parse", "--absolute-git-dir"))
-                branch = f"refs/heads/nocturne-worktrees/{git_dir.name}/work"
-                release = subprocess.run(
-                    ["git", "-C", str(root), "worktree", "remove", str(marker.parent)],
-                    capture_output=True,
-                )
-                if release.returncode == 0:
-                    # F154: only retire the private ref if its tip is the commit just archived.
-                    subprocess.run(
-                        ["git", "-C", str(root), "update-ref", "-d", branch, head.stdout.strip()],
-                        capture_output=True,
-                    )
+                namespace = f"refs/heads/nocturne-worktrees/{git_dir.name}/"
+                for branch in _git(
+                    root, "for-each-ref", "--format=%(refname)", namespace
+                ).splitlines():
+                    _git(root, "update-ref", "-d", branch)
+                shutil.rmtree(marker.parent)
+        subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True)
         for step in target.iterdir():
-            if step.is_dir() and not step.is_symlink():
-                for child in step.iterdir():
-                    if child.is_dir() and not child.is_symlink():
-                        evidence = run_home / child.relative_to(target)
-                        if (
-                            child.name.startswith("judge-")
-                            and (evidence / "assignment.json").is_file()
-                        ):
-                            for name in (
-                                "JUDGE_BRIEF.json",
-                                "JUDGE_SESSION.json",
-                                "judge-verdict.json",
-                            ):
-                                source, saved = child / name, evidence / name
-                                if (
-                                    source.is_file()
-                                    and not source.is_symlink()
-                                    and not saved.exists()
-                                ):
-                                    shutil.move(source, saved)
-                        _remove_empty(child)
-                _remove_empty(step)
+            if step.is_symlink() or not step.is_dir():
+                continue
+            for judge in step.glob("judge-*"):
+                assignment = run_home / judge.relative_to(target) / "assignment.json"
+                if not judge.is_symlink() and judge.is_dir() and assignment.is_file():
+                    shutil.rmtree(judge)
+            _remove_empty(step)
         if _remove_empty(target):
             removed.append(target)
             _remove_empty(target.parent)

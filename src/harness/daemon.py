@@ -1424,7 +1424,6 @@ def create_dev_app(
         model_context=loop.model_context,
     )
     worktree_removals: set[asyncio.Task] = set()
-    worktree_release = asyncio.Lock()
 
     async def remove_finished_worktrees(symphony_id: str | None = None) -> None:
         while symphony_id in execution.live:  # its workers stop after the completed update
@@ -1434,17 +1433,15 @@ def create_dev_app(
                 event
                 for event in loop.symphony_stack_events()
                 if event.get("state") in {"completed", "blocked"}
-                and event.get("symphony_id") not in execution.live
             ),
             key=lambda event: str(event.get("completed_at")),
         )
-        async with worktree_release:
-            await asyncio.to_thread(
-                remove_kept_worktrees,
-                home,
-                [str(event["symphony_id"]) for event in completed],
-                configured.symphony_worktrees_kept,
-            )
+        await asyncio.to_thread(
+            remove_kept_worktrees,
+            home,
+            [str(event["symphony_id"]) for event in completed],
+            configured.symphony_worktrees_kept,
+        )
 
     async def publish_symphony_state(thread_id: str, event: Mapping[str, object]) -> None:
         await loop.publish_symphony_state(thread_id, event)

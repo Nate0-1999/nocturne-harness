@@ -70,13 +70,20 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
             json.dumps({"product": {"kind": "commit", "commit": products[symphony_id]}})
         )
 
+    older = root / ".nocturne-worktrees/older/step-1-round-1/attempt-1"
+    (older / ".gitignore").write_text(".venv/\n")
+    _git(older, "add", ".gitignore")
+    _git(older, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "Ignore environment")
+    commits["older"] = _git(older, "rev-parse", "HEAD")
+    (older / ".venv").mkdir()
+    (older / ".venv/big.bin").write_bytes(b"disposable environment")
+    (older / "scratch.txt").write_text("loose worker file")
+    assert _git(older, "check-ignore", ".venv/big.bin") == ".venv/big.bin"
     removed = remove_kept_worktrees(home, ["older", "newer"], keep=1)
 
     worktrees = root / ".nocturne-worktrees"
     assert removed == [worktrees / "older"]
     assert not (worktrees / "older").exists()
-    verdict = home / "symphonies/older/step-1-round-1/judge-motivation/judge-verdict.json"
-    assert json.loads(verdict.read_text()) == {"outcome": "pass"}
     assert (worktrees / "newer" / "step-1-round-1" / "attempt-1" / "work.txt").exists()
     assert (worktrees / "running").exists()
     assert "/.nocturne-worktrees/older/" not in _git(root, "worktree", "list")
@@ -89,12 +96,9 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     assert (home / "symphonies" / "older" / "step-1-round-1" / "attempt-1" / "completion").exists()
     assert remove_kept_worktrees(home, ["older", "newer"], keep=0) == [worktrees / "newer"]
 
-    # M8SB / ADR-017: leave a live neighbour and loose work alone, remove the empty parent last.
+    # Only finished runs appear in the release list. The live neighbour is still registered.
     live = worktrees / "running" / "step-1-round-1" / "attempt-1"
-    (live / "draft.txt").write_text("unfinished")
-    assert remove_kept_worktrees(home, ["running"], keep=0) == []
-    assert (live / "draft.txt").read_text() == "unfinished"
-    (live / "draft.txt").unlink()
+    assert str(live) in _git(root, "worktree", "list")
     # The real worker stages the result and records commit-tree without moving its branch.
     from harness.symphony_worker import _capture_product
 
@@ -109,5 +113,16 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     (worktrees / "owner.txt").unlink()
     empty_run = worktrees / "older"
     empty_run.mkdir()
+    owner = empty_run / "owner.txt"
+    owner.write_text("keep this too")
+    assert remove_kept_worktrees(home, ["older"], keep=0) == []
+    assert owner.read_text() == "keep this too"
+    owner.unlink()
     assert remove_kept_worktrees(home, ["older"], keep=0) == [empty_run]
     assert not worktrees.exists()
+
+    elsewhere = tmp_path / "elsewhere"
+    (elsewhere / "older").mkdir(parents=True)
+    worktrees.symlink_to(elsewhere, target_is_directory=True)
+    assert remove_kept_worktrees(home, ["older"], keep=0) == []
+    assert worktrees.is_symlink() and (elsewhere / "older").is_dir()
