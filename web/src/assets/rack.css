@@ -434,7 +434,7 @@
   color: var(--dim);
   font-family: var(--data-font);
   font-size: var(--text-xs);
-  letter-spacing: 0.09em;
+  letter-spacing: 0.05em; /* SD-129: the title row holds 11px type by closer spacing */
   text-transform: uppercase;
 }
 
@@ -451,8 +451,8 @@
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  gap: 0.45rem;
-  padding: 0 0.55rem;
+  gap: 0.3rem;
+  padding: 0 0.35rem;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -492,10 +492,10 @@
   --kit-edge: color-mix(in srgb, var(--accent) 48%, transparent);
   --kit-fill: transparent;
   --chamfer: 0.25rem;
-  padding: 0.12rem 0.36rem;
+  padding: 0.12rem 0.25rem;
   color: var(--ink);
   font-size: var(--text-xs);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -539,7 +539,7 @@
   display: flex;
   align-self: center;
   flex: none;
-  margin-inline: 0.18rem;
+  margin-inline: 0.1rem;
 }
 
 .rack-module__settings-toggle {
@@ -2793,14 +2793,16 @@ button.rack-module__resize-handle--nw {
   }
 
   .topbar {
-    padding: 0 0.7rem;
+    padding: 0 0.5rem;
   }
 
-  /* M3EX-34: at phone width the Palace and its state stay readable; the mark carries the brand. */
+  /* M3EX-34: at phone width the Palace and its state stay readable; the mark carries the brand.
+     SD-129: at 11px the line fits by closer spacing, never by smaller type. */
   .topbar .connection {
     display: block;
     min-width: 0;
     max-width: none;
+    letter-spacing: 0.02em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3450,9 +3452,9 @@ button.rack-module__resize-handle--nw {
 .rack-module__fill,
 .rack-module__remove {
   align-self: stretch;
-  min-width: 1.8rem;
+  min-width: 1.5rem;
   margin-right: 0.9rem;
-  margin-left: 0.55rem;
+  margin-left: 0.2rem;
   border: 0;
   border-left: 1px solid var(--line);
   background: transparent;
@@ -3621,12 +3623,12 @@ button.rack-module__resize-handle--nw {
   }
 
   .app-settings-toggle {
-    left: 2.85rem;
+    left: 2.5rem;
   }
 
   .rack-remote--header .topbar {
     justify-content: flex-start;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   .rack-remote--header .connection {

@@ -509,6 +509,7 @@
 
 .chat-header__model-value {
   min-width: 0;
+  overflow-wrap: anywhere; /* a long model id breaks; it is never cut */
   color: var(--muted);
 }
 
@@ -2120,6 +2121,7 @@
 .feature-radar svg {
   width: 15rem;
   height: 15rem;
+  overflow: visible; /* a side label may run into the figure's padding */
 }
 
 .feature-radar__ring,
@@ -2132,7 +2134,7 @@
 .feature-radar__label {
   fill: var(--dim);
   font-family: var(--data-font);
-  font-size: 9px;
+  font-size: 12px; /* 11px as drawn: the web is 260 units in 15rem */
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -2401,7 +2403,7 @@
   .mobile-memories {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
     min-height: 2.75rem;
     padding: 0 0.2rem;
     background: transparent;
