@@ -29,8 +29,8 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
         if (!active) return
         const data = value as unknown as { workers: Worker[] }
         setWorkers(data.workers.filter((worker) => attemptId === null || worker.attempt_id === attemptId))
-        setStatus((current) => current === 'Waiting for worker context…'
-          ? 'Memory changes apply at the next model request.' : current)
+        setStatus((current) => current === 'Waiting for worker context…' && data.workers.length
+          ? '' : current)
       }).catch((error: unknown) => { if (active) setStatus(failureMessage(error, 'Worker context could not be loaded. Wait for the next refresh or reload.')) })
     void refresh()
     const timer = globalThis.setInterval(() => void refresh(), 2000)
@@ -47,9 +47,9 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
 
   return <section aria-label="Agent context" className="symphony-card">
     <h3>{attemptId === null ? 'Memories by worker' : `${attemptId} · context`}</h3>
-    <p role="status">{status}</p>
+    {status && <p role="status">{status}</p>}
     {workers.map((worker) => <details key={worker.worker_id} open={worker.stage === 'completion'}>
-      <summary>{worker.stage} · {worker.state} · {worker.agent_id}</summary>
+      <summary>{worker.attempt_id} · {worker.stage} · {worker.state} · {worker.agent_id}</summary>
       <ContextBars workerSnapshot={worker.observation} />
       <h4>Injected memories</h4>
       {worker.injection === null ? <p>{worker.stage === 'judge'
@@ -60,7 +60,8 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
         actions={<Button action="remove" iconOnly className="memory-card__remove" type="button" aria-label={`Pop off ${card.label}`}
           data-tooltip="Pop off" data-tooltip-detail="Leave this memory out of the worker's next request."
           disabled={worker.state !== 'running'} onClick={() => void select(worker, card, false)} />} />)}
-      <h4>Suggestions and removed memories</h4>
+      {(worker.injection?.near_misses.length || worker.removed.length) > 0 &&
+        <h4>Suggestions and removed memories</h4>}
       {[...(worker.injection?.near_misses ?? []), ...worker.removed].map((card) => <MemoryCard key={card.memory_id} memoryId={card.memory_id}
         label={card.label} body={card.body} score={card.score} pin={card.pin} features={card.features} tone="near-miss"
         actions={<Button action="add" iconOnly variant="primary" className="memory-card__add" type="button" aria-label={`Add ${card.label}`}
