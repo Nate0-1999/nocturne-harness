@@ -187,6 +187,14 @@ class SymphonyExecution:
         def command(location, stage, brief, model_policy, origin_agent, name):
             output = run_home / name
             assignment = output / "assignment.json"
+            if stage != "judge" and reviewed is not None:
+                _json(
+                    output / "memory-selection.json",
+                    {
+                        "added": [str(key) for key in reviewed.confirmed_memory_ids],
+                        "removed": [str(key) for key in reviewed.excluded_memory_ids],
+                    },
+                )
             _json(
                 assignment,
                 {
@@ -205,7 +213,7 @@ class SymphonyExecution:
                     "model_policy": model_policy,
                     "origin_agent": origin_agent,
                     "thread_id": stack.thread_id,
-                    "project_key": str(root),
+                    "project_key": context.project_key,
                     "run_id": round_run,
                     "prompt_id": generate_ulid(),
                     "home": str(self.home),
@@ -236,6 +244,9 @@ class SymphonyExecution:
         unresolved = []
         passed_work = []
         try:
+            reviewed = await context.spine.restore_injection(
+                UUID(stack.thread_id), context.principal_id
+            )
             for step_index, step in enumerate(stack.launch.recipe):
                 feedback = ""
                 prior_decision = None
@@ -632,7 +643,7 @@ class SymphonyExecution:
                                     body=memory["body"],
                                     kind=MemoryKind(memory["kind"]),
                                     keywords=memory["keywords"],
-                                    project_key=str(root),
+                                    project_key=context.project_key,
                                     origin_path=".",
                                     origin_location=str(root),
                                 )

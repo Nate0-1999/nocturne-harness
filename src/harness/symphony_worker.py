@@ -21,7 +21,7 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.usage import UsageLimits
 
-from harness.agent import ExtractionCandidateDraft
+from harness.agent import HarnessAgent
 from harness.conductor import ProductBaton, SmokeGateResult, TypedDistillate
 from harness.config import HarnessSettings
 from harness.judge_panel import (
@@ -36,9 +36,10 @@ from harness.judge_panel import (
 from harness.model_policy import ModelPolicyResolver, measured_token_burn
 from harness.model_router import CompletionRouter, model_settings_for
 from harness.pydantic_ai_adapter import WorkspaceCapability, adopted_skill_capabilities
+from harness.pydantic_harness_adapter import located_transcript
 from harness.receipt_queue import SpendReceiptQueue
 from harness.spend import SpendLineage, model_response_receipts
-from harness.spine_client import SpineClient
+from harness.spine_client import SpendEventsRequest, SpineClient
 from harness.symphony_context import WorkerContext
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
@@ -52,7 +53,6 @@ class WorkResult(BaseModel):
     claims: list[str]
     evidence_refs: list[str]
     uncertainties: list[str]
-    memories: list[ExtractionCandidateDraft]
 
 
 class MetricObservation(BaseModel):
@@ -228,6 +228,7 @@ async def run(assignment_path: Path) -> None:
         prompt_id=assignment["prompt_id"],
     )
     captured = []
+    extraction_events = []
     worker_context = WorkerContext(
         assignment=assignment,
         output=output,
@@ -239,11 +240,23 @@ async def run(assignment_path: Path) -> None:
         return await worker_context.render(captured)
 
     def receipt():
-        return model_response_receipts(
+        work = model_response_receipts(
             [message for message in captured if isinstance(message, ModelResponse)],
             lineage=lineage,
             purpose="judge" if stage == "judge" else "building",
         )
+        if extraction_events:
+            return SpendEventsRequest(events=[*(work.events if work else []), *extraction_events])
+        return work
+
+    async def record_extraction(messages):
+        batch = model_response_receipts(
+            [message for message in messages if isinstance(message, ModelResponse)],
+            lineage=lineage,
+            purpose="extraction",
+        )
+        if batch is not None:
+            extraction_events.extend(batch.events)
 
     async def observe(_context, events):
         async for _event in events:
@@ -326,9 +339,7 @@ async def run(assignment_path: Path) -> None:
             "Commit when the task asks; otherwise the supervisor captures your exact patch. "
             "The original task's prohibitions govern every stratagem and retry. Evidence can "
             "be a tool observation; never create a file the task forbids. "
-            "You have no memory tools. "
-            "Return any durable lessons as atomic memories of at most 128 tokens each, "
-            "or an empty memories list when nothing was learned."
+            "You have no memory tools."
         )
     task = asyncio.current_task()
     asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, task.cancel)
@@ -371,9 +382,14 @@ async def run(assignment_path: Path) -> None:
             )
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
             artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
+            transcript, _ = located_transcript(captured)
+            extractor = HarnessAgent(settings, router=router)
+            draft = await extractor.extract_thread(
+                transcript, on_result=record_extraction, memory_size=settings.memory_max_tokens
+            )
             _write(
                 output / "memories.json",
-                json.dumps([memory.model_dump() for memory in work.memories]),
+                json.dumps([memory.model_dump() for memory in draft.candidates]),
             )
             value = TypedDistillate.model_validate_json(
                 json.dumps(

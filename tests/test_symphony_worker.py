@@ -10,6 +10,7 @@ import pytest
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness import symphony_worker
+from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent
 from harness.pydantic_harness_adapter import PydanticHarnessToolset
 from harness.spine_client import InjectPrepareResponse, MemoryAllocation, SpineTransportError
 from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_json
@@ -338,6 +339,22 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(
     assert "UTF-8 checksum" not in await judge.render([])
     assert spine.prepare_injection.call_count == (2 if response_lost else 3)
 
+    # FL-096: a fresh leaf must apply both parent choices before its first model call.
+    kept = "32345678-1234-5678-1234-567812345678"
+    write_json(tmp_path / "memory-selection.json", {"removed": [removed], "added": [kept]})
+    assignment["stage"] = "smoke"
+    spine.prepare_injection.side_effect = None
+    spine.prepare_injection.return_value = prepared
+    leaf = WorkerContext(
+        assignment=assignment, output=tmp_path, context=context, resolution=worker.resolution
+    )
+    await leaf.render([])
+    first, selected = [call.args[0] for call in spine.prepare_injection.call_args_list[-2:]]
+    assert first.mode == "gate" and not first.current_memory_ids
+    assert selected.mode == "autonomous"
+    assert list(map(str, selected.confirmed_memory_ids)) == [kept]
+    assert list(map(str, selected.excluded_memory_ids)) == [removed]
+
 
 @pytest.mark.asyncio
 async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monkeypatch):
@@ -428,8 +445,21 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     monkeypatch.setattr(symphony_worker, "SpineClient", lambda *_, **__: spine)
     monkeypatch.chdir(attempt)
 
+    lesson = ExtractionCandidateDraft(
+        label="Report location",
+        body="The result is recorded in README.md.",
+        kind="project_note",
+        keywords=["report", "location"],
+        source_message_ids=["m1"],
+    )
+    extract = AsyncMock(
+        return_value=ExtractionDraft(working_summary="", open_loops=[], candidates=[lesson])
+    )
+    monkeypatch.setattr(HarnessAgent, "extract_thread", extract)
     await symphony_worker.run(out / "assignment.json")
 
+    assert "README.md written" in extract.await_args.args[0]
+    assert json.loads((out / "memories.json").read_text()) == [lesson.model_dump()]
     result = json.loads((out / "result.json").read_text())
     assert result["artifacts"] == ["README.md", "README.md (line 1)"]
     assert result["evidence_refs"][2] == "/elsewhere/n.txt"

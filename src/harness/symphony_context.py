@@ -105,24 +105,38 @@ class WorkerContext:
             )
             current.update(selection.get("added", []))
             current.difference_update(selection.get("removed", []))
-            self.prepared = await self._palace_request(
-                self.context.spine.prepare_injection,
-                InjectPrepareRequest(
-                    thread_id=uuid5(NAMESPACE_URL, str(self.output)),
-                    agent_id=self.context.agent_id,
-                    machine_id=self.context.machine_id,
-                    principal_id=self.context.principal_id,
-                    project_key=self.context.project_key,
-                    location_path=workspace_location_path(location),
-                    current_location=str(location.cwd),
-                    prompt=self.assignment["brief"],
-                    model_context_tokens=self.resolution.context_tokens,
-                    mode="gate" if self.prepared is None else "autonomous",
-                    current_memory_ids=sorted(current),
-                    confirmed_memory_ids=selection.get("added", []),
-                    excluded_memory_ids=selection.get("removed", []),
-                ),
+            request = InjectPrepareRequest(
+                thread_id=uuid5(NAMESPACE_URL, str(self.output)),
+                agent_id=self.context.agent_id,
+                machine_id=self.context.machine_id,
+                principal_id=self.context.principal_id,
+                project_key=self.context.project_key,
+                location_path=workspace_location_path(location),
+                current_location=str(location.cwd),
+                prompt=self.assignment["brief"],
+                model_context_tokens=self.resolution.context_tokens,
+                mode="autonomous",
+                current_memory_ids=sorted(current),
+                confirmed_memory_ids=selection.get("added", []),
+                excluded_memory_ids=selection.get("removed", []),
             )
+            if self.prepared is None:
+                # A-030 opens an independent worker snapshot before it can apply reviewed IDs.
+                self.prepared = await self._palace_request(
+                    self.context.spine.prepare_injection,
+                    request.model_copy(
+                        update={
+                            "mode": "gate",
+                            "current_memory_ids": [],
+                            "confirmed_memory_ids": [],
+                            "excluded_memory_ids": [],
+                        }
+                    ),
+                )
+            if self.last_selection is not None or current or selection.get("removed"):
+                self.prepared = await self._palace_request(
+                    self.context.spine.prepare_injection, request
+                )
             if self.prepared.final_block is None:
                 committed = await self._palace_request(
                     self.context.spine.commit_injection,
