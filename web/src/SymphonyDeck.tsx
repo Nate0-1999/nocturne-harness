@@ -491,7 +491,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
   const [signed, setSigned] = useState(false)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
-  const [contextAttempt, setContextAttempt] = useState<string | null>(null)
+  const [contextAttempt, setContextAttempt] = useState<string | null>()
 
   function chooseSeat(next: SymphonyJudgeCharter['seat']) {
     const charter = stack.launch.judge_charters.find((candidate) => candidate.seat === next)
@@ -557,7 +557,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         {stack.attempts.map((attempt) => (
           <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
             <div><Button type="button" onClick={() => setContextAttempt(
-              contextAttempt === attempt.attempt_id ? null : attempt.attempt_id
+              contextAttempt === attempt.attempt_id ? undefined : attempt.attempt_id
             )}>{attempt.attempt_id}</Button><span>{attempt.state}</span></div>
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
@@ -572,7 +572,11 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
           </div>
         ))}
       </div>
-      {contextAttempt !== null && <WorkerContext
+      <Button type="button" aria-expanded={contextAttempt === null}
+        onClick={() => setContextAttempt(contextAttempt === null ? undefined : null)}>
+        Worker memories
+      </Button>
+      {contextAttempt !== undefined && <WorkerContext
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
       <SymphonyFeedback stack={stack} />

@@ -18,7 +18,7 @@ interface Worker {
   injection: null | { injected: Card[]; near_misses: Card[] }
 }
 
-export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; attemptId: string }) {
+export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; attemptId: string | null }) {
   const { events } = useRackPlugin()
   const [workers, setWorkers] = useState<Worker[]>([])
   const [status, setStatus] = useState('Waiting for worker context…')
@@ -28,7 +28,7 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
       .then((value) => {
         if (!active) return
         const data = value as unknown as { workers: Worker[] }
-        setWorkers(data.workers.filter((worker) => worker.attempt_id === attemptId))
+        setWorkers(data.workers.filter((worker) => attemptId === null || worker.attempt_id === attemptId))
         setStatus((current) => current === 'Waiting for worker context…'
           ? 'Memory changes apply at the next model request.' : current)
       }).catch((error: unknown) => { if (active) setStatus(failureMessage(error, 'Worker context could not be loaded. Wait for the next refresh or reload.')) })
@@ -46,12 +46,15 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
   }
 
   return <section aria-label="Agent context" className="symphony-card">
-    <h3>{attemptId} · context</h3>
+    <h3>{attemptId === null ? 'Memories by worker' : `${attemptId} · context`}</h3>
     <p role="status">{status}</p>
     {workers.map((worker) => <details key={worker.worker_id} open={worker.stage === 'completion'}>
       <summary>{worker.stage} · {worker.state} · {worker.agent_id}</summary>
       <ContextBars workerSnapshot={worker.observation} />
       <h4>Injected memories</h4>
+      {worker.injection === null ? <p>{worker.stage === 'judge'
+        ? 'This judge received no Palace memories.' : 'No injection recorded yet.'}</p>
+        : worker.injection.injected.length === 0 && <p>No memories were injected.</p>}
       {worker.injection?.injected.map((card) => <MemoryCard key={card.memory_id} memoryId={card.memory_id} label={card.label}
         body={card.body} score={card.score} pin={card.pin} features={card.features} tone="injected"
         actions={<Button action="remove" iconOnly className="memory-card__remove" type="button" aria-label={`Pop off ${card.label}`}
