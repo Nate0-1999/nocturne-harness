@@ -179,7 +179,8 @@ class FrontSession:
                 elif method == "session/prompt":
                     if self.cwd is None:
                         await self.text(
-                            "A worktree conversation is unavailable here. Use the project's own folder."
+                            "A worktree conversation is unavailable here. "
+                            "Use the project's own folder."
                         )
                         await self.send(id=rid, result={"stopReason": "refusal"})
                     elif self.turn is not None and not self.turn.done():
