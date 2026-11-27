@@ -1429,7 +1429,7 @@ def problem_error() -> SpineProblemError:
         (similar_response(), "looks similar"),
         (label_conflict(), "label already belongs"),
         (problem_error(), "try later"),
-        (SpineTransportError(), "memory service unavailable"),
+        (SpineTransportError(), "did not confirm the save"),
     ],
     ids=["similar", "label", "problem", "transport"],
 )
