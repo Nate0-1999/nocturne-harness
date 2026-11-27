@@ -7,13 +7,14 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "82ed4a739d4503b3f3b35459540a204ec976f35e"
+      "head": "7ea006b56f9bffb3130cc468e64bd0c7a07f0314"
     }
   ],
   "unmapped": {
     "harness/src/harness/__init__.py": "Paired 0.1.124 release metadata or its packaging assertion; no runtime permission logic.",
     "harness/src/harness/t3_front.py": "The new conversation-window grant removes terminal, filesystem and source-control permissions; its live walk is in report 352.",
-    "harness/tests/test_t3_front.py": "Regression on the grant sent by the window-pairing method; red on main.",
+    "harness/src/harness/t3_front_session.py": "Refuse Nocturne conversations in the private front server worktree directory before any run or journal lookup.",
+    "harness/tests/test_t3_front.py": "Regression coverage for pairing, worktree session admission and the launcher explanation.",
     "harness/verification/m8tc/FL-009.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-069.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-170.png": "M8TC verification record; no runtime behavior.",
@@ -25,7 +26,19 @@
     "harness/verification/m8tc/FL-193.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-194.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/SHA256SUMS": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/ledger-report.json": "M8TC verification record; no runtime behavior."
+    "harness/verification/m8tc/ledger-report.json": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-166.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-169.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-172.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-174.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-162.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-164.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-167.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-182.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-200.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-207.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-208.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-211.png": "M8TC verification record; no runtime behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -37,6 +50,42 @@
       "screenshot": "FL-069.png",
       "flag": "",
       "observed": "The Nocturne agent read the fixture by its exact path. Stage recorded completed skill loading, bash and browser navigation on the subsequent turn. T3's direct tools were independently denied. Return 2 confirmed that the two-scope page could neither open a shell, observe the operator terminal nor read either disposable file directly."
+    },
+    "FL-166": {
+      "label": "A prompt when the app's memory use passes a threshold of the local system's memory, memory-leak guards, and no proceeding without write access at startup.",
+      "walk": "Start the daemon in a folder with no write access; it refuses to proceed, and doctor shows the app's memory use against its threshold.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-166.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-166 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-169": {
+      "label": "Client and cloud versions stay sync-locked or backward compatible, following industry practice, so version differences feel seamless.",
+      "walk": "Start a client whose version differs from the cloud Palace's; it either keeps working or refuses with a plain version message.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-169.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-169 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-172": {
+      "label": "Constitution: Palace export and portability (gate-day).",
+      "walk": "Run nocturne export to produce one file containing every principal-scoped memory and its lineage; import it into another Palace and compare the archive (A-071 CLI front door).",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-172.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-172 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-174": {
+      "label": "Constitution: a doctor readout naming which identity the running daemon is (gate verification-identity work).",
+      "walk": "Run doctor; the readout names the daemon's identity and its home.",
+      "protected": true,
+      "verdict": "FAIL",
+      "screenshot": "FL-174.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-174 journey was not run. The Stage screenshot shows the ordinary project control only."
     },
     "FL-187": {
       "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
@@ -83,6 +132,33 @@
       "flag": "F086",
       "observed": "Not proven by M8TC. A second fresh installation and headless profile reopened the same local thread and settled answers. The original installation was retained and the services were started on isolated ports; literal code deletion followed by nocturne up was not performed."
     },
+    "FL-162": {
+      "label": "Easy onboarding from a single splash repo, needing only two secrets: a GCP credential and an OpenRouter key.",
+      "walk": "On a fresh machine, follow the splash repo's install steps; you are asked for a GCP credential and an OpenRouter key and nothing else before the app comes up.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-162.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-162 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-164": {
+      "label": "Local mode with no internet, cloud mode, and a way to mirror our cloud setup into your own provider.",
+      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Start the Harness with the network off and send one message; the reply arrives and the memory lands in the local palace.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-164.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-164 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-167": {
+      "label": "One obvious start command with an update prompt; update, deploy, launch and doctor as one or two commands.",
+      "walk": "M3WF fixture (harness/verification/m3wf/README.md): Run the one start command when a newer release exists; it offers the update, then launches.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-167.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-167 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
     "FL-170": {
       "label": "A fresh reinstall that reconnects to existing files and auto-finds the cloud palace.",
       "walk": "Reinstall on the same machine and run the start command; it finds the existing cloud Palace and the old threads without being told where they are.",
@@ -91,6 +167,15 @@
       "screenshot": "FL-170.png",
       "flag": "F086",
       "observed": "Not proven by M8TC. Reinstallation restored the local journal. Cloud Palace discovery requires a cloud target outside this local-only charge."
+    },
+    "FL-182": {
+      "label": "Agent workflows that are programmable, so making agents do work is extremely easy.",
+      "walk": "Save an agent workflow and run it twice; both runs do the same work without a person steering.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-182.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-182 journey was not run. The Stage screenshot shows the ordinary project control only."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
@@ -118,6 +203,42 @@
       "screenshot": "FL-193.png",
       "flag": "F086",
       "observed": "Not proven by M8TC. The installed pinned toolset served a real skill, bash and browser call. Updating the upstream dependency is outside the permission-only charge."
+    },
+    "FL-200": {
+      "label": "Spin up new palaces easily: one command creates a fresh palace with its own database, schema and token in the owner's project, reachable by name; the app can point at any palace the owner has; a test palace is where verification agents train and is dropped whole afterwards.",
+      "walk": "Run the new-palace command with a name; a fresh empty palace answers by that name; point the app at it, save a memory, then drop it whole; the owner's main palace is untouched throughout.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-200.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-200 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-207": {
+      "label": "A workflow is a folder — the bundle: its recipe, its skills, its tools and the names of its keys — that checks, packs to one archive with a digest, and saves as a job carrying that digest.",
+      "walk": "`nocturne workflow new <folder>` makes the folder. Add a SKILL.md folder under .agents/skills, an executable under tools, a key name in keys.example and a cron line in workflow.json. `nocturne workflow check <folder>` refuses until the vault holds the named key, then lists the tool with its --help line, the key name and the digest. `nocturne workflow pack <folder>` from two different folders writes the same .tar bytes, whose sha256 is the digest. `nocturne jobs save <folder>` records the digest on the job; the Jobs module's row reads 'bundle <digest head>' and its detail shows the digest, the tools and the key names (names only). The run's tool inventory lists the bundle's skill.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-207.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-207 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-208": {
+      "label": "The vault: one owner-only env file per workflow holds the keys its tools need; a value is never printed, logged, journaled or packed, and no agent can read it.",
+      "walk": "Pipe a value into `nocturne vault set <workflow> <NAME>`: it lands in vault/<workflow>.env (mode 600 in a 700 folder) and the command prints the name and the path only. Run the saved bundle, then search every transcript, journal, log, the packed archive, the Palace database and the captures for the value: none. Save a job that tells its agent to read the vault file with the read tool and with cat: both are refused and no card offers to open it.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-208.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-208 journey was not run. The Stage screenshot shows the ordinary project control only."
+    },
+    "FL-211": {
+      "label": "SSH targets run the same product version, each with its own local Palace; initialization starts the localhost service and runs doctor.",
+      "walk": "Add stage and prod by SSH address. Initialize both hosts at the sender's version, inspect healthy doctor and verification identities, and inspect nocturne targets and the Jobs tier view. A version mismatch names the older side and never downgrades.",
+      "protected": false,
+      "verdict": "FAIL",
+      "screenshot": "FL-211.png",
+      "flag": "F086",
+      "observed": "Not proven by M8TC. Changing the shared CLI brought this row into range. Only t3 open was changed and walked. The required FL-211 journey was not run. The Stage screenshot shows the ordinary project control only."
     }
   },
   "not_run": {
@@ -281,18 +402,11 @@
     "FL-197": "outside diff",
     "FL-160": "outside diff",
     "FL-161": "outside diff",
-    "FL-162": "outside diff",
     "FL-163": "outside diff",
-    "FL-164": "outside diff",
     "FL-165": "outside diff",
-    "FL-166": "outside diff",
-    "FL-167": "outside diff",
     "FL-168": "outside diff",
-    "FL-169": "outside diff",
     "FL-171": "outside diff",
-    "FL-172": "outside diff",
     "FL-173": "outside diff",
-    "FL-174": "outside diff",
     "FL-175": "outside diff",
     "FL-176": "horizon",
     "FL-177": "horizon",
@@ -300,7 +414,6 @@
     "FL-179": "outside diff",
     "FL-180": "outside diff",
     "FL-181": "outside diff",
-    "FL-182": "outside diff",
     "FL-183": "outside diff",
     "FL-184": "outside diff",
     "FL-185": "outside diff",
@@ -310,18 +423,14 @@
     "FL-196": "outside diff",
     "FL-198": "outside diff",
     "FL-199": "outside diff",
-    "FL-200": "outside diff",
     "FL-201": "outside diff",
     "FL-202": "outside diff",
     "FL-203": "outside diff",
     "FL-204": "horizon",
     "FL-205": "outside diff",
     "FL-206": "outside diff",
-    "FL-207": "outside diff",
-    "FL-208": "outside diff",
     "FL-209": "outside diff",
     "FL-210": "outside diff",
-    "FL-211": "outside diff",
     "FL-212": "outside diff",
     "FL-213": "outside diff",
     "FL-214": "outside diff",
