@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "0ca9cc9ee5b84dd8ba5116ca618ffab7ce144990"
+      "head": "82ed4a739d4503b3f3b35459540a204ec976f35e"
     }
   ],
   "unmapped": {
@@ -36,7 +36,7 @@
       "verdict": "PASS",
       "screenshot": "FL-069.png",
       "flag": "",
-      "observed": "The Nocturne agent read the fixture by its exact path. Stage recorded completed skill loading, bash and browser navigation on the subsequent turn. T3's direct tools were independently denied."
+      "observed": "The Nocturne agent read the fixture by its exact path. Stage recorded completed skill loading, bash and browser navigation on the subsequent turn. T3's direct tools were independently denied. Return 2 confirmed that the two-scope page could neither open a shell, observe the operator terminal nor read either disposable file directly."
     },
     "FL-187": {
       "label": "Two repos, the spine (memory) and the Harness, not a mono repo.",
