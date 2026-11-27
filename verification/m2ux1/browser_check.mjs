@@ -50,6 +50,7 @@ try {
     await resetRack(page)
 
     if (width === 390) {
+      await checkResultReview(browser)
       await headerFrame(page).getByRole('button', { name: 'Threads' })
         .evaluate((element) => element.click())
       evidence.states.push(await assertCleanState(page, width, 'threads-drawer'))
@@ -88,6 +89,69 @@ try {
 } finally {
   await context.close()
   await browser.close()
+}
+
+// M8SB: opening review must expose the decision above the bottom strip, without a swipe.
+async function checkResultReview(browser) {
+  const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true })
+  const id = '01M8SBAAAAAAAAAAAAAAAAAAAA'
+  const completed = {
+    event_kind: 'symphony_state', state: 'completed', execution_kind: 'supervised', symphony_id: id,
+    launch: { objective: 'Review the release notes', judge_charters: [], authority: { spend_wall_usd: '1' } },
+    attempts: [{ attempt_id: 'worker', state: 'completed', cancellation: 'none',
+      memories_admitted: false, follow_ups: [], partial_evidence: [] }],
+    timeline: [],
+  }
+  await phone.routeWebSocket('**/ws', (socket) => {
+    socket.connectToServer().onMessage((raw) => {
+      const event = JSON.parse(raw)
+      if (event.type === 'thread.snapshot' && Array.isArray(event.payload.messages)) {
+        event.payload.messages.push({
+          role: 'assistant', message_id: id, run_id: id, content: '', thinking: '', partial: false,
+          events: [completed],
+        })
+      }
+      socket.send(JSON.stringify(event))
+    })
+  })
+  let message = ''
+  await phone.route('**/v1/symphonies/*/result', route => route.fulfill({ json: {
+    review: { project: '/project', branch: 'main', head: '1'.repeat(40), commit: '2'.repeat(40) },
+    files: Array.from({ length: 12 }, (_, i) => `note-${i}.md | 1 +`).join('\n'), message,
+  } }))
+  try {
+    await phone.goto(baseUrl)
+    await waitForRack(phone)
+    await phone.getByRole('button', { name: 'Deck', exact: true }).first().tap()
+    const result = frame(phone, 'conversation').getByRole('region', { name: 'Project result' })
+    const review = result.getByRole('button', { name: 'Review result for project' })
+    await review.tap()
+    await fullyInView(result.getByText('Bring the judged result into', { exact: false }))
+    await fullyInView(result.getByRole('button', { name: 'Yes, bring in result' }))
+    await fullyInView(result.getByRole('button', { name: 'No, keep on branch' }))
+    message = 'The project has uncommitted changes. Commit your work and review again.'
+    await review.tap()
+    await fullyInView(result.getByRole('status').filter({ hasText: message }))
+  } finally {
+    await phone.close()
+  }
+}
+
+async function fullyInView(item) {
+  await item.evaluate(el => new Promise((resolve, reject) => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.intersectionRatio >= 0.99) {
+        clearTimeout(timeout)
+        observer.disconnect()
+        resolve()
+      }
+    }, { threshold: 0.99 })
+    const timeout = setTimeout(() => {
+      observer.disconnect()
+      reject(new Error(`Result review clipped: ${el.textContent}`))
+    }, 3000)
+    observer.observe(el)
+  }))
 }
 
 async function waitForRack(targetPage) {
