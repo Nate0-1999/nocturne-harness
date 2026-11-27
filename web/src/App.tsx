@@ -611,12 +611,14 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       !STAGE_MODULE_IDS.includes(selection.id as StageModuleId)
     ) return
     const timeout = globalThis.setTimeout(() => {
+      if (selection.id === 'palace_queue' && !sheetMode) viewportRef.current?.scrollTo(0, 0)
       setLayout((current) => {
         const targetLayer = current.layers.find((candidate) => (
           candidate.modules.some((module) => module.module_id === selection.id)
         ))
-        if (targetLayer === undefined) return current
-        const selected = selectStageLayer(current, targetLayer.layer_id)
+        if (targetLayer === undefined && selection.id !== 'palace_queue') return current
+        const selected = targetLayer === undefined ? restoreStageModule(current, 'palace_queue')
+          : selectStageLayer(current, targetLayer.layer_id)
         const module = activeStageLayer(selected).modules.find(
           (candidate) => candidate.module_id === selection.id,
         )
@@ -631,7 +633,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
       })
     }, 0)
     return () => globalThis.clearTimeout(timeout)
-  }, [selection, viewportSize.height, viewportSize.width])
+  }, [selection, sheetMode, viewportSize.height, viewportSize.width])
 
   useEffect(() => {
     try {
@@ -3332,6 +3334,7 @@ function markdownFile(markdown: string): File {
 
 function PalaceQueueModule() {
   const { events } = useRackPlugin()
+  const selected = useRackSelection()
   const seedInputRef = useRef<HTMLInputElement>(null)
   const [cards, setCards] = useState<ThreadEndQueueCard[]>([])
   const [agentFiles, setAgentFiles] = useState<AgentFileOffer[]>([])
@@ -3341,11 +3344,16 @@ function PalaceQueueModule() {
   const [busy, setBusy] = useState(false)
   const [dragging, setDragging] = useState(false)
 
+  const latestLoad = useRef(0)
+  const [queueLoaded, setQueueLoaded] = useState(false)
   const load = useCallback(() => {
+    const request = ++latestLoad.current
     return events.dispatch({ type: 'queue.load' }).then((value) => {
+      if (request !== latestLoad.current) return
       setCards(queueCardsFrom(value).filter((card) =>
         card.birthplace === 'seed' || card.birthplace === 'symphony' || card.birthplace === 'curator'
       ))
+      setQueueLoaded(true)
     })
   }, [events])
 
@@ -3362,6 +3370,28 @@ function PalaceQueueModule() {
       setStatusText('Memory Ingest could not load its pending work or agent-file offers.')
     })
   }, [load, loadAgentFiles])
+
+  useEffect(() => {
+    // Workers can queue lessons on a thread this window is not watching.
+    let active = true
+    const refresh = () => void load().catch(() => {}).finally(() => {
+      if (active) timer = globalThis.setTimeout(refresh, 5000)
+    })
+    let timer = globalThis.setTimeout(refresh, 5000)
+    return () => { active = false; globalThis.clearTimeout(timer) }
+  }, [load])
+
+  const selectedBatch = selected?.kind === 'module' && selected.id === 'palace_queue'
+    ? selected.batch_uid ?? cards.find((card) => card.birthplace === 'symphony')?.batch_uid : null
+  const batchRef = useRef<HTMLElement>(null)
+  const batchAvailable = cards.some((card) => card.batch_uid && card.batch_uid === selectedBatch)
+  useEffect(() => {
+    const batch = batchRef.current
+    const panel = batch?.closest('.palace-queue-module')
+    if (batchAvailable && batch && panel) {
+      panel.scrollTop += batch.getBoundingClientRect().top - panel.getBoundingClientRect().top
+    }
+  }, [selectedBatch, batchAvailable])
 
   const curatorCards = useMemo(
     () => cards.filter((card) => card.birthplace === 'curator'),
@@ -3488,10 +3518,10 @@ function PalaceQueueModule() {
         <section className="curator-state" aria-labelledby="curator-proposals-title" data-testid="curator-proposals">
           <header>
             <div>
-              <span>Curator proposals</span>
+              <span>Memory proposals</span>
               <h3 id="curator-proposals-title">Corpus repairs need your consent</h3>
             </div>
-            <strong>{curatorCards.length} waiting</strong>
+            <strong>{queueLoaded ? cards.length : '—'} waiting</strong>
           </header>
           {curatorCards.length === 0 ? (
             <small title="Curators never change memories without this queue.">Curator passes add proposed repairs here.</small>
@@ -3571,7 +3601,8 @@ function PalaceQueueModule() {
         ) : (
           <div className="seed-batch-list">
             {batches.map(([batchUid, batchCards]) => (
-              <article className="seed-batch" key={batchUid} data-batch-uid={batchUid}>
+              <article className="seed-batch" key={batchUid} data-batch-uid={batchUid}
+                ref={batchUid === selectedBatch ? batchRef : undefined}>
                 <header>
                   <div>
                     <span>
