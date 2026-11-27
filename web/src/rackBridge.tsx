@@ -390,6 +390,9 @@ function createRemoteApi(
   let snapshot = connection.snapshot
   let selection = connection.selection
   let nextRequest = 0
+  // A page that has just reloaded listens on the channel of the page before it. Its request ids carry
+  // a mark of their own, so a late answer to that earlier page finds nobody waiting for it here.
+  const page = Array.from(crypto.getRandomValues(new Uint32Array(2)), (part) => part.toString(36)).join('')
   const stateListeners = new Set<() => void>()
   const envelopeListeners = new Set<(event: RackEnvelopeEvent) => void>()
   const resizeListeners = new Set<(event: RackResizeEvent) => void>()
@@ -402,7 +405,7 @@ function createRemoteApi(
   const request = <Result,>(
     message: RemoteRequestPayload,
   ): Promise<Result> => {
-    const requestId = `${connection.manifest.id}:${++nextRequest}`
+    const requestId = `${connection.manifest.id}:${page}:${++nextRequest}`
     return new Promise<Result>((resolve, reject) => {
       pending.set(requestId, {
         resolve: (value) => resolve(value as Result),
