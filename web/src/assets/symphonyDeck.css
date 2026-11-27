@@ -10,6 +10,12 @@
 .symphony-deck .deck-stack { --kit-fill: var(--surface); padding: 1rem; box-shadow: 0 16px 50px rgb(0 0 0 / 24%); }
 .deck-stack[data-state="running"] { --kit-edge: var(--accent); }
 .deck-stack[data-state="blocked"] { --kit-edge: var(--accent-secondary); }
+.symphony-result, .symphony-result__answer { display: flex; flex-wrap: wrap; gap: .5rem; }
+.symphony-result { margin-block: .75rem; max-inline-size: 22rem; }
+.symphony-result__answer { width: 100%; }
+.symphony-result p, .symphony-result pre { width: 100%; overflow-wrap: anywhere; }
+.symphony-result pre { white-space: pre-wrap; margin: 0; }
+.symphony-result p:empty { display: none; }
 .deck-stack code, .deck-lineage dd { color: var(--muted); overflow-wrap: anywhere; font-size: var(--text-md); }
 .deck-lineage { display: grid; gap: .4rem; margin: .8rem 0; }
 .deck-lineage div { display: grid; grid-template-columns: 7rem 1fr; gap: .6rem; }

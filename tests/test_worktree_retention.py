@@ -42,12 +42,17 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
             attempt, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", symphony_id
         )
         commits[symphony_id] = _git(attempt, "rev-parse", "HEAD")
-        (attempt.parent / "judge-motivation").mkdir()
+        judge = attempt.parent / "judge-motivation"
+        judge.mkdir()
+        (judge / "judge-verdict.json").write_text('{"outcome": "pass"}')
         assignment = (
             home / "symphonies" / symphony_id / "step-1-round-1" / "attempt-1" / "completion"
         )
         assignment.mkdir(parents=True)
         (assignment / "assignment.json").write_text(json.dumps({"project_key": str(root)}))
+        judge_evidence = assignment.parent.parent / judge.name
+        judge_evidence.mkdir()
+        (judge_evidence / "assignment.json").write_text(json.dumps({"project_key": str(root)}))
         products[symphony_id] = _git(
             root,
             "-c",
@@ -65,6 +70,15 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
             json.dumps({"product": {"kind": "commit", "commit": products[symphony_id]}})
         )
 
+    older = root / ".nocturne-worktrees/older/step-1-round-1/attempt-1"
+    (older / ".gitignore").write_text(".venv/\n")
+    _git(older, "add", ".gitignore")
+    _git(older, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "Ignore environment")
+    commits["older"] = _git(older, "rev-parse", "HEAD")
+    (older / ".venv").mkdir()
+    (older / ".venv/big.bin").write_bytes(b"disposable environment")
+    (older / "scratch.txt").write_text("loose worker file")
+    assert _git(older, "check-ignore", ".venv/big.bin") == ".venv/big.bin"
     removed = remove_kept_worktrees(home, ["older", "newer"], keep=1)
 
     worktrees = root / ".nocturne-worktrees"
@@ -81,3 +95,34 @@ def test_completed_symphony_worktrees_leave_and_their_commits_stay_reachable(tmp
     assert f"refs/heads/{branches['running']}" in remaining
     assert (home / "symphonies" / "older" / "step-1-round-1" / "attempt-1" / "completion").exists()
     assert remove_kept_worktrees(home, ["older", "newer"], keep=0) == [worktrees / "newer"]
+
+    # Only finished runs appear in the release list. The live neighbour is still registered.
+    live = worktrees / "running" / "step-1-round-1" / "attempt-1"
+    assert str(live) in _git(root, "worktree", "list")
+    # The real worker stages the result and records commit-tree without moving its branch.
+    from harness.symphony_worker import _capture_product
+
+    (live / "work.txt").write_text("judged final text")
+    saved = _capture_product(live, commits["running"], "Judged result")
+    receipt = home / "symphonies/running/step-1-round-1/attempt-1/completion/result.json"
+    receipt.write_text(json.dumps({"product": {"kind": "commit", "commit": saved}}))
+    (worktrees / "owner.txt").write_text("keep me")
+    assert remove_kept_worktrees(home, ["running"], keep=0) == [worktrees / "running"]
+    assert (worktrees / "owner.txt").read_text() == "keep me"
+    assert _git(root, "show", f"{saved}:work.txt") == "judged final text"
+    (worktrees / "owner.txt").unlink()
+    empty_run = worktrees / "older"
+    empty_run.mkdir()
+    owner = empty_run / "owner.txt"
+    owner.write_text("keep this too")
+    assert remove_kept_worktrees(home, ["older"], keep=0) == []
+    assert owner.read_text() == "keep this too"
+    owner.unlink()
+    assert remove_kept_worktrees(home, ["older"], keep=0) == [empty_run]
+    assert not worktrees.exists()
+
+    elsewhere = tmp_path / "elsewhere"
+    (elsewhere / "older").mkdir(parents=True)
+    worktrees.symlink_to(elsewhere, target_is_directory=True)
+    assert remove_kept_worktrees(home, ["older"], keep=0) == []
+    assert worktrees.is_symlink() and (elsewhere / "older").is_dir()

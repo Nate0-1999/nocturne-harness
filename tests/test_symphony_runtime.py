@@ -134,3 +134,65 @@ def test_passing_alternatives_graft_with_the_most_chosen_lines(tmp_path: Path) -
             ["git", "-C", str(graft), "rev-parse", "HEAD"], text=True
         ).strip()
     )
+
+
+def test_only_the_reviewed_checkout_can_receive_the_judged_commit(tmp_path):
+    """FL-085 / F154: only human consent to the reviewed fast-forward can change project files."""
+    from types import SimpleNamespace
+
+    from harness.symphony_result import ResultReview, project_result
+
+    root = (tmp_path / "project").resolve()
+    _repo(root, ".venv/\nresult.txt\n")
+    run = "finished"
+    attempt = root / ".nocturne-worktrees" / run / "step" / "winner"
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", root, *args], text=True).strip()
+
+    git("worktree", "add", "--detach", str(attempt))
+    (attempt / "result.txt").write_text("judged")
+    subprocess.run(["git", "-C", attempt, "add", "-f", "result.txt"], check=True)
+    commit = _commit(attempt, "Judged result")
+    git("worktree", "remove", str(attempt))
+    branch = _publish_result(root, run, commit)
+    stack = SimpleNamespace(
+        state="completed",
+        symphony_id=run,
+        result=f" Result commit: {commit}",
+        attempts=[SimpleNamespace(partial_evidence=[str(attempt)])],
+    )
+    before = git("rev-parse", "HEAD")
+    preview = project_result(stack)
+    assert "result.txt" in preview["files"] and not preview["message"]
+    assert git("rev-parse", "HEAD") == before
+    approved = ResultReview(**preview["review"])
+
+    (root / "draft").write_text("owner")
+    assert "commit" in project_result(stack, approved)["message"].lower()
+    assert (root / "draft").read_text() == "owner"
+    (root / "draft").unlink()
+    (root / "result.txt").write_text("ignored owner work")
+    assert "local files" in project_result(stack, approved)["message"]
+    assert (root / "result.txt").read_text() == "ignored owner work"
+    (root / "result.txt").unlink()
+
+    git("switch", "--detach", before)
+    detached = project_result(stack)
+    assert not detached["review"]["branch"] and "choose" in detached["message"].lower()
+    git("switch", approved.branch)
+    git("bisect", "start")
+    assert "finish" in project_result(stack, approved)["message"].lower()
+    git("bisect", "reset")
+    git("switch", "-c", "other")
+    assert "changed" in project_result(stack, approved)["message"]
+    (root / "different").write_text("new owner commit")
+    other = _commit(root, "Owner advanced")
+    message = project_result(stack)["message"]
+    assert "changed" in message and branch in message and "review" in message.lower()
+    assert git("rev-parse", "HEAD") == other
+    git("switch", approved.branch)
+    assert "Brought" in project_result(stack, approved)["message"]
+    assert git("rev-parse", "HEAD") == git("rev-parse", branch) == commit
+    assert (root / "result.txt").read_text() == "judged"
+    assert "already" in project_result(stack)["message"]

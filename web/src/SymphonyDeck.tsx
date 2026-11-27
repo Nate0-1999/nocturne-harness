@@ -10,7 +10,7 @@ import type {
   SymphonyLaunch,
   UserTranscriptMessage,
 } from './protocol'
-import { useRackPlugin, useRackSnapshot } from './rack'
+import { useRackPlugin, useRackSnapshot, type SymphonyResultPreview } from './rack'
 import { failureMessage, RequestFailure } from './requestFailure'
 import './assets/symphonyDeck.css'
 import { WorkerContext } from './WorkerContext'
@@ -476,6 +476,59 @@ function ProposedResponseCardView({
   )
 }
 
+function SymphonyResult({ id }: { id: string }) {
+  const { events } = useRackPlugin()
+  const [preview, setPreview] = useState<SymphonyResultPreview | null>(null)
+  const [status, setStatus] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const answer = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const target = answer.current
+    if (busy || !target) return
+    const observer = new IntersectionObserver(([entry]) => {
+      observer.disconnect()
+      if (entry.intersectionRatio < 0.9999) target.scrollIntoView({ block: 'center', inline: 'nearest' })
+    })
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [busy])
+
+  async function review(approved?: SymphonyResultPreview['review']) {
+    setBusy(true)
+    try {
+      const result = await events.dispatch({ type: 'symphony.result', symphony_id: id, approved })
+      setPreview(result)
+      setStatus(result.message)
+    } catch {
+      setPreview(null)
+      setStatus('Could not verify the result. Check the original project and its Symphony branch, then review again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return <section aria-label="Project result" className="symphony-result">
+    <Button type="button" disabled={busy} onClick={() => void review()}>Review result for project</Button>
+    {preview && <>
+      <p>Result <code>symphony/{id}</code></p>
+      <p>Project <code>{preview.review.project}</code> · {preview.review.branch || 'No branch selected'}</p>
+      <pre>{preview.files || 'No file changes.'}</pre>
+    </>}
+    {(busy || preview || status) && <div ref={answer} className="symphony-result__answer">
+      {preview && !preview.message && <>
+        <p>Bring the judged result into {preview.review.branch}? This advances it from <code>{preview.review.head.slice(0, 12)}</code> to <code>{preview.review.commit.slice(0, 12)}</code>.</p>
+        <Button type="button" disabled={busy} onClick={() => void review(preview.review)}>Yes, bring in result</Button>
+        <Button type="button" disabled={busy} onClick={() => {
+          setPreview(null)
+          setStatus('Kept on the Symphony branch. The project was left as it was.')
+        }}>No, keep on branch</Button>
+      </>}
+      <p role="status">{busy ? 'Checking the project…' : status}</p>
+    </div>}
+  </section>
+}
+
 function DeckStackCard({ stack }: { stack: DeckStack }) {
   const { events, selection } = useRackPlugin()
   const batches = new Map<string, string>()
@@ -543,6 +596,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         <div><span>{stack.state}</span><h2>{stack.launch.objective}</h2></div>
         <code>{stack.symphony_id}</code>
       </header>
+      {stack.state === 'completed' && <SymphonyResult key={stack.symphony_id} id={stack.symphony_id} />}
       {stack.steering.length > 0 && (
         <dl className="deck-lineage" aria-label="Steering">
           {stack.steering.map((line, index) => <div key={index}><dt>Steering</dt><dd>{line}</dd></div>)}

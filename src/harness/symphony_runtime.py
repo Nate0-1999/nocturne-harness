@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import hashlib
 import json
 import os
@@ -36,6 +37,7 @@ from harness.rounds import AcceptedWork, GraftReceipt, RoundAttemptPlan, Symphon
 from harness.spine_client import JudgedContext, MemoryKind, MemoryStatus, PatchMemoryRequest
 from harness.supervisor import WorkerSupervisor
 from harness.symphony_experience import SymphonyAttemptRecord
+from harness.symphony_result import worktree_project
 
 
 def _git(root: Path, *args: str) -> str:
@@ -776,6 +778,16 @@ class SymphonyExecution:
         _json(self.home / "symphonies" / symphony_id / "followups.json", state["followups"])
 
 
+def _remove_empty(path: Path) -> bool:
+    try:
+        path.rmdir()
+    except OSError as exc:
+        if exc.errno not in (errno.ENOENT, errno.ENOTEMPTY, errno.EEXIST, errno.ENOTDIR):
+            raise
+        return False
+    return True
+
+
 def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[Path]:
     """M3HW (M3W5B-13): seven small Symphonies left 17 GB of worktrees, each with its own
     environment. A completed Symphony's result is already on the branch, so its worktrees go,
@@ -787,11 +799,23 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
         assignments = sorted(run_home.rglob("assignment.json"))
         if not assignments:
             continue
-        root = Path(json.loads(assignments[0].read_text())["project_key"])
+        assignment = json.loads(assignments[0].read_text())
+        root = worktree_project(assignment.get("workspace_root", ""), symphony_id)
+        if root is None:
+            root = Path(assignment["project_key"])
         target = root / ".nocturne-worktrees" / symphony_id
-        if target.is_symlink() or not target.is_dir():
+        if not root.is_absolute() or target.parent.is_symlink() or target.is_symlink():
+            continue
+        if not target.is_dir():
+            _remove_empty(target.parent)
             continue
         for marker in sorted(target.glob("*/*/.git")):
+            if (
+                marker.is_symlink()
+                or marker.parent.is_symlink()
+                or marker.parent.parent.is_symlink()
+            ):
+                continue
             name = marker.parent.relative_to(target).as_posix()
             head = subprocess.run(
                 ["git", "-C", str(marker.parent), "rev-parse", "HEAD"],
@@ -811,7 +835,17 @@ def remove_kept_worktrees(home: Path, completed: list[str], keep: int) -> list[P
                     root, "for-each-ref", "--format=%(refname)", namespace
                 ).splitlines():
                     _git(root, "update-ref", "-d", branch)
-        shutil.rmtree(target)
+                shutil.rmtree(marker.parent)
         subprocess.run(["git", "-C", str(root), "worktree", "prune"], capture_output=True)
-        removed.append(target)
+        for step in target.iterdir():
+            if step.is_symlink() or not step.is_dir():
+                continue
+            for judge in step.glob("judge-*"):
+                assignment = run_home / judge.relative_to(target) / "assignment.json"
+                if not judge.is_symlink() and judge.is_dir() and assignment.is_file():
+                    shutil.rmtree(judge)
+            _remove_empty(step)
+        if _remove_empty(target):
+            removed.append(target)
+            _remove_empty(target.parent)
     return removed
