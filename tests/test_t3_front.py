@@ -62,7 +62,9 @@ def test_t3_open_explains_the_worktree_limit(monkeypatch):
     output = io.StringIO()
     assert cli.main(["t3", "open"], stdout=output) == 0
     assert "Use the project's current checkout" in output.getvalue()
+    assert "Direct terminal, file and Git controls are blocked" in output.getvalue()
     assert "can create a branch and folder before Nocturne refuses the chat" in output.getvalue()
+    assert "Add environment pairs a separate server" in output.getvalue()
 
 
 @pytest.mark.asyncio
