@@ -263,7 +263,9 @@ def main(
             except httpx.HTTPError:
                 raise OnboardingError("The local daemon is unavailable. Run nocturne up.") from None
             print(
-                "T3’s terminal, Git, file controls and Add environment are your own actions.",
+                "Use the project's current checkout to chat. Direct terminal, file and Git "
+                "controls are blocked. New worktree can create a branch and folder before "
+                "Nocturne refuses the chat. Add environment pairs a separate server.",
                 file=stdout,
             )
         elif args.command == "t3":

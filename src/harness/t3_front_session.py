@@ -88,7 +88,18 @@ class FrontSession:
                     if start + 256 < len(sessions):
                         result["nextCursor"] = str(start + 256)
                 elif method in {"session/new", "session/load"}:
-                    self.cwd = Path(params["cwd"]).resolve(strict=True)
+                    cwd = Path(params["cwd"]).resolve(strict=True)
+                    if cwd.is_relative_to((self.front.root / "state/worktrees").resolve()):
+                        await self.send(
+                            id=rid,
+                            error={
+                                "code": -32602,
+                                "message": "A worktree conversation is unavailable here. "
+                                "Use the project's own folder.",
+                            },
+                        )
+                        continue
+                    self.cwd = cwd
                     self.workspace_root = str(self.cwd)
                     if method == "session/new":
                         if self.native:

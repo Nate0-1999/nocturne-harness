@@ -1,3 +1,6 @@
+import asyncio
+import io
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -6,6 +9,46 @@ import pytest
 
 from harness.t3_front_session import FrontSession
 from harness.transcript import TranscriptJournal
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method", ["session/new", "session/load"])
+async def test_front_refuses_its_own_worktree_before_opening_a_conversation(tmp_path, method):
+    """P2.5 / SD-128: a front worktree must never become a second journal project."""
+    from harness.t3_front import FrontServer
+
+    front = FrontServer(tmp_path, None, None, tmp_path)
+    folder = front.root / "state/worktrees/fixture/checkout"
+    folder.mkdir(parents=True)
+    alias = tmp_path / "linked-checkout"
+    alias.symlink_to(folder, target_is_directory=True)
+    reader = asyncio.StreamReader()
+    params = {"cwd": str(alias), "sessionId": "prior-thread"}
+    reader.feed_data(json.dumps({"id": 1, "method": method, "params": params}).encode() + b"\n")
+    reader.feed_eof()
+    session = FrontSession(front, None, reader, None)
+    session.send = AsyncMock()
+    await session.serve()
+    assert session.send.await_args.kwargs["error"]["message"] == (
+        "A worktree conversation is unavailable here. Use the project's own folder."
+    )
+    assert session.session is None
+
+
+def test_t3_open_explains_the_worktree_limit(monkeypatch):
+    """P2.5 / SD-128: opening the window must tell the person which checkout is safe to use."""
+    from harness import cli
+
+    monkeypatch.setattr(cli, "load_config", lambda: SimpleNamespace(daemon_port=1, machine_id="x"))
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        lambda self, url, **kw: httpx.Response(200, request=httpx.Request("POST", url)),
+    )
+    output = io.StringIO()
+    assert cli.main(["t3", "open"], stdout=output) == 0
+    assert "Use the project's current checkout" in output.getvalue()
+    assert "can create a branch and folder before Nocturne refuses the chat" in output.getvalue()
 
 
 @pytest.mark.asyncio
