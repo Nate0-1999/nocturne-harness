@@ -75,9 +75,6 @@ try {
   await page.getByRole('navigation', { name: 'Off-screen modules' }).getByRole('button', { name: 'Conversation', exact: true }).click()
   // F077: changing the iframe's Conversation mode must preserve its unsent draft.
   await page.getByRole('button', { name: 'Deck', exact: true }).click()
-  // The Deck is on screen before the next tap, as it is for a person: a second switch inside the
-  // first one's reload can hand the module another request's answer and blank it.
-  await conversation.getByTestId('symphony-deck').waitFor({ state: 'visible' })
   await page.getByRole('button', { name: 'Focused', exact: true }).click()
   await waitUntil(async () => await conversation.getByTestId('composer').inputValue() === prompt)
   await conversation.getByTestId('composer').press('Enter')
