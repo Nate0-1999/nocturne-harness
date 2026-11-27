@@ -38,6 +38,17 @@ from harness.supervisor import WorkerSupervisor
 from harness.symphony_experience import SymphonyAttemptRecord
 
 
+def receipted_models(run_home: Path) -> dict[str, list[str]]:
+    """One row per assigned stage or judge, including agents without a receipt yet."""
+    result = {}
+    for assignment in sorted(run_home.rglob("assignment.json")):
+        receipts = assignment.with_name("receipts.json")
+        events = json.loads(receipts.read_text())["events"] if receipts.is_file() else []
+        agent = assignment.parent.relative_to(run_home).as_posix()
+        result[agent] = list(dict.fromkeys(e["model"] for e in events if e.get("model")))
+    return result
+
+
 def _git(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
 
