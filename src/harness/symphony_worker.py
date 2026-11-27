@@ -389,7 +389,10 @@ async def run(assignment_path: Path) -> None:
             transcript, _ = located_transcript(captured)
             extractor = HarnessAgent(settings, router=router)
             draft = await extractor.extract_thread(
-                transcript, on_result=record_extraction, memory_size=settings.memory_max_tokens
+                transcript,
+                on_result=record_extraction,
+                memory_size=settings.memory_max_tokens,
+                worker_memories=sorted(worker_context.given_memories),
             )
             sources = {
                 f"m{index}"

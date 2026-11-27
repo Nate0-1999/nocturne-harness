@@ -71,6 +71,7 @@ class WorkerContext:
         self.last_selection = None
         self.workspace = ""
         self.cards = {}
+        self.given_memories: set[tuple[str, str]] = set()
         self.sources = {}
 
     async def _palace_request(self, call, request):
@@ -150,6 +151,7 @@ class WorkerContext:
                     update={"final_block": committed.final_block},
                 )
             self.last_selection = key
+            self.given_memories.update((card.label, card.body) for card in self.prepared.injected)
             for card in (*self.prepared.injected, *self.prepared.near_misses):
                 self.cards[str(card.memory_id)] = card.model_dump(mode="json")
                 self.sources[str(card.memory_id)] = str(self.prepared.injection_id)

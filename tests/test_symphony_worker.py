@@ -5,6 +5,7 @@ import subprocess
 from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import pytest
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
@@ -12,7 +13,12 @@ from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 from harness import symphony_worker
 from harness.agent import ExtractionCandidateDraft, ExtractionDraft, HarnessAgent
 from harness.pydantic_harness_adapter import PydanticHarnessToolset
-from harness.spine_client import InjectPrepareResponse, MemoryAllocation, SpineTransportError
+from harness.spine_client import (
+    InjectPrepareResponse,
+    MemoryAllocation,
+    ScoredMemoryCard,
+    SpineTransportError,
+)
 from harness.symphony_context import COMPONENT_REGISTRY, WorkerContext, write_json
 from harness.toolset import AgentLocation
 
@@ -425,13 +431,27 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     resolver = SimpleNamespace(resolve=AsyncMock(return_value=resolution))
     monkeypatch.setattr(symphony_worker, "ModelPolicyResolver", lambda **_: resolver)
     monkeypatch.setattr(symphony_worker, "model_settings_for", lambda *_: {})
+    known = ScoredMemoryCard.model_validate(
+        {
+            "memory_id": "12345678-1234-5678-1234-567812345670",
+            "label": "Reorder rule",
+            "body": "Reorder below five.",
+            "kind": "procedure",
+            "pin": False,
+            "rank": 1,
+            "score": 1.0,
+            "features": dict.fromkeys(("sem", "kw", "time", "proj", "freq", "hist"), 1.0),
+        }
+    )
     prepared = InjectPrepareResponse(
         injection_id="12345678-1234-5678-1234-567812345678",
         snapshot_ts=datetime.now(UTC),
         scorer_version="test",
-        injected=[],
-        near_misses=[],
-        final_block="",
+        injected=[known],
+        near_misses=[
+            known.model_copy(update={"memory_id": UUID(int=2), "body": "Only suggested."})
+        ],
+        final_block=known.body,
         memory_allocation=MemoryAllocation(
             memory_context_share=0.05,
             share_tokens=500,
@@ -463,6 +483,7 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     await symphony_worker.run(out / "assignment.json")
 
     assert "README.md written" in extract.await_args.args[0]
+    assert extract.await_args.kwargs["worker_memories"] == [(known.label, known.body)]
     assert json.loads((out / "memories.json").read_text()) == [
         {**lesson.model_dump(), "body": f"Unverified: {lesson.body}"}
     ]
