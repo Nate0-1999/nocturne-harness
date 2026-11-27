@@ -4696,6 +4696,21 @@ signed-in link is handed only to a request from this home's own page. Fitted, th
 covers the window below a gate, which must stay visible. A layout the owner already arranged
 gets the module beside its modules. Report 340 records the look-first and the walk.
 
+Return, 2026-11-25. A browser that brings a control into view scrolled the Stage viewport's
+hidden overflow under the camera and threw the whole Stage aside. The viewport now clips
+(`overflow: clip`), so it cannot scroll at all; this replaces Decision 092's scroll reset on
+Recipe and Deck recall. The Sheet still scrolls.
+
+Second return, 2026-11-25. Report 348 (M8TT): one switch, `T3CODE_TELEMETRY_ENABLED=false`,
+was all that kept T3's usage data on this machine, and T3's page names T3 Connect and Axiom
+whatever its server is told. Every T3 server now also gets `T3CODE_OTEL_SDK_DISABLED=true` (no
+trace export), `T3CODE_POSTHOG_HOST` on this machine's empty port 9 (usage events have nowhere
+to go) and `DO_NOT_TRACK=1` (T3's analytics obeys it from 0.1.12; set for the next pin). The
+pass-through's changed answer also says `connect-src 'self'`, in the policy line the
+pass-through adds, so nothing T3's own policy forbids is loosened: T3's page in the Stage
+connects to its own address alone. The `nocturne t3 open` window does not pass through and has
+no such lock.
+
 ## M8TS — T3 where the chat window was, in step with Threads and Memory [P2.5]
 
 SD-124, draft A-104. An untouched Work layer is arranged for the window: Threads, T3 and

@@ -15,7 +15,8 @@ _THREAD = re.compile(rb"[0-9A-Za-z-]{1,64}")
 
 def hosting_answer(headers: list[tuple[bytes, bytes]], page: str) -> list[tuple[bytes, bytes]]:
     """Replace T3's "nobody may host this page" with "only this Nocturne page may"."""
-    ours = b"frame-ancestors " + page.encode("ascii")
+    # M8TT: T3's page also names T3 Connect and Axiom; it may connect to this address alone.
+    ours = b"frame-ancestors " + page.encode("ascii") + b"; connect-src 'self'"
     answer = []
     for name, value in headers:
         lower = name.lower()

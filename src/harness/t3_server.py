@@ -124,6 +124,10 @@ class T3Server:
             "T3CODE_LAN": "false",
             "T3CODE_TAILSCALE_SERVE": "false",
             "T3CODE_TELEMETRY_ENABLED": "false",
+            # M8TT: that switch was the only lock. Trace export off; usage events sent nowhere.
+            "T3CODE_OTEL_SDK_DISABLED": "true",
+            "T3CODE_POSTHOG_HOST": "http://127.0.0.1:9",
+            "DO_NOT_TRACK": "1",  # T3's own analytics obeys this from 0.1.12, not at the pin.
             "T3CODE_LOG_WS_EVENTS": "false",
             "T3CODE_CODEX_PROBE_TIMEOUT_MS": "60000",
             "T3CODE_AUTO_BOOTSTRAP_PROJECT_FROM_CWD": "false",
