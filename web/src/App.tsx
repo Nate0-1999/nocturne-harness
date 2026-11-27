@@ -163,9 +163,13 @@ import {
   type AttunementTarget,
   type StickyAttunementPick,
 } from './attunement'
-import { ActionIcon, Button, Confirm, ConfirmButton, Select, TextField, Toggle } from './kit'
+import { ActionIcon, Button, type ButtonAction, Confirm, ConfirmButton, Select, TextField, Toggle } from './kit'
 
 const EMPTY_MESSAGES: ChatMessage[] = []
+/** SD-129: the modules the Off-screen bar draws as their emblem; any other keeps its name (T3). */
+const OFFSCREEN_EMBLEMS: Partial<Record<RackModuleId, ButtonAction>> = {
+  memory: 'memory', vitals: 'spend', context_bars: 'contextBars', palace_state: 'palaceState', palace_queue: 'ingest',
+}
 const SEAM_COLORS = (JSON.parse(seamColorsRaw) as { colors: SeamColorEntry[] }).colors
 const EMPTY_MEMORY_PANEL: RackMemoryPanelState = {
   items: [],
@@ -1023,8 +1027,8 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           onClick={() => setLayout(createStageLayer)}
         />
         <div className="stage-camera-controls" role="group" aria-label="View layout">
-          <Button variant="bare" type="button" data-tooltip-detail="Free placement: drag, resize and zoom the modules." aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</Button>
-          <Button variant="bare" type="button" data-tooltip-detail="The same modules laid out full size in one scrolling sheet." aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</Button>
+          <Button action="stage" iconOnly variant="bare" type="button" data-tooltip-detail="Free placement: drag, resize and zoom the modules." aria-pressed={!sheetMode} onClick={() => setSheetMode(false)}>Stage</Button>
+          <Button action="sheet" iconOnly variant="bare" type="button" data-tooltip-detail="The same modules laid out full size in one scrolling sheet." aria-pressed={sheetMode} onClick={() => setSheetMode(true)}>Sheet</Button>
         </div>
         <div className="stage-camera-controls" aria-label="Stage camera" hidden={sheetMode}>
           <Button action="zoomOut" iconOnly variant="bare" type="button" aria-label="Zoom out" data-tooltip-detail="Show more of this layer without changing module sizes or positions." onClick={() => zoomAt(layer.camera.zoom - 0.1)} />
@@ -1039,7 +1043,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
             Whole stage
           </Button>
         </div>
-        <Button variant="bare"
+        <Button action="library" iconOnly variant="bare"
           className="stage-library-toggle"
           type="button"
           data-testid="stage-library-toggle"
@@ -1130,7 +1134,7 @@ function RackWorkspace({ isRegressionFixture }: { isRegressionFixture: boolean }
           <nav className="stage-recall" aria-label="Off-screen modules">
             <span>Off-screen</span>
             {offscreenModules.map((module) => (
-              <Button variant="bare" key={module.instance_id} type="button" onClick={() => focusModule(module)}>
+              <Button action={OFFSCREEN_EMBLEMS[module.module_id]} iconOnly={module.module_id in OFFSCREEN_EMBLEMS} variant="bare" key={module.instance_id} type="button" data-tooltip-detail="Bring this module into the window." onClick={() => focusModule(module)}>
                 {RACK_MANIFESTS[module.module_id].name}
               </Button>
             ))}

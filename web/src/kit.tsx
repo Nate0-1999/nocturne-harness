@@ -8,9 +8,10 @@ import type {
   SelectHTMLAttributes, TextareaHTMLAttributes,
 } from 'react'
 import {
-  Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ban, Check, ChevronDown, ChevronUp,
-  ChevronsUpDown, CircleStop, Eye, FolderOpen, GripVertical, Maximize, MessageSquare, Mic, Minimize, Paperclip,
-  Pause, Pencil, Pin, Play, Plus, RotateCcw, Save, Search, Send, Settings,
+  Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Ban, Brain, ChartNoAxesColumn, Check, ChevronDown, ChevronUp,
+  ChevronsUpDown, CircleDollarSign, CircleStop, Eye, FolderOpen, GripVertical, Inbox, Landmark, LayoutDashboard,
+  Library, Maximize, MessageSquare, Mic, Minimize, Paperclip,
+  Pause, Pencil, Pin, Play, Plus, RotateCcw, Rows3, Save, Search, Send, Settings,
   Square, SquareCheck, Trash2, Undo2, Upload, Volume2, X, ZoomIn, ZoomOut,
 } from 'lucide-react'
 
@@ -19,7 +20,9 @@ import {
  * destroys nothing (a row removed, a panel closed); the bin destroys; the check approves or allows;
  * the barred circle denies; the folder is a folder or file, the speech square a conversation;
  * the empty and checked squares are only ever a switch's off and on, so stop is the ringed square.
- * Yes, No, Cancel and Reset carry no icon. */
+ * Yes, No, Cancel and Reset carry no icon.
+ * SD-129: the last row is the emblems the owner saw drawn and kept (report 346): the two views and
+ * the Library on the toolbar, and five modules on the Off-screen bar. */
 const ACTION_ICONS = {
   send: Send, stop: CircleStop, add: Plus, remove: X, delete: Trash2, refresh: RotateCcw,
   open: FolderOpen, thread: MessageSquare, settings: Settings, run: Play, pause: Pause, search: Search,
@@ -28,6 +31,8 @@ const ACTION_ICONS = {
   latest: ArrowDown, edit: Pencil, pin: Pin, unpin: Pin, archive: Archive,
   attach: Paperclip, import: Upload, preview: Eye, listen: Mic, speak: Volume2,
   approve: Check, deny: Ban, move: GripVertical, zoomIn: ZoomIn, zoomOut: ZoomOut,
+  stage: LayoutDashboard, sheet: Rows3, library: Library, memory: Brain, spend: CircleDollarSign,
+  contextBars: ChartNoAxesColumn, palaceState: Landmark, ingest: Inbox,
 } as const
 
 export type ButtonAction = keyof typeof ACTION_ICONS
@@ -44,6 +49,8 @@ const ACTION_WORDS: Record<ButtonAction, string> = {
   latest: 'Latest', edit: 'Edit', pin: 'Pin', unpin: 'Unpin', archive: 'Archive',
   attach: 'Attach', import: 'Import', preview: 'Preview', listen: 'Listen', speak: 'Read aloud',
   approve: 'Approve', deny: 'Deny', move: 'Move', zoomIn: 'Zoom in', zoomOut: 'Zoom out',
+  stage: 'Stage', sheet: 'Sheet', library: 'Library', memory: 'Memory Palace', spend: 'Spend',
+  contextBars: 'Context Bars', palaceState: 'Palace State', ingest: 'Memory Ingest',
 }
 
 export function ActionIcon({ action }: { action: ButtonAction }) {
