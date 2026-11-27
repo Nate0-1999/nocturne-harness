@@ -482,6 +482,18 @@ function SymphonyResult({ id }: { id: string }) {
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
 
+  const answer = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const target = answer.current
+    if (busy || !target) return
+    const observer = new IntersectionObserver(([entry]) => {
+      observer.disconnect()
+      if (entry.intersectionRatio < 0.9999) target.scrollIntoView({ block: 'center', inline: 'nearest' })
+    })
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [busy])
+
   async function review(approved?: SymphonyResultPreview['review']) {
     setBusy(true)
     try {
@@ -502,7 +514,9 @@ function SymphonyResult({ id }: { id: string }) {
       <p>Result <code>symphony/{id}</code></p>
       <p>Project <code>{preview.review.project}</code> · {preview.review.branch || 'No branch selected'}</p>
       <pre>{preview.files || 'No file changes.'}</pre>
-      {!preview.message && <>
+    </>}
+    {(busy || preview || status) && <div ref={answer} className="symphony-result__answer">
+      {preview && !preview.message && <>
         <p>Bring the judged result into {preview.review.branch}? This advances it from <code>{preview.review.head.slice(0, 12)}</code> to <code>{preview.review.commit.slice(0, 12)}</code>.</p>
         <Button type="button" disabled={busy} onClick={() => void review(preview.review)}>Yes, bring in result</Button>
         <Button type="button" disabled={busy} onClick={() => {
@@ -510,8 +524,8 @@ function SymphonyResult({ id }: { id: string }) {
           setStatus('Kept on the Symphony branch. The project was left as it was.')
         }}>No, keep on branch</Button>
       </>}
-    </>}
-    <p role="status">{busy ? 'Checking the project…' : status}</p>
+      <p role="status">{busy ? 'Checking the project…' : status}</p>
+    </div>}
   </section>
 }
 
