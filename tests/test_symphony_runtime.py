@@ -8,7 +8,7 @@ from harness.symphony_runtime import _carry_environment, _graft, _publish_result
 
 
 def test_agent_models_name_only_receipted_work(tmp_path: Path) -> None:
-    """FL-089: a saved policy or a dead worker cannot testify to the model that served a run."""
+    """P2 / FL-089: only a receipt can identify the model that actually served an agent."""
     from harness.symphony_runtime import receipted_models
 
     for stage in ("attempt/completion", "judge-motivation"):

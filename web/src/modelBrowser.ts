@@ -77,6 +77,14 @@ export function browseOrder(models: ListedModel[], pins: string[], search: strin
       || key(left) - key(right) || left.name.localeCompare(right.name))
 }
 
+export function cheaperThan(candidate: ListedModel, reference?: ListedModel): boolean {
+  if (!reference || candidate.prompt_price === null || candidate.completion_price === null ||
+      reference.prompt_price === null || reference.completion_price === null) return false
+  const input = Number(candidate.prompt_price) - Number(reference.prompt_price)
+  const output = Number(candidate.completion_price) - Number(reference.completion_price)
+  return input <= 0 && output <= 0 && (input < 0 || output < 0)
+}
+
 export function formatPrice(item: Pick<ListedModel, 'prompt_price' | 'completion_price'>): string {
   if (item.prompt_price === null || item.completion_price === null) return '—'
   if (Number(item.prompt_price) === 0 && Number(item.completion_price) === 0) return 'free'

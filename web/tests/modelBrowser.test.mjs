@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import { browseOrder, chipParts, modelMark, policyInForce, spendModelLabel, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
+import { browseOrder, cheaperThan, chipParts, modelMark, policyInForce, spendModelLabel, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -14,6 +14,15 @@ const models = [
   model('top', '57', '4', 200_000),
   model('unscored', null, '0.05', null),
 ]
+
+/** P2 / FL-089: a lower input price can still raise a worker's output cost. */
+test('a cheaper role model saves on a published rate without raising the other', () => {
+  const reference = models[0]
+  assert.ok(cheaperThan({ ...reference, prompt_price: '0' }, reference))
+  assert.equal(cheaperThan(reference, reference), false)
+  assert.equal(cheaperThan({ ...reference, prompt_price: '0', completion_price: '8' }, reference), false)
+  assert.equal(cheaperThan({ ...reference, completion_price: null }, reference), false)
+})
 
 /** P2 / SD-115: keep the pinned state visible and the unpinned button reachable by touch or keyboard. */
 test('model pins reveal on row hover, keyboard focus and a touch hold', async () => {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createHostPluginApi, RACK_MANIFESTS, useOptionalRackPlugin } from './rack'
 import { Button, Select, TextArea } from './kit'
-import { formatPrice, modelLabel, parseBrowser, policyName, shortName, type ModelBrowser } from './modelBrowser'
+import { cheaperThan, formatPrice, modelLabel, parseBrowser, policyName, shortName, type ModelBrowser } from './modelBrowser'
 import { failureMessage, serverMessage } from './requestFailure'
 
 const hostPolicies = createHostPluginApi(RACK_MANIFESTS.conversation)
@@ -69,21 +69,19 @@ export function AgentPolicies({ level, browser }: { level?: 'Duet' | 'Symphony',
         : shortName(browser?.models.find((item) => item.model === now)?.name ?? modelLabel(now))].filter(Boolean).join(' · ')
       return <fieldset key={role}>
         <legend>{label}{pick !== null && <span className="agent-policy__pick"> · {pick}</span>}</legend>
-        {symphonyRole ? <label className="theme-control">Policy or model
+        {symphonyRole ? <label>Policy or model
           <Select aria-label={`${label} policy or model`} value={value} onChange={event => setPolicies({ ...policies, [role]: event.target.value })}>
             <optgroup label="Home policies">{[...strategies].filter(policy =>
               !policy.startsWith('pinned:') || !catalog?.models.some(item => `pinned:${item.model}` === policy)
             ).map(policy => <option key={policy} value={policy}>{policy.startsWith('pinned:') ? modelLabel(policy.slice(7)) : policy}</option>)}</optgroup>
             <optgroup label="Models">{catalog?.models.map(item => {
               const subscription = item.model.startsWith('subscription:')
-              const cheaper = chatModel && item.prompt_price != null && item.completion_price != null &&
-                chatModel.prompt_price != null && chatModel.completion_price != null &&
-                +item.prompt_price <= +chatModel.prompt_price && +item.completion_price <= +chatModel.completion_price &&
-                (+item.prompt_price < +chatModel.prompt_price || +item.completion_price < +chatModel.completion_price)
               return <option key={item.model} value={`pinned:${item.model}`} disabled={Boolean(item.banned_by) || subscription}>
-                {item.name} · {subscription ? 'Included with your plan · conversations only' : formatPrice(item)}{cheaper && ' · cheaper than chat'}
+                {item.name} · {subscription ? 'Included with your plan · conversations only' : formatPrice(item)}{cheaperThan(item, chatModel) && ' · cheaper than chat'}
               </option>
             })}</optgroup>
+            {catalog?.subscriptions?.filter(source => source.availability !== 'available').map(source =>
+              <option key={source.tool} disabled>{source.name} · {source.availability.replaceAll('_', ' ')}</option>)}
           </Select>
         </label> : <><label className="theme-control">Token-cost policy
           <Select aria-label={`${label} token-cost policy`} data-tooltip-detail={role === 'curator' ? 'How the Palace chooses its curator model. Applies to future passes.' : 'How this role\'s model is chosen. Applies to new threads and future rounds; existing choices stay fixed.'} value={kind} onChange={(event) => {
