@@ -288,6 +288,8 @@ export function ModelDevice() {
   const [status, setStatus] = useState('Ready')
   const [browser, setBrowser] = useState<ModelBrowser | null>(null)
   const [browserError, setBrowserError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<'models' | 'locations' | null>('models')
+  const browserRead = useRef(0)
   const [search, setSearch] = useState('')
   const [banTarget, setBanTarget] = useState('')
   const [sort, setSort] = useState<SortKey>('rank')
@@ -323,18 +325,35 @@ export function ModelDevice() {
   }, [events])
 
   const liveModel = live?.resolved_model ?? null
-  const loadBrowser = useCallback(async () => {
+  const loadBrowser = useCallback(async (listFirst = false) => {
+    const read = ++browserRead.current
+    setLoading('models')
+    setBrowserError(null)
+    const request = { type: 'models.load' as const, thread_id: threadId, subscriptions: true }
     try {
-      setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId, subscriptions: true, country_details: true })))
-      setBrowserError(null)
+      if (listFirst) {
+        const list = parseBrowser(await events.dispatch(request))
+        if (read !== browserRead.current) return
+        if (!list.models.some(item => item.model.startsWith('openrouter:'))) {
+          setBrowser(list)
+          return
+        }
+        if (!list.country_filters?.serving.countries.length) setBrowser(list)
+        setLoading('locations')
+      }
+      const detailed = parseBrowser(await events.dispatch({ ...request, country_details: true }))
+      if (read !== browserRead.current) return
+      setBrowser(detailed)
     } catch (error) {
-      setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
+      if (read === browserRead.current) setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
+    } finally {
+      if (read === browserRead.current) setLoading(null)
     }
   }, [events, threadId])
 
   useEffect(() => {
-    const timer = globalThis.setTimeout(() => { void loadBrowser() }, 0)
-    return () => globalThis.clearTimeout(timer)
+    const timer = globalThis.setTimeout(() => { void loadBrowser(true) }, 0)
+    return () => { globalThis.clearTimeout(timer); browserRead.current++ }
   }, [loadBrowser, liveModel])
 
   useEffect(() => {
@@ -420,6 +439,11 @@ export function ModelDevice() {
     () => browseOrder(browser?.models ?? [], pins, search, sort),
     [browser?.models, pins, search, sort],
   )
+
+  let listStatus = `${listed.length} models`
+  if (loading === 'models') listStatus = 'Loading models…'
+  else if (loading === 'locations') listStatus = 'Loading provider locations…'
+  else if (browser?.unavailable) listStatus = serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.')
 
   async function pin(model: string, pinned: boolean) {
     try {
@@ -524,7 +548,7 @@ export function ModelDevice() {
         </div>
       </section>}
       {browser?.country_error && <p role="status">{browser.country_error}</p>}
-      {browser?.country_filters && <CountryControls filters={browser.country_filters} options={browser.country_options ?? []} models={browser.models} save={async filters => {
+      {browser?.country_filters && loading !== 'locations' && <CountryControls filters={browser.country_filters} options={browser.country_options ?? []} models={browser.models} save={async filters => {
         try {
           await events.dispatch({ type: 'models.countries', filters })
           await loadBrowser()
@@ -579,7 +603,7 @@ export function ModelDevice() {
                   model: resolved?.startsWith('local:') ? resolved : browser.local?.model ?? null,
                   when_offline: !browser.local?.when_offline }
                 setBrowser((current) => current === null ? current : { ...current, local })
-                void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
+                void events.dispatch({ type: 'models.local', ...local }).then(() => loadBrowser()).catch((error) => {
                   setBrowserError(failureMessage(error, 'The configuration was not deleted. Try again.')); void loadBrowser()
                 })
               }}
@@ -639,7 +663,7 @@ export function ModelDevice() {
             <option value="price">Price</option>
             <option value="context">Context</option>
           </Select>
-          <span>{browserError ?? (browser?.unavailable ? serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.') : `${listed.length} models`)}</span>
+          <span role="status">{browserError ?? listStatus}</span>
         </div>}
         <div className="model-browser__tools">
           <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"
@@ -648,7 +672,7 @@ export function ModelDevice() {
           <Button type="button" onClick={() => { void events.dispatch({
             type: 'models.local', url: (localUrl ?? browser?.local?.url) || null, model: browser?.local?.model ?? null,
             when_offline: browser?.local?.when_offline ?? false,
-          }).then(loadBrowser).catch((error: unknown) => setBrowserError(failureMessage(error, 'Local models could not be found. Start the local model service and try again.'))) }}>Find local models</Button>
+          }).then(() => loadBrowser()).catch((error: unknown) => setBrowserError(failureMessage(error, 'Local models could not be found. Start the local model service and try again.'))) }}>Find local models</Button>
         </div>
         <div className="model-row model-row--head" aria-hidden="true">
           <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />
@@ -672,7 +696,7 @@ export function ModelDevice() {
                   onClick={() => { void configure({ policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model' }) }}
                 >
                   <span className="model-row__name">{item.name}{item.banned_by ? <small> · banned</small> : item.reasoning && <small> · thinks</small>}
-                    <ModelCountries item={item} />
+                    {loading !== 'locations' && <ModelCountries item={item} />}
                   </span>
                   <span>{item.score ?? '—'}</span>
                   <span>{formatPrice(item)}</span>
