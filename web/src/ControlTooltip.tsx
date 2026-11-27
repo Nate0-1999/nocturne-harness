@@ -14,6 +14,12 @@ const CONTROL_SELECTOR = [
 // never hear it leave. The document the pointer enters says so; every other one closes its tip.
 const POINTER_HERE = 'nocturne.control-tooltip.pointer-here'
 
+// SD-112 / M8LR: a finger cannot hover. Held this long on a control it raises the tip, and the lift
+// after it presses nothing; a quicker tap presses as before. A text field's hold is the system's own.
+const HOLD_MS = 500
+const HOLD_SLOP_PX = 10
+const TEXT_ENTRY = 'textarea, select, input:not([type="checkbox"], [type="radio"], [type="range"])'
+
 interface TooltipState {
   title: string
   detail: string
@@ -30,6 +36,10 @@ export function ControlTooltip() {
   useEffect(() => {
     let activeControl: HTMLElement | null = null
     let pointerHere = false
+    let holdTimer: ReturnType<typeof setTimeout> | undefined
+    let holdFrom: { x: number, y: number } | null = null
+    // A hold raised the tip: it stays up after the lift, until the next touch, and the lift's click is swallowed.
+    let held = false
     const inFrame = window.parent !== window
     const frames = () => Array.from(document.querySelectorAll('iframe'), (frame) => frame.contentWindow)
 
@@ -65,17 +75,20 @@ export function ControlTooltip() {
         pointerHere = true
         announce(null)
       }
+      if (event.pointerType === 'touch') return
       const control = closestControl(event.target)
       if (control === null) hide(activeControl)
       else if (control !== activeControl) show(control)
     }
 
-    function onLeave() {
+    function onLeave(event: Event) {
       pointerHere = false
+      if (held && event.type !== 'blur') return
       hide(activeControl)
     }
 
     function onPointerOut(event: PointerEvent) {
+      if (held) return
       const control = closestControl(event.target)
       if (control === null || closestControl(event.relatedTarget) === control) return
       hide(control)
@@ -97,7 +110,37 @@ export function ControlTooltip() {
       if (activeControl !== null) setTooltip(positionTooltip(activeControl))
     }
 
-    function onActivate() {
+    function onPointerDown(event: PointerEvent) {
+      endHold()
+      held = false
+      if (event.pointerType !== 'touch') return
+      hide(activeControl)
+      const control = closestControl(event.target)
+      if (control === null || control.matches(TEXT_ENTRY)) return
+      holdFrom = { x: event.clientX, y: event.clientY }
+      holdTimer = setTimeout(() => {
+        held = true
+        show(control)
+      }, HOLD_MS)
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      if (holdFrom !== null && Math.hypot(event.clientX - holdFrom.x, event.clientY - holdFrom.y) > HOLD_SLOP_PX) endHold()
+    }
+
+    function endHold() {
+      clearTimeout(holdTimer)
+      holdFrom = null
+    }
+
+    function onActivate(event: MouseEvent) {
+      // The lift after a hold: the tip was read and nothing is pressed. A keyboard press (detail 0) is never a lift.
+      if (held && event.detail !== 0) {
+        held = false
+        event.preventDefault()
+        event.stopPropagation()
+        return
+      }
       hide(activeControl)
     }
 
@@ -106,6 +149,10 @@ export function ControlTooltip() {
     document.addEventListener('focusin', onFocusIn)
     document.addEventListener('focusout', onFocusOut)
     document.addEventListener('click', onActivate, true)
+    document.addEventListener('pointerdown', onPointerDown, true)
+    document.addEventListener('pointermove', onPointerMove, true)
+    document.addEventListener('pointerup', endHold, true)
+    document.addEventListener('pointercancel', endHold, true)
     document.documentElement.addEventListener('pointerleave', onLeave)
     globalThis.addEventListener('blur', onLeave)
     globalThis.addEventListener('message', onMessage)
@@ -117,6 +164,11 @@ export function ControlTooltip() {
       document.removeEventListener('focusin', onFocusIn)
       document.removeEventListener('focusout', onFocusOut)
       document.removeEventListener('click', onActivate, true)
+      document.removeEventListener('pointerdown', onPointerDown, true)
+      document.removeEventListener('pointermove', onPointerMove, true)
+      document.removeEventListener('pointerup', endHold, true)
+      document.removeEventListener('pointercancel', endHold, true)
+      endHold()
       document.documentElement.removeEventListener('pointerleave', onLeave)
       globalThis.removeEventListener('blur', onLeave)
       globalThis.removeEventListener('message', onMessage)

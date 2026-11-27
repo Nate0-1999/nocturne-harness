@@ -4729,3 +4729,23 @@ opened, and T3's server does not know which thread a page shows. A thread born i
 the open thread once the journal holds it. A crossing asked for from T3 is the Deck's own
 card, drawn on the T3 module as well. The open thread is one value per home, so two windows
 on one home move each other. Report 347 records the look-first and the walk.
+
+## M8LR — Rows parted by a line, emblems on the two bars, a held finger reads a tip, no type under 11px [P2]
+
+SD-129, SD-125, SD-112. The owner saw before and after pictures (report 346) and kept two
+sets; each is its own commit so either can be dropped at his go, and the bundle is rebuilt
+after. The bars: Stage, Sheet and Library, and five modules on the Off-screen bar, are
+emblems from the kit's table with the word as the tip; a module he saw no emblem for keeps
+its name, T3 and the Conversation among them. The rows: a thread row's only edge is the
+line under it; Memory's list drops each card's box, and a card in context keeps its accent
+edge because that edge is its state. The same card elsewhere (the memory review, the trace,
+the Profiler) keeps its box: he saw only the list.
+A finger cannot hover, and a tip under a held finger pressed its control on the lift. Held
+half a second, a finger now raises the tip; the tip stays until the next touch and the
+lift's click is swallowed before the page hears it. A keyboard press is never swallowed, and
+a text field's hold is left to the system (select, paste). Not proven on a real phone.
+Type: the scale's three small steps are 11, 11.5 and 12px. Rows sized for 9px text were
+given closer spacing or a break, never smaller type: the phone header's Palace line, a
+module's title row, the Conversation's model line. The Memory Graph's node labels are
+drawing units that zoom and are outside the floor. nocturne-look step 3 forbids an invented
+emblem as written; its new wording waits for the owner's yes (report 353).

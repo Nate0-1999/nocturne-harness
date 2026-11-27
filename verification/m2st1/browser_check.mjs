@@ -130,6 +130,20 @@ try {
   await recall.waitFor()
   const recalledNames = await recall.getByRole('button').allTextContents()
   if (recalledNames.length === 0) throw new Error('off-screen recall stayed empty after panning away')
+  // SD-129: on the two bars an emblem stands in for its word and its tip says the word; T3 keeps its word.
+  const toolbar = page.locator('.stage-toolbar')
+  for (const [bar, name, emblem] of [[toolbar, 'Stage', true], [toolbar, 'Sheet', true], [toolbar, 'Library', true], [recall, 'Spend', true], [recall, 'T3', false]]) {
+    const control = bar.getByRole('button', { name, exact: true })
+    const drawn = await control.evaluate((button) => ({
+      emblem: button.querySelector('svg') !== null,
+      word: [...button.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== ''),
+    }))
+    await control.hover()
+    const tip = await page.getByRole('tooltip').locator('strong').textContent()
+    if (drawn.emblem !== emblem || drawn.word === emblem || tip !== name) {
+      throw new Error(`${name} on its bar: ${JSON.stringify({ ...drawn, tip })}`)
+    }
+  }
   await recall.getByRole('button', { name: 'Conversation' }).click()
   const intersects = await page.getByTestId('rack-module-conversation').evaluate((module) => {
     const moduleRect = module.getBoundingClientRect()

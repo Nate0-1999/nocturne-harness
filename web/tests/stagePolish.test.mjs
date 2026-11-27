@@ -109,3 +109,46 @@ test('the mark is a snake eating its tail in the header and the favicon', async 
   assert.ok(shapes(header).length > 0)
   assert.deepEqual(shapes(header), shapes(favicon))
 })
+
+/** P2 (SD-129, report 346 section 4): rows inside a module part by a thin line; no row wears a box
+ * of its own, at rest, under the pointer or when it is the open one.
+ */
+test("thread rows and Memory's cards part by a thin line with no box around each", async () => {
+  const [shell, rack] = await Promise.all(['shell', 'rack'].map((name) =>
+    readFile(new URL(`../src/assets/${name}.css`, import.meta.url), 'utf8')))
+  const rules = [...`${shell}\n${rack}`.matchAll(/(?:^|\})\s*([^{}@]+)\{([^{}]*)\}/gu)]
+    .map((match) => ({ selectors: match[1].split(',').map((selector) => selector.trim()), body: match[2] }))
+  const row = (selector) => /^\.thread-item(?:--selected|:hover)?$/u.test(selector)
+  const edges = rules.filter((rule) => rule.selectors.every(row))
+    .flatMap((rule) => rule.body.match(/border[\w-]*:[^;]+/gu) ?? [])
+  assert.deepEqual(edges, ['border: 0', 'border-bottom: 1px solid var(--line)'])
+  assert.match(shell, /\.memory-panel__list > \.memory-card \{[^}]*border-width: 0 0 1px;[^}]*background: none;/u)
+  assert.doesNotMatch(shell, /\.memory-panel__list \{[^}]*gap:/u)
+})
+
+/** P2 (SD-129, report 345 option A): nothing is set under 11 pixels. The scale's small steps hold
+ * the floor, and no stylesheet sets a smaller size of its own; a row that runs out of room gets
+ * closer spacing or a break, never smaller type.
+ */
+test('no stylesheet sets type under 11 pixels', async () => {
+  const { readdir } = await import('node:fs/promises')
+  const small = []
+  // The Memory Graph's node labels are sized in the units of a drawing that zooms, not in screen pixels.
+  const drawingUnits = ['font-size:2.1px']
+  for (const folder of ['../src/assets/', '../src/themes/']) {
+    const directory = new URL(folder, import.meta.url)
+    for (const name of (await readdir(directory)).filter((file) => file.endsWith('.css'))) {
+      const css = await readFile(new URL(name, directory), 'utf8')
+      const sizes = [
+        ...css.matchAll(/--text-[a-z]+:\s*([^;}]+)/gu),
+        ...css.matchAll(/font-size:\s*([^;}]+)/gu),
+        ...[...css.matchAll(/font:\s*([^;}]+)/gu)].map((match) => [match[0], match[1].split('/')[0]]),
+      ]
+      for (const [declaration, value] of sizes) {
+        const length = /(?<![\w.-])(\d*\.?\d+)(rem|px)\b/u.exec(value)
+        if (length !== null && !drawingUnits.includes(declaration) && Number(length[1]) * (length[2] === 'rem' ? 16 : 1) < 11) small.push(`${name}: ${declaration.trim()}`)
+      }
+    }
+  }
+  assert.deepEqual(small, [])
+})
