@@ -50,7 +50,8 @@ try {
     await resetRack(page)
 
     if (width === 390) {
-      await checkResultReview(browser)
+      await checkResultReview(browser, '')
+      await checkResultReview(browser, 'Commit your work before bringing in this result.')
       await headerFrame(page).getByRole('button', { name: 'Threads' })
         .evaluate((element) => element.click())
       evidence.states.push(await assertCleanState(page, width, 'threads-drawer'))
@@ -92,7 +93,7 @@ try {
 }
 
 // M8SB: opening review must expose the decision above the bottom strip, without a swipe.
-async function checkResultReview(browser) {
+async function checkResultReview(browser, message) {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true })
   const id = '01M8SBAAAAAAAAAAAAAAAAAAAA'
   const completed = {
@@ -114,7 +115,6 @@ async function checkResultReview(browser) {
       socket.send(JSON.stringify(event))
     })
   })
-  let message = ''
   await phone.route('**/v1/symphonies/*/result', route => route.fulfill({ json: {
     review: { project: '/project', branch: 'main', head: '1'.repeat(40), commit: '2'.repeat(40) },
     files: Array.from({ length: 12 }, (_, i) => `note-${i}.md | 1 +`).join('\n'), message,
@@ -126,12 +126,13 @@ async function checkResultReview(browser) {
     const result = frame(phone, 'conversation').getByRole('region', { name: 'Project result' })
     const review = result.getByRole('button', { name: 'Review result for project' })
     await review.tap()
-    await fullyInView(result.getByText('Bring the judged result into', { exact: false }))
-    await fullyInView(result.getByRole('button', { name: 'Yes, bring in result' }))
-    await fullyInView(result.getByRole('button', { name: 'No, keep on branch' }))
-    message = 'The project has uncommitted changes. Commit your work and review again.'
-    await review.tap()
-    await fullyInView(result.getByRole('status').filter({ hasText: message }))
+    if (message) {
+      await fullyInView(result.getByRole('status').filter({ hasText: message }))
+    } else {
+      await fullyInView(result.getByText('Bring the judged result into', { exact: false }))
+      await fullyInView(result.getByRole('button', { name: 'Yes, bring in result' }))
+      await fullyInView(result.getByRole('button', { name: 'No, keep on branch' }))
+    }
   } finally {
     await phone.close()
   }
