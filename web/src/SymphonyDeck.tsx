@@ -590,7 +590,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
       <details onToggle={event => setShowModels(event.currentTarget.open)}>
         <summary>Models used</summary>
         {modelError ? <p role="status">{modelError}</p> : models && Object.keys(models).length ? (
-          <dl className="deck-lineage">{Object.entries(models).map(([agent, names]) =>
+          <dl className="deck-lineage deck-models">{Object.entries(models).map(([agent, names]) =>
             <div key={agent}><dt>{agent.replace(/-round-/g, ' · round ').replace(/round-\d+-attempt-/g, 'attempt ').replace(/\/smoke$/, '/readiness').replaceAll('/', ' · ').replaceAll('-', ' ')}</dt>
               <dd>{names.join(', ') || 'No receipt'}</dd></div>)}</dl>
         ) : <p>{models ? 'No agent receipts recorded.' : 'Reading receipts…'}</p>}

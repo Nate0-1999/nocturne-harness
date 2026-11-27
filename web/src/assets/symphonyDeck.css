@@ -14,6 +14,8 @@
 .deck-lineage { display: grid; gap: .4rem; margin: .8rem 0; }
 .deck-lineage div { display: grid; grid-template-columns: 7rem 1fr; gap: .6rem; }
 .deck-lineage dd { margin: 0; }
+.deck-models div { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+.deck-models dd { color: var(--ink); }
 .symphony-deck .deck-demand { --kit-edge: var(--accent-secondary); --kit-fill: var(--accent-secondary-soft); margin: 1rem 0; padding: .9rem; }
 .deck-demand strong { color: var(--accent-secondary); text-transform: uppercase; letter-spacing: .1em; }
 .deck-attempts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .6rem; margin: 1rem 0; }
