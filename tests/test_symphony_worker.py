@@ -8,6 +8,8 @@ from unittest.mock import AsyncMock
 from uuid import UUID
 
 import pytest
+from pydantic_ai.exceptions import ModelHTTPError
+from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import DeltaToolCall, FunctionModel
 
 from harness import symphony_worker
@@ -366,10 +368,8 @@ async def test_worker_context_injects_without_a_gate_and_reacts_to_selection(
     assert "Reorder rule" in first_prompt and "Packing checklist" not in first_prompt
 
 
-@pytest.mark.asyncio
-async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monkeypatch):
-    """F137 / M3SF: an attempt citing its own files by absolute path is not refused after the work,
-    and only the signed walls, not the chat's per-run caps, bound the worker."""
+@pytest.fixture
+def completion_worker(tmp_path, monkeypatch):
     attempt = tmp_path / "attempt"
     attempt.mkdir()
     subprocess.run(["git", "init", "-q", str(attempt)], check=True)
@@ -392,10 +392,7 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     (attempt / "README.md").write_text("done\n")
     out = tmp_path / "out"
     out.mkdir()
-    # The chat's per-run caps must not stop a worker below the signed walls.
-    (out / "env").write_text(
-        "SPINE_TOKEN='test'\nPRINCIPAL_ID='verification-test'\nRUN_TOTAL_TOKENS_LIMIT='1'\n"
-    )
+    (out / "env").write_text("SPINE_TOKEN='test'\nPRINCIPAL_ID='verification-test'\n")
     assignment = {
         "stage": "completion",
         "brief": "Write README.md",
@@ -468,6 +465,16 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     )
     monkeypatch.setattr(symphony_worker, "SpineClient", lambda *_, **__: spine)
     monkeypatch.chdir(attempt)
+    return out, known
+
+
+@pytest.mark.asyncio
+async def test_completion_artifacts_are_relative_to_the_worktree(completion_worker, monkeypatch):
+    """F137 / M3SF: an attempt citing its own files by absolute path is not refused after the work,
+    and only the signed walls, not the chat's per-run caps, bound the worker."""
+    out, known = completion_worker
+    with (out / "env").open("a") as env:
+        env.write("RUN_TOTAL_TOKENS_LIMIT='1'\n")
 
     lesson = ExtractionCandidateDraft(
         label="Report location",
@@ -490,6 +497,55 @@ async def test_completion_artifacts_are_relative_to_the_worktree(tmp_path, monke
     result = json.loads((out / "result.json").read_text())
     assert result["artifacts"] == ["README.md", "README.md (line 1)"]
     assert result["evidence_refs"][2] == "/elsewhere/n.txt"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("fault", "reason"),
+    [("invalid label", "64 characters"), ("provider", "503"), ("review timeout", "timed out")],
+)
+async def test_lesson_failure_preserves_completed_work(
+    completion_worker, monkeypatch, fault, reason
+):
+    """M8SY / ADR-021: a model failure proposing lessons cannot erase a finished product commit."""
+    out, _ = completion_worker
+    calls = []
+
+    async def respond(messages, info):
+        calls.append(messages)
+        if fault == "provider":
+            raise ModelHTTPError(503, "test")
+        if fault == "review timeout" and len(calls) == 2:
+            assert "Review these proposed worker lessons" in messages[-1].parts[-1].content
+            raise TimeoutError()
+        candidate = {
+            "label": "x" * 65 if fault == "invalid label" else "Shop hours",
+            "body": "Harbour market closes on Mondays.",
+            "kind": "fact",
+            "keywords": ["shop", "hours"],
+        }
+        draft = {"working_summary": "", "open_loops": [], "candidates": [candidate]}
+        return ModelResponse(parts=[TextPart(json.dumps(draft))])
+
+    monkeypatch.setattr(
+        symphony_worker,
+        "HarnessAgent",
+        lambda settings, router: HarnessAgent(
+            settings, router=router, model=FunctionModel(respond)
+        ),
+    )
+    await symphony_worker.run(out / "assignment.json")
+
+    result = json.loads((out / "result.json").read_text())
+    assert result["status"] == "completed"
+    commit = result["product"]["commit"]
+    assert subprocess.check_output(["git", "show", f"{commit}:README.md"], text=True) == "done\n"
+    assert json.loads((out / "memories.json").read_text()) == []
+    evidence = json.loads((out / "lesson-error.json").read_text())
+    assert evidence["attempt_id"] == "round-1-attempt-1"
+    assert reason in evidence["reason"]
+    assert not (out / "failure.json").exists()
+    assert len(calls) == (1 if fault == "provider" else 2)
 
 
 @pytest.mark.asyncio
