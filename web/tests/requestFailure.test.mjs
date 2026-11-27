@@ -2,6 +2,16 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { failureMessage, responseFailure, serverMessage } from '../src/requestFailure.ts'
 
+/** SD-100: a country refusal tells the person which setting to change. */
+test('the conversation displays the authored country and direct-source guidance', () => {
+  for (const sentence of [
+    'No allowed provider serves this model. Change the filters or pick another model.',
+    'Maker country FR is excluded.', 'Maker country is unknown.', 'Provider country is unknown.',
+    'This source lists models without scores. Pick a model in the Model Device.',
+  ]) assert.equal(serverMessage(sentence, 'Check the connection.'), sentence)
+  assert.equal(serverMessage('Maker country some diagnostic is excluded.', 'Try again.'), 'Try again.')
+})
+
 /** P4 / SD-096 rule (e): a broken network response cannot expose diagnostics. */
 test('request failures hide exceptions, status text and structured diagnostics', async () => {
   const next = 'The document could not be read. Keep the file and upload it again.'
