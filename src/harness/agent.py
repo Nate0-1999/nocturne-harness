@@ -54,6 +54,7 @@ from harness.spine_client import (
     SearchRequest,
     SimilarMemoriesResponse,
     SpineClientError,
+    SpineTransportError,
 )
 from harness.tools_memory import (
     MemoryToolContext,
@@ -228,6 +229,15 @@ class RememberResult:
     message: str
     memory_id: UUID | None = None
     label: str | None = None
+
+
+def _unconfirmed_remember(exc: SpineClientError) -> RememberResult:
+    if isinstance(exc, SpineTransportError) and not never_reached_palace(exc):
+        return RememberResult(
+            False,
+            "The Palace did not confirm the save. Please check Memory or retry the same fact.",
+        )
+    return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
 
 
 class BoundaryIntent(BaseModel):
@@ -743,7 +753,7 @@ class HarnessAgent:
         except SpineClientError as exc:
             if queued is not None:
                 raise
-            return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
+            return _unconfirmed_remember(exc)
 
         if not isinstance(response, MemorySplitResponse):
             if isinstance(response, SimilarMemoriesResponse) and response.similar:
@@ -843,7 +853,7 @@ class HarnessAgent:
         except SpineClientError as exc:
             if queued is not None:
                 raise  # an outbox replay stops here and keeps its place in the queue
-            return RememberResult(False, f"Could not remember: {render_spine_error('save', exc)}")
+            return _unconfirmed_remember(exc)
 
         if isinstance(response, SimilarMemoriesResponse):
             if not response.similar:

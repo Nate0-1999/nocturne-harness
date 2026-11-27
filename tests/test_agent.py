@@ -1429,7 +1429,7 @@ def problem_error() -> SpineProblemError:
         (similar_response(), "looks similar"),
         (label_conflict(), "label already belongs"),
         (problem_error(), "try later"),
-        (SpineTransportError(), "memory service unavailable"),
+        (SpineTransportError(), "did not confirm the save"),
     ],
     ids=["similar", "label", "problem", "transport"],
 )
@@ -1833,7 +1833,8 @@ async def test_a_remember_that_may_have_landed_still_fails_loudly(tmp_path) -> N
         "The keeper's boat is moored at pier four.", context=replace(context(spine), outbox=outbox)
     )
 
-    assert not result.ok and result.message.startswith("Could not remember")
+    assert not result.ok and "did not confirm" in result.message
+    assert "check Memory" in result.message
     assert outbox.waiting() == []
 
     spine.outcome = unreached(httpx.ConnectError("refused"))
