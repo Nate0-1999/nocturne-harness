@@ -220,7 +220,8 @@
   width: 100%;
   min-height: 3rem;
   padding: var(--space-3) var(--space-4);
-  border: 1px solid transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line); /* SD-129: rows part by a thin line, no box each */
   background: transparent;
   color: var(--muted);
   text-align: left;
@@ -267,13 +268,11 @@
 }
 
 .thread-item:hover {
-  border-color: var(--line);
   background: var(--surface-raised);
   color: var(--ink);
 }
 
 .thread-item--selected {
-  border-color: var(--line-strong);
   background: var(--surface-raised);
   color: var(--ink);
 }
@@ -1590,7 +1589,18 @@
 
 .memory-panel__list {
   display: grid;
-  gap: 0.65rem;
+}
+
+/* SD-129: Memory's cards part by a thin line, no box each; a card in context keeps its accent edge. */
+.memory-panel__list > .memory-card {
+  padding-inline: 0.25rem;
+  border-width: 0 0 1px;
+  border-color: var(--line);
+  background: none;
+}
+
+.memory-panel__list > .memory-card--context {
+  border-left: 2px solid var(--accent);
 }
 
 .principal-memory__editor {
