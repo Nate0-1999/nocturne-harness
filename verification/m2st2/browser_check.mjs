@@ -122,6 +122,34 @@ try {
   observations.phone = { viewport: '390x844', gear_box: gearBox, thread_button_box: threadButtonBox }
   await page.screenshot({ path: join(evidenceDir, '02-app-settings-phone-390x844.png') })
 
+  // SD-112 / PLAN M8LR (4): by touch a tip is read without pressing. A held finger raises it and
+  // the lift presses nothing; a quick tap still presses.
+  const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
+  const phonePage = await phone.newPage()
+  await phonePage.goto(fixtureUrl, { waitUntil: 'domcontentloaded' })
+  const library = phonePage.getByTestId('stage-library-toggle')
+  await library.waitFor()
+  const libraryBox = await library.boundingBox()
+  const finger = await phone.newCDPSession(phonePage)
+  const point = { x: Math.round(libraryBox.x + libraryBox.width / 2), y: Math.round(libraryBox.y + libraryBox.height / 2) }
+  const touch = async (heldMs) => {
+    await finger.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] })
+    await phonePage.waitForTimeout(heldMs)
+    await finger.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await phonePage.waitForTimeout(400)
+    return {
+      tip: await phonePage.getByRole('tooltip').locator('strong').allTextContents(),
+      library_open: await library.getAttribute('aria-expanded'),
+    }
+  }
+  const held = await touch(900)
+  const tapped = await touch(60)
+  if (held.tip.join() !== 'Library' || held.library_open !== 'false' || tapped.library_open !== 'true') {
+    throw new Error(`touch tip: ${JSON.stringify({ held, tapped })}`)
+  }
+  observations.touch_tip = { held, tapped }
+  await phone.close()
+
   if (consoleProblems.length !== 0 || pageErrors.length !== 0) {
     throw new Error(JSON.stringify({ consoleProblems, pageErrors }))
   }
