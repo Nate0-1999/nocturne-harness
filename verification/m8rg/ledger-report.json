@@ -66,8 +66,11 @@
     "harness/verification/m8rg/SHA256SUMS": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/ledger-report.json": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
+    "harness/web/dist/assets/index-BuOuy9Ou.js": "Intermediate generated Model Device bundle superseded by the handoff build.",
     "harness/web/dist/assets/index-CitP46G3.js": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
+    "harness/web/dist/assets/index-Cq_-xKdY.css": "Intermediate generated Model Device bundle superseded by the handoff build.",
     "harness/web/dist/assets/index-Ctivfuv7.css": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
+    "harness/web/dist/assets/index-DA3z-UUu.js": "Intermediate generated Model Device bundle superseded by the handoff build.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/dist/index.html": "Generated from the reviewed Model Device, request-message and stylesheet changes.",
     "harness/web/tests/requestFailure.test.mjs": "Regression coverage of the existing model-policy or request-message contract."
