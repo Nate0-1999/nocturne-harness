@@ -17,10 +17,7 @@ from harness.t3_client import TERMINAL, T3Client, T3Error, new_id
 from harness.t3_front_session import FrontSession
 from harness.t3_server import T3Server
 
-BROWSER_SCOPES = (
-    "orchestration:read orchestration:operate terminal:read terminal:operate "
-    "filesystem:read filesystem:write source-control:write"
-).split()
+BROWSER_SCOPES = ["orchestration:read", "orchestration:operate"]
 OUT_OF_STEP = "Out of step · open in Nocturne · "
 
 

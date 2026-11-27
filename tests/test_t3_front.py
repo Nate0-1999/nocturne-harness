@@ -1,10 +1,93 @@
+import asyncio
+import io
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
+import httpx
 import pytest
 
 from harness.t3_front_session import FrontSession
 from harness.transcript import TranscriptJournal
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("method", ["session/new", "session/load"])
+async def test_front_refuses_its_own_worktree_before_opening_a_conversation(tmp_path, method):
+    """P2.5 / SD-128: a front worktree must never become a second journal project."""
+    from harness.t3_front import FrontServer
+
+    front = FrontServer(tmp_path, None, None, tmp_path)
+    folder = front.root / "state/worktrees/fixture/checkout"
+    folder.mkdir(parents=True)
+    alias = tmp_path / "linked-checkout"
+    alias.symlink_to(folder, target_is_directory=True)
+    reader = asyncio.StreamReader()
+    params = {"cwd": str(alias), "sessionId": "prior-thread"}
+    reader.feed_data(json.dumps({"id": 1, "method": method, "params": params}).encode() + b"\n")
+    session = FrontSession(front, None, reader, None)
+
+    async def prompt_after_setup(**reply):
+        if reply.get("id") == 1:
+            prompt = {
+                "sessionId": reply["result"].get("sessionId", "prior-thread"),
+                "prompt": [{"type": "text", "text": "Hello"}],
+            }
+            reader.feed_data(
+                json.dumps({"id": 2, "method": "session/prompt", "params": prompt}).encode() + b"\n"
+            )
+            reader.feed_eof()
+
+    session.send = AsyncMock(side_effect=prompt_after_setup)
+    await session.serve()
+    update = session.send.await_args_list[1].kwargs["params"]["update"]
+    assert update["sessionUpdate"] == "agent_message_chunk"
+    assert update["content"]["text"] == (
+        "A worktree conversation is unavailable here. Use the project's own folder."
+    )
+    session.send.assert_awaited_with(id=2, result={"stopReason": "refusal"})
+    assert session.workspace_root is None and session.turn is None
+
+
+def test_t3_open_explains_the_worktree_limit(monkeypatch):
+    """P2.5 / SD-128: opening the window must tell the person which checkout is safe to use."""
+    from harness import cli
+
+    monkeypatch.setattr(cli, "load_config", lambda: SimpleNamespace(daemon_port=1, machine_id="x"))
+    monkeypatch.setattr(
+        httpx.Client,
+        "post",
+        lambda self, url, **kw: httpx.Response(200, request=httpx.Request("POST", url)),
+    )
+    output = io.StringIO()
+    assert cli.main(["t3", "open"], stdout=output) == 0
+    assert "Use the project's current checkout" in output.getvalue()
+    assert "Direct terminal, file and Git controls are blocked" in output.getvalue()
+    assert "can create a branch and folder before Nocturne refuses the chat" in output.getvalue()
+    assert "Add environment pairs a separate server" in output.getvalue()
+
+
+@pytest.mark.asyncio
+async def test_new_window_pairs_with_only_the_permissions_needed_to_chat(tmp_path, monkeypatch):
+    """P2.5 / SD-128: a paired window must not act on owner files outside the wall."""
+    from harness.t3_front import FrontServer
+
+    front = FrontServer(tmp_path, None, None, tmp_path)
+    client = SimpleNamespace(
+        origin="http://127.0.0.1",
+        session="fixture",
+        call=AsyncMock(return_value={"providers": [{"instanceId": "nocturne", "enabled": True}]}),
+    )
+    monkeypatch.setattr(front, "client", AsyncMock(return_value=client))
+    pairing = AsyncMock(return_value=httpx.Response(200, json={"credential": "fixture"}))
+    monkeypatch.setattr(httpx.AsyncClient, "post", pairing)
+    try:
+        await front.browser_url()
+        pairing.assert_awaited_once()
+        grant = pairing.await_args.kwargs["json"]["scopes"]
+        assert set(grant) == {"orchestration:read", "orchestration:operate"}
+    finally:
+        await front.close()
 
 
 @pytest.mark.asyncio
