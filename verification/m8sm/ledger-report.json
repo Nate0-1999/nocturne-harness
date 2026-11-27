@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "da8823bcb0eeb4bb9106e194b8bc78453bd5398a"
+      "head": "3c70f8d3c2e9896271d7d62a21d6bfc59fc0aa93"
     }
   ],
   "unmapped": {
@@ -77,6 +77,8 @@
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated web asset packaged with the role chooser and run card.",
     "harness/web/dist/index.html": "Generated web asset packaged with the role chooser and run card.",
     "harness/web/tests/modelBrowser.test.mjs": "Regression or packaging assertion for the model and version changes.",
+    "harness/web/dist/assets/index-DLGcWOW4.js": "Intermediate M8SM web bundle replaced by the final verified build.",
+    "harness/web/dist/assets/index-DRYkIfq0.js": "Intermediate M8SM web bundle replaced by the final verified build.",
     "harness/verification/m8sm/impacted.json": "M8SM walk evidence, coverage declaration or checksum manifest."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
