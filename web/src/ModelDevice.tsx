@@ -39,7 +39,7 @@ function CountryControls({ filters, options, models, save }: {
   return <details className="model-countries">
     <summary>Country filters · <span aria-live="polite">{eligible} of {homeModels.length} models</span></summary>
     <fieldset disabled={saving}>
-      <small>Filter this home’s chat, sub-agents, judges and background calls while the Palace curator uses its own settings.</small>
+      <small>Filters cover this home’s non-subscription chat, sub-agents, judges and background calls, and the Palace curator is set separately.</small>
       {(['maker', 'serving'] as const).map(key => {
         const label = key === 'maker' ? 'Maker country' : 'Provider countries'
         const rule = filters[key]
