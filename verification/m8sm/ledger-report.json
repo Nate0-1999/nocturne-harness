@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "5e3c9a5158e905d98dca721f531af5d900a37082"
+      "head": "da8823bcb0eeb4bb9106e194b8bc78453bd5398a"
     }
   ],
   "unmapped": {
@@ -70,14 +70,14 @@
     "harness/verification/m8sm/FL-213.png": "M8SM walk evidence, coverage declaration or checksum manifest.",
     "harness/verification/m8sm/FL-215.png": "M8SM walk evidence, coverage declaration or checksum manifest.",
     "harness/verification/m8sm/SHA256SUMS": "M8SM walk evidence, coverage declaration or checksum manifest.",
-    "harness/verification/m8sm/impacted.json": "M8SM walk evidence, coverage declaration or checksum manifest.",
     "harness/verification/m8sm/ledger-report.json": "M8SM walk evidence, coverage declaration or checksum manifest.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated web asset packaged with the role chooser and run card.",
     "harness/web/dist/assets/index-BhhU1Xca.css": "Generated web asset packaged with the role chooser and run card.",
     "harness/web/dist/assets/index-C-aRdgUM.js": "Generated web asset packaged with the role chooser and run card.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated web asset packaged with the role chooser and run card.",
     "harness/web/dist/index.html": "Generated web asset packaged with the role chooser and run card.",
-    "harness/web/tests/modelBrowser.test.mjs": "Regression or packaging assertion for the model and version changes."
+    "harness/web/tests/modelBrowser.test.mjs": "Regression or packaging assertion for the model and version changes.",
+    "harness/verification/m8sm/impacted.json": "M8SM walk evidence, coverage declaration or checksum manifest."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
