@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "7ea006b56f9bffb3130cc468e64bd0c7a07f0314"
+      "head": "0da23cf73b5403b612d1499599e6be2b18806f92"
     }
   ],
   "unmapped": {
@@ -17,7 +17,15 @@
     "harness/tests/test_t3_front.py": "Regression coverage for pairing, worktree session admission and the launcher explanation.",
     "harness/verification/m8tc/FL-009.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-069.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-162.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-164.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-166.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-167.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-169.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-170.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-172.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-174.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/FL-182.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-186.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-187.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-190.png": "M8TC verification record; no runtime behavior.",
@@ -25,20 +33,12 @@
     "harness/verification/m8tc/FL-192.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-193.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-194.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/SHA256SUMS": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/ledger-report.json": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-166.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-169.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-172.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-174.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-162.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-164.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-167.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-182.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-200.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-207.png": "M8TC verification record; no runtime behavior.",
     "harness/verification/m8tc/FL-208.png": "M8TC verification record; no runtime behavior.",
-    "harness/verification/m8tc/FL-211.png": "M8TC verification record; no runtime behavior."
+    "harness/verification/m8tc/FL-211.png": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/SHA256SUMS": "M8TC verification record; no runtime behavior.",
+    "harness/verification/m8tc/ledger-report.json": "M8TC verification record; no runtime behavior."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
