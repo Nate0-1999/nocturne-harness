@@ -499,7 +499,8 @@ function SymphonyResult({ id }: { id: string }) {
   return <section aria-label="Project result" className="symphony-result">
     <Button type="button" disabled={busy} onClick={() => void review()}>Review result for project</Button>
     {preview && <>
-      <p><code>{preview.review.project}</code> · {preview.review.branch || 'Detached HEAD'}</p>
+      <p>Result <code>symphony/{id}</code></p>
+      <p>Project <code>{preview.review.project}</code> · {preview.review.branch || 'Detached HEAD'}</p>
       <pre>{preview.files || 'No file changes.'}</pre>
       {!preview.message && <>
         <p>Bring the judged result into {preview.review.branch}? This advances it from <code>{preview.review.head.slice(0, 12)}</code> to <code>{preview.review.commit.slice(0, 12)}</code>.</p>
