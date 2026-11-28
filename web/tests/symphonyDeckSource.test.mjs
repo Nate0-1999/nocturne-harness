@@ -1,7 +1,17 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
-import { deckCount, deckEvidence } from '../src/deckCards.ts'
+import { attemptOutcome, deckCount, deckEvidence } from '../src/deckCards.ts'
+
+/** M8FV / ADR-014: blocking a panel leaves completed worker reports intact. */
+test('a stopped attempt on a blocked stack shows the result of that worker in that worktree', () => {
+  const attempt = { attempt_id: 'second', partial_evidence: ['this-worktree'], state: 'stopped' }
+  const result = (root, status) => ({ attempt_id: 'second', artifact_root: root, distillate: { status } })
+  const evidence = [{ attempt_lineage: [result('different-step', 'failed'), result('this-worktree', 'completed')] }]
+  assert.equal(attemptOutcome(attempt, evidence), 'completed')
+  assert.equal(attemptOutcome(attempt, []), 'stopped')
+  assert.equal(attemptOutcome({ ...attempt, state: 'cancelled' }, evidence), 'cancelled')
+})
 
 /** ADR-014 / M8FV: a completed stack can own pending lessons and receive the same final panel record twice. */
 test('the Deck counts visible stacks and open lessons, and prints each independent verdict once', () => {

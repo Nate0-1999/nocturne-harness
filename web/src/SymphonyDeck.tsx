@@ -19,7 +19,7 @@ import { ReplyReader } from './ReplyReader'
 import { Button, ConfirmButton, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
-import { deckCount, deckEvidence, record } from './deckCards'
+import { attemptOutcome, deckCount, deckEvidence, record } from './deckCards'
 import { agentColor } from './visualization'
 import { SymphonyFeedback } from './SymphonyCards'
 import { distinctThreadTitles, visibleThreadTitle } from './threadTitles'
@@ -570,11 +570,12 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         </aside>
       )}
       <div className="deck-attempts">
-        {stack.attempts.map((attempt) => (
-          <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
+        {stack.attempts.map((attempt) => {
+          const outcome = attemptOutcome(attempt, stack.evidence)
+          return <div className="deck-attempt" key={attempt.attempt_id} data-state={outcome}>
             <div><Button type="button" onClick={() => setContextAttempt(
               contextAttempt === attempt.attempt_id ? null : attempt.attempt_id
-            )}>{attempt.attempt_id}</Button><span>{attempt.state}</span></div>
+            )}>{attempt.attempt_id}</Button><span>{outcome}</span></div>
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
@@ -586,7 +587,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
                 }, `${attempt.attempt_id} cancelled after draining.`)}>Stop attempt</ConfirmButton>
             )}
           </div>
-        ))}
+        })}
       </div>
       {contextAttempt !== null && <WorkerContext
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}

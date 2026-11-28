@@ -20,6 +20,20 @@ export function deckCount(stacks: Pick<DeckStack, 'state'>[], waiting: number, l
   return parts.join(' · ')
 }
 
+export function attemptOutcome(attempt: DeckStack['attempts'][number], evidence: DeckStack['evidence']) {
+  if (attempt.state !== 'stopped') return attempt.state
+  for (const entry of evidence) {
+    if (!Array.isArray(entry.attempt_lineage)) continue
+    for (const item of entry.attempt_lineage) {
+      const lineage = record(item)
+      if (lineage?.attempt_id !== attempt.attempt_id || !attempt.partial_evidence.includes(String(lineage.artifact_root))) continue
+      const status = record(lineage.distillate)?.status
+      if (status === 'completed' || status === 'failed' || status === 'cancelled' || status === 'blocked') return status
+    }
+  }
+  return attempt.state
+}
+
 export function deckEvidence(entries: DeckStack['evidence']): DeckStack['evidence'] {
   const seen = new Set<string>()
   return entries.flatMap(entry => {
