@@ -321,12 +321,12 @@ def test_a_thread_born_in_t3_is_the_open_thread_only_once_the_journal_holds_it(t
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("kind", ["image", "file", "damaged", "multiple"])
+@pytest.mark.parametrize("kind", ["image", "file", "damaged", "multiple", "oversize"])
 async def test_paperclip_preserves_image_bytes_or_explains_the_refusal(tmp_path, kind):
     """P4 / FL-070: files from T3 must not disappear into a text-only paid turn."""
     import base64
 
-    data = b"GIF89a" + bytes(range(256)) * 220
+    data = b"GIF89a" + bytes(5 * 1024 * 1024 - 6 + (kind == "oversize"))
     block = {"type": "image", "mimeType": "image/gif", "data": base64.b64encode(data).decode()}
     files = [{"type": "image", "mimeType": "image/gif", "sizeBytes": len(data)}]
     blocks = [{"type": "text", "text": "T3 instructions"}, block]
@@ -388,11 +388,16 @@ async def test_rejected_unbound_attachment_does_not_hide_a_rewound_turn(tmp_path
     journal = TranscriptJournal(tmp_path)
     ids = ["rejected", "later"]
     items = [{"item": {"type": "user_message", "messageId": key}} for key in ids]
+    items[0]["item"]["attachments"] = [{"type": "file"}]
+    items[1:1] = [
+        {"item": {"type": "user_message", "messageId": "retry", "runId": "failed"}},
+        {"item": {"type": "error", "runId": "failed"}},
+    ]
     client = SimpleNamespace(orchestration_get=AsyncMock(return_value={"items": items}))
     projection = {
         "thread": {},
-        "runs": [{"userMessageId": "rejected", "status": "failed"}],
-        "messages": [{"id": "rejected", "attachments": [{"type": "file"}]}],
+        "runs": [],
+        "messages": [],
     }
     session = FrontSession(SimpleNamespace(journal=journal), "native", None, None)
     session.thread = "thread"

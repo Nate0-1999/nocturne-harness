@@ -36,15 +36,17 @@ def prompt_image(attachments, blocks):
     return ImageInput(kind="image", media_type=block.get("mimeType"), data_base64=block.get("data"))
 
 
-def unsubmitted_messages(projection, bindings):
-    # An ACP start failure or a declined attachment can leave a T3 row without a journal turn.
-    candidates = {m["id"] for m in projection.get("messages", ()) if m.get("attachments")} | {
-        r["userMessageId"]
-        for r in projection["runs"]
-        if r["status"] in {"failed", "interrupted", "cancelled"}
-    }
+def unsubmitted_messages(transcript, bindings):
+    # The full transcript keeps declined files and failed starts after the run projection rolls off.
+    items = [row["item"] for row in transcript["items"]]
+    failed = {item["runId"] for item in items if item["type"] == "error" and item.get("runId")}
     return {
-        key for key in candidates if key not in bindings and not key.startswith("nocturne-journal-")
+        item["messageId"]
+        for item in items
+        if item["type"] == "user_message"
+        and (item.get("attachments") or item.get("runId") in failed)
+        and item["messageId"] not in bindings
+        and not item["messageId"].startswith("nocturne-journal-")
     }
 
 
@@ -286,7 +288,7 @@ class FrontSession:
             return "This message has not appeared in T3’s transcript. Open the thread in Nocturne."
         journal = self.front.journal
         bindings = journal.front_prompts(self.thread)
-        skipped = unsubmitted_messages(projection, bindings)
+        skipped = unsubmitted_messages(transcript, bindings)
         previous = [
             key.removeprefix("nocturne-journal-")
             if key.startswith("nocturne-journal-")
