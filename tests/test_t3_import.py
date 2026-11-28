@@ -13,6 +13,47 @@ from harness.t3_import import check_original, history
 from harness.transcript import TranscriptJournal
 
 
+def test_reopening_an_imported_thread_reads_memory_scores_without_embedding(tmp_path):
+    """A-095, SD-130: opening an adopted conversation with visible memories must cost nothing."""
+    from fastapi.testclient import TestClient
+    from test_daemon import PanelGateSpine, fixture_resolver, frame, receive_until
+
+    from harness.config import HarnessSettings
+    from harness.daemon import create_dev_app
+
+    tid = str(uuid4())
+    journal = TranscriptJournal(tmp_path / "transcripts")
+    binding = {
+        "native_session": str(uuid4()),
+        "source": "subscription:codex/fixture",
+        "location": str(tmp_path),
+    }
+    spine = PanelGateSpine()
+    spine.restore_injection = AsyncMock(return_value=None)
+    settings = HarnessSettings(
+        nocturne_home=tmp_path, model_context_tokens=8192, principal_id="principal-test"
+    )
+    app = create_dev_app(
+        tmp_path,
+        settings=settings,
+        spine=spine,
+        transcript_journal=journal,
+        model_resolver_override=fixture_resolver(settings),
+    )
+    with TestClient(app) as client, client.websocket_connect("/ws") as socket:
+        journal.adopt_subscription(tid, binding, str(tmp_path), "Old", [])
+        for previous in (None, SimpleNamespace(injected=spine.cards, near_misses=[])):
+            spine.restore_injection.return_value = (
+                SimpleNamespace(prepared=previous) if previous else None
+            )
+            socket.send_json(frame("memory.panel.update", {"action": "refresh"}, thread_id=tid))
+            panel, _ = receive_until(socket, "memory.panel.update")
+            assert [item["score"] for item in panel["payload"]["items"]] == [
+                card.score if previous else None for card in spine.cards
+            ]
+    assert not spine.score_requests
+
+
 def test_raced_and_restarted_adoptions_keep_only_visible_history(tmp_path):
     """A-095, SD-130: reopening cannot resend a prompt, grant permission or book a turn."""
     tid = str(uuid4())

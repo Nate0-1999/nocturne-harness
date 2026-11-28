@@ -1172,22 +1172,31 @@ def create_dev_app(
         except SpineClientError:
             pass  # The card keeps its authoritative body when history is unavailable.
         try:
-            scores = await owned_spine.memory_scores(
-                InjectPrepareRequest(
-                    thread_id=UUID(thread_id),
-                    agent_id=agent_id,
-                    machine_id=machine_id,
-                    principal_id=principal_id,
-                    project_key=context.project_key,
-                    location_path=context.origin_path,
-                    current_location=(
-                        None if context.toolset is None else str(context.toolset.location().cwd)
+            if (journal.subscription_binding(thread_id) or {}).get("native_session"):
+                # SD-130: opening imported history must not buy an embedding of an old prompt.
+                saved = await owned_spine.restore_injection(UUID(thread_id), principal_id)
+                if saved is not None:
+                    scores = {
+                        str(card.memory_id): card.score
+                        for card in (*saved.prepared.injected, *saved.prepared.near_misses)
+                    }
+            else:
+                scores = await owned_spine.memory_scores(
+                    InjectPrepareRequest(
+                        thread_id=UUID(thread_id),
+                        agent_id=agent_id,
+                        machine_id=machine_id,
+                        principal_id=principal_id,
+                        project_key=context.project_key,
+                        location_path=context.origin_path,
+                        current_location=(
+                            None if context.toolset is None else str(context.toolset.location().cwd)
+                        ),
+                        prompt=loop.latest_prompt(thread_id) or context.project_key or "",
+                        model_context_tokens=await loop.model_context(thread_id),
                     ),
-                    prompt=loop.latest_prompt(thread_id) or context.project_key or "",
-                    model_context_tokens=await loop.model_context(thread_id),
-                ),
-                ids,
-            )
+                    ids,
+                )
         except (SpineClientError, ModelCatalogUnavailable):
             pass  # Display an unavailable score rather than inventing one.
         return [
