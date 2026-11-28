@@ -26,10 +26,9 @@ export function T3Module() {
   const [imported, setImported] = useState<string | null>(null)
   const openingImport = useRef<string | null>(null)
   useEffect(() => {
-    if (imported && catalog.some(row => row.thread_id === imported)) {
+    if (imported && openingImport.current !== imported && catalog.some(row => row.thread_id === imported)) {
       openingImport.current = imported
       void api.events.dispatch({ type: 'thread.select', thread_id: imported })
-      setImported(null)
     }
   }, [imported, catalog])
   const phase = screen === null ? 'starting' : 'url' in screen ? 'shown' : 'stopped'
@@ -50,7 +49,10 @@ export function T3Module() {
         // A shown T3 that cannot open this thread yet stays where it is.
         if (!current) return
         if (phase === 'shown' && 'line' in next) {
-          if (openingImport.current === open) openingImport.current = null
+          if (openingImport.current === open) {
+            openingImport.current = null
+            setImported(null)
+          }
           return
         }
         at.current = open
@@ -73,6 +75,7 @@ export function T3Module() {
             if (thread === openingImport.current) {
               seen.current = thread
               openingImport.current = null
+              setImported(null)
             }
           } else if (thread && thread !== seen.current &&
             getRackSnapshot().catalog.some((entry) => entry.thread_id === thread)) {
