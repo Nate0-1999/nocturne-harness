@@ -245,8 +245,7 @@ class FrontServer(T3Server):
         visible = [
             row["item"]["text"]
             for row in transcript["items"]
-            if row["item"]["type"] == "user_message"
-            and row["item"].get("messageId") not in skipped
+            if row["item"]["type"] == "user_message" and row["item"].get("messageId") not in skipped
         ]
         title = projection["thread"]["title"]
         if visible != [m["content"] for m in users[: len(visible)]]:
