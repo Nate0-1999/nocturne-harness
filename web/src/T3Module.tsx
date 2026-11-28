@@ -15,7 +15,7 @@ const api = { ...host, events: { ...host.events, getSnapshot: getRackSnapshot } 
  * so the host page frames it directly; a rack frame's address would be refused.
  * SD-124: it stays in step with the Stage's open thread, both ways. */
 export function T3Module() {
-  const open = useRackHostSnapshot().selectedThreadId
+  const { selectedThreadId: open, catalog } = useRackHostSnapshot()
   const [screen, setScreen] = useState<Screen>(null)
   const [attempt, setAttempt] = useState(0)
   const [unanswered, setUnanswered] = useState('')
@@ -23,6 +23,15 @@ export function T3Module() {
   // where the daemon last saw T3 go. `seen` is the daemon's last word, so only a move counts.
   const at = useRef<string | null>(null)
   const seen = useRef<string | null>(null)
+  const [imported, setImported] = useState<string | null>(null)
+  const openingImport = useRef<string | null>(null)
+  useEffect(() => {
+    if (imported && catalog.some(row => row.thread_id === imported)) {
+      openingImport.current = imported
+      void api.events.dispatch({ type: 'thread.select', thread_id: imported })
+      setImported(null)
+    }
+  }, [imported, catalog])
   const phase = screen === null ? 'starting' : 'url' in screen ? 'shown' : 'stopped'
 
   useEffect(() => {
@@ -39,7 +48,11 @@ export function T3Module() {
       .catch(() => ({ line: 'Nocturne is not answering. Run nocturne up.' }))
       .then((next) => {
         // A shown T3 that cannot open this thread yet stays where it is.
-        if (!current || (phase === 'shown' && 'line' in next)) return
+        if (!current) return
+        if (phase === 'shown' && 'line' in next) {
+          if (openingImport.current === open) openingImport.current = null
+          return
+        }
         at.current = open
         setScreen(next)
       })
@@ -55,6 +68,12 @@ export function T3Module() {
           if (!running) {
             at.current = seen.current = null
             setScreen({ line: 'T3 stopped.' })
+          } else if (openingImport.current && openingImport.current === getRackSnapshot().selectedThreadId) {
+            // The old iframe can still report its thread while the imported address loads.
+            if (thread === openingImport.current) {
+              seen.current = thread
+              openingImport.current = null
+            }
           } else if (thread && thread !== seen.current &&
             getRackSnapshot().catalog.some((entry) => entry.thread_id === thread)) {
             // A thread opened in T3 becomes the Stage's open thread, once the thread list has it.
@@ -89,7 +108,7 @@ export function T3Module() {
   // T3 keeps what its own window has, except leaving this frame: it cannot move Nocturne's page.
   return (
     <div className="t3-project-window">
-      <T3ProjectImport onOpen={id => void api.events.dispatch({ type: 'thread.select', thread_id: id })} />
+      <T3ProjectImport onOpen={setImported} />
       {/* A crossing asked for from T3 waits on the Deck; the same card is answered here too. */}
       <div className="t3-module__crossing" data-testid="t3-module-crossing">
         <RackApiProvider api={api}>

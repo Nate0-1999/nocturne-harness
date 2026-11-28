@@ -1,3 +1,4 @@
+import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
@@ -62,6 +63,58 @@ def test_raced_and_restarted_adoptions_keep_only_visible_history(tmp_path):
     assert RunLoop._rehydrate_model_history(transcript) == ()
     assert "permission" not in restarted.subscription_binding(tid)
     assert b"allowed_thread" not in before and b"subscription.turn" not in before
+
+
+@pytest.mark.asyncio
+async def test_first_new_prompt_waits_for_review_after_an_import(tmp_path):
+    """A-095, SD-130: the first new prompt must pause before any provider receives it."""
+    from test_memory_gate import (
+        THREAD_ID,
+        RecordingDelegate,
+        RecordingEmitter,
+        RecordingSpine,
+        context_factory,
+        decision,
+    )
+
+    from harness.memory_gate import MemoryGateTurnRunner
+
+    journal = TranscriptJournal(tmp_path / "journal")
+    messages = history(
+        [
+            dict(
+                type="user_message",
+                text="Before adoption",
+                runId=None,
+                startedAt="2026-11-28T00:00:00Z",
+            )
+        ]
+    )
+    journal.adopt_subscription(
+        THREAD_ID,
+        {"location": str(tmp_path), "source": "subscription:codex/fixture"},
+        str(tmp_path),
+        "Old conversation",
+        messages,
+    )
+    history_for_model = RunLoop._rehydrate_model_history(journal.current_thread(THREAD_ID))
+    spine, delegate, emitter = RecordingSpine(), RecordingDelegate(), RecordingEmitter()
+    runner = MemoryGateTurnRunner(
+        delegate, spine, context_factory(spine), model_context_tokens=8192
+    )
+    turn = asyncio.create_task(
+        runner.run(
+            thread_id=THREAD_ID,
+            prompt="First new question",
+            message_history=history_for_model,
+            emit=emitter,
+        )
+    )
+    await asyncio.wait_for(emitter.opened.wait(), 1)
+    assert not delegate.calls and spine.prepare_requests[0].prompt == "First new question"
+    emitter.decision.set_result(decision())
+    await asyncio.wait_for(turn, 1)
+    assert [(c[1], c[2]) for c in delegate.calls] == [("First new question", ())]
 
 
 @pytest.mark.asyncio
