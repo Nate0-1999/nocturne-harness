@@ -35,6 +35,9 @@ def test_raced_and_restarted_adoptions_keep_only_visible_history(tmp_path):
         )
     ]
     messages = history(items)
+    assert all(m["message_id"] == m["run_id"] for m in messages if m["role"] == "assistant")
+    # Exercise a journal written by the first M8TN build as well as the current importer.
+    messages[-1]["run_id"] = messages[0]["run_id"]
     binding = {
         "source": "subscription:codex/example/fixture",
         "location": str(tmp_path),
@@ -55,6 +58,9 @@ def test_raced_and_restarted_adoptions_keep_only_visible_history(tmp_path):
     assert not adopt(None) and path.read_bytes() == before
     transcript = restarted.current_thread(tid)
     assert transcript.conversation_title() == "A title"
+    assert all(
+        m["message_id"] == m["run_id"] for m in transcript.messages if m["role"] == "assistant"
+    )
     assert [m["content"] for m in transcript.messages] == [
         "Earlier messages were omitted.",
         "Old prompt",

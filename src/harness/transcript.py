@@ -1071,6 +1071,10 @@ class TranscriptJournal:
                         deepcopy(message.get("image")),
                     )
                 )
+                # Early project imports gave a historical reply two IDs. Keep its journal
+                # identity and parent chain while restoring the assistant snapshot contract.
+                if message.get("imported") and message.get("role") == "assistant":
+                    message["run_id"] = message_id
                 latest_messages[message_id] = deepcopy(message)
                 if "tail_message_id" in row:
                     candidate_tail = row["tail_message_id"]

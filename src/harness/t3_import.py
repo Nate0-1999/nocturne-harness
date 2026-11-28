@@ -46,7 +46,8 @@ def history(items):
         if user:
             message.update(role="user", state="end_turn", model_visible=False)
         else:
-            message.update(role="assistant", thinking="", events=[], partial=False)
+            message.update(message_id=run, role="assistant", thinking="", events=[], partial=False)
+            run = None
         messages.append(message)
     return messages
 
