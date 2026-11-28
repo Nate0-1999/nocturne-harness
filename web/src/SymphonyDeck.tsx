@@ -226,7 +226,6 @@ export function SymphonyDeck() {
     )}`
   }
   const cards = useMemo(() => proposedResponseCards(snapshot).filter((card) => !seen.has(card.proposal_run_id)), [snapshot, seen])
-  const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
   const waiting = selected?.activeRun?.state === 'waiting_gate' ? selected.activeRun.run_id : null
   const boundaries = (selected?.messages ?? []).flatMap((message) => (
     message.role === 'assistant' ? message.events.filter((event, index, all) => (
@@ -253,6 +252,28 @@ export function SymphonyDeck() {
   const [opening, setOpening] = useState(false)
   const timer = useRef<number | null>(null)
   const visibleCards = cards.filter((card) => !locallyFired.has(card.proposal_run_id))
+  const lessonIds = useMemo(() => new Set(stacks.flatMap(stack => stack.evidence.flatMap(entry =>
+    Array.isArray(entry.queue_cards) ? entry.queue_cards.map(card => record(card)?.item_uid) : [],
+  )).filter((id): id is string => typeof id === 'string')), [stacks])
+  const [pendingLessons, setPendingLessons] = useState<string[] | null>(null)
+  useEffect(() => {
+    if (!lessonIds.size) return
+    let active = true
+    let timer: ReturnType<typeof setTimeout>
+    async function refresh() {
+      try {
+        const result = await events.dispatch({ type: 'queue.load', birthplace: 'symphony' })
+        const queue = record(result)?.cards
+        if (active && Array.isArray(queue)) setPendingLessons(queue.map(card => record(card)?.item_uid)
+          .filter((id): id is string => typeof id === 'string'))
+      } catch { if (active) setPendingLessons(null) }
+      if (active) timer = setTimeout(refresh, 5000)
+    }
+    void refresh()
+    return () => { active = false; clearTimeout(timer) }
+  }, [events, lessonIds])
+  const waitingCards = visibleCards.length + boundaries.length
+  const totalCards = waitingCards + stacks.length
 
   useEffect(() => () => {
     if (timer.current !== null) globalThis.clearTimeout(timer.current)
@@ -332,7 +353,7 @@ export function SymphonyDeck() {
     <section className="symphony-deck" data-testid="symphony-deck">
       <header className="symphony-deck__header">
         <div><p>Conductor channel</p><h1>The Deck</h1></div>
-        <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
+        <span>{deckCount(stacks, waitingCards, lessonIds, pendingLessons)}</span>
       </header>
       <p className="symphony-deck__rule" title="The longest-waiting reply stays first. Browse freely; steer the conductor here. Workers are never directly addressable.">Reply to steer the conductor.</p>
       {boundaries.map((card) => (
@@ -361,7 +382,7 @@ export function SymphonyDeck() {
         </article>
       ))}
       {visibleCards.length === 0 ? (
-        <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
+        totalCards === 0 && <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
       ) : (
         <div className="deck-proposal-queue" data-testid="deck-proposal-queue">
           {visibleCards.map((card, index) => (
@@ -476,6 +497,35 @@ function ProposedResponseCardView({
   )
 }
 
+export function deckCount(stacks: Pick<DeckStack, 'state'>[], waiting: number, lessonIds: Set<string>, pending: string[] | null) {
+  const count = stacks.length + waiting
+  const parts = [`${count} ${count === 1 ? 'card' : 'cards'}`]
+  if (waiting) parts.push(`${waiting} waiting`)
+  for (const state of ['running', 'blocked', 'completed'] as const) {
+    const amount = stacks.filter(stack => stack.state === state).length
+    if (amount) parts.push(`${amount} ${state === 'running' ? 'live' : state}`)
+  }
+  if (lessonIds.size && pending === null) parts.push('Lesson count unavailable')
+  const lessons = pending?.filter(id => lessonIds.has(id)).length
+  if (lessons) parts.push(`${lessons} ${lessons === 1 ? 'lesson' : 'lessons'} waiting`)
+  return parts.join(' · ')
+}
+
+export function deckEvidence(entries: DeckStack['evidence']): DeckStack['evidence'] {
+  const seen = new Set<string>()
+  return entries.flatMap(entry => {
+    if (!Array.isArray(entry.verdicts)) return [entry]
+    const verdicts = entry.verdicts.filter(value => {
+      const id = record(value)?.judge_session_id
+      if (typeof id !== 'string') return true
+      if (seen.has(id)) return false
+      seen.add(id)
+      return true
+    })
+    return verdicts.length ? [{ ...entry, verdicts }] : []
+  })
+}
+
 function DeckStackCard({ stack }: { stack: DeckStack }) {
   const { events } = useRackPlugin()
   const running = stack.attempts.filter((attempt) => attempt.state === 'running')
@@ -576,8 +626,16 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
       <SymphonyFeedback stack={stack} />
-      {stack.evidence.map((entry, index) => (
-        <details key={index}>
+      {deckEvidence(stack.evidence).map((entry, index) => (
+        typeof entry.worker_id === 'string' && typeof entry.location === 'string' ? <details key={index}>
+          <summary>Worker evidence · {String(entry.attempt_id)}</summary>
+          <dl className="deck-lineage">
+            <div><dt>Folder</dt><dd>{entry.location}</dd></div>
+            <div><dt>Model policy</dt><dd>{String(entry.model_policy)}</dd></div>
+            <div><dt>Process</dt><dd>{String(entry.pid)}</dd></div>
+            <div><dt>Accepted commit</dt><dd>{String(entry.accepted_commit)}</dd></div>
+          </dl>
+        </details> : <details key={index}>
           <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>
           {Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
             const verdict = record(value)
