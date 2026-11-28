@@ -1,7 +1,10 @@
 """Project T3's private provider inventory into the conversation source contract (A-095)."""
 
+import asyncio
 import hashlib
+import json
 import re
+import subprocess
 from datetime import UTC, datetime
 
 from harness.t3_client import T3Error
@@ -156,3 +159,88 @@ async def resolve_offer(server, requested):
         if requested in (key, f"subscription:{source['tool']}/{model['id']}"):
             return key, source, model
     raise T3Error("This tool, account and model are unavailable on the signed-in subscription.")
+
+
+async def subscription_window(server, tool, slug) -> int:
+    """Ask only for metadata, after the private server confirms the signed-in offer."""
+    client = await server.client()
+    binary = server._settings()["providerInstances"][tool]["config"]["binaryPath"]
+    args = [binary]
+    request = ""
+    if tool == "codex":
+        args += ["debug", "models"]
+    else:
+        args += [
+            "-p",
+            "--no-session-persistence",
+            "--model",
+            slug,
+            "--tools",
+            "",
+            "--strict-mcp-config",
+            "--mcp-config",
+            '{"mcpServers":{}}',
+            "--setting-sources",
+            "",
+            "--input-format",
+            "stream-json",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+        ]
+        request = (
+            json.dumps(
+                {
+                    "type": "control_request",
+                    "request_id": "window",
+                    "request": {"subtype": "get_context_usage"},
+                }
+            )
+            + "\n"
+        )
+    try:
+        result = await asyncio.to_thread(
+            subprocess.run,
+            args,
+            input=request,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            timeout=20,
+            cwd=client.native_env["TMPDIR"],
+            env={
+                **client.native_env,
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+                "DISABLE_AUTOUPDATER": "1",
+                "DISABLE_TELEMETRY": "1",
+            },
+        )
+        if tool == "codex":
+            window = next(
+                (
+                    m.get("context_window")
+                    for m in json.loads(result.stdout)["models"]
+                    if m.get("slug") == slug
+                ),
+                None,
+            )
+        else:
+            window = None
+            for line in result.stdout.splitlines():
+                frame = json.loads(line)
+                response = frame.get("response") or {}
+                if (
+                    frame.get("type") == "control_response"
+                    and response.get("request_id") == "window"
+                    and response.get("subtype") == "success"
+                ):
+                    usage = response["response"]
+                    if usage.get("model") == slug:
+                        window = usage.get("maxTokens")
+                    break
+        if type(window) is int and window > 0:
+            return window
+    except (OSError, subprocess.SubprocessError, ValueError, AttributeError, KeyError, TypeError):
+        pass
+    raise T3Error("The tool did not report a context size for this model. Choose another model.")

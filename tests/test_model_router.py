@@ -252,3 +252,77 @@ async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_t
     with pytest.raises(NamedModelResolutionError):
         await resolver.resolve_named("thread", "openai:not-listed")
     assert len(seen) == 2  # the miss refetched once
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tool,plan", [("codex", "chatgpt"), ("claudeAgent", "pro")])
+async def test_stock_subscription_choice_uses_the_offered_models_window(
+    tmp_path, monkeypatch, tool, plan
+):
+    """A-095: a stock verification home must resolve a listed native model before its first turn."""
+    import json
+    import secrets
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, Mock
+    from uuid import uuid4
+
+    from harness import onboarding
+
+    monkeypatch.delenv("MODEL_CONTEXT_TOKENS", raising=False)
+    monkeypatch.setattr(onboarding, "_discover_cloud_palace", lambda *_: None)
+    monkeypatch.setattr(onboarding, "_ensure_tool_runtimes", lambda *_args, **_kwargs: None)
+    onboarding.init_nocturne(
+        home=tmp_path,
+        verification=True,
+        environ={"OPENROUTER_API_KEY": "fixture"},
+        prompt=lambda _: "n",
+    )
+    environment = onboarding.load_config(home=tmp_path).process_environment({})
+    assert "MODEL_CONTEXT_TOKENS" not in environment
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    router = CompletionRouter(HarnessSettings(_env_file=None))
+    slug = uuid4().hex
+    window = secrets.randbits(20) + 1
+    provider = {
+        "instanceId": tool,
+        "status": "ready",
+        "models": [{"slug": slug}],
+        "auth": {"status": "authenticated", "type": plan, "profileId": "fixture"},
+    }
+    client = SimpleNamespace(
+        call=AsyncMock(return_value={"providers": [provider]}), native_env={"TMPDIR": str(tmp_path)}
+    )
+    server = Mock()
+    server.client = AsyncMock(return_value=client)
+    server._settings.return_value = {"providerInstances": {tool: {"config": {"binaryPath": tool}}}}
+    router.subscription_server = server
+
+    def native(args, **kwargs):
+        if tool == "codex":
+            assert args[1:] == ["debug", "models"]
+            output = {"models": [{"slug": slug, "context_window": window}]}
+        else:
+            assert args[args.index("--model") + 1] == slug
+            request = json.loads(kwargs["input"])
+            assert request["request"] == {"subtype": "get_context_usage"}
+            output = {
+                "type": "control_response",
+                "response": {
+                    "request_id": request["request_id"],
+                    "subtype": "success",
+                    "response": {"model": slug, "maxTokens": window},
+                },
+            }
+        return SimpleNamespace(stdout=json.dumps(output))
+
+    monkeypatch.setattr("subprocess.run", native)
+    resolver = ModelPolicyResolver(
+        policy=router.settings.effective_model_policy_chat,
+        static_model=router.settings.chat_model,
+        static_context_tokens=router.settings.model_context_tokens,
+        catalog=router.catalog,
+    )
+    selected = await resolver.resolve_named("thread", f"subscription:{tool}/{slug}")
+    assert selected.context_tokens == window
+    assert selected.model.endswith(f"/{slug}")

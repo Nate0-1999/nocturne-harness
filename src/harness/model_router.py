@@ -36,7 +36,7 @@ from harness.openrouter_runtime import PreservingOpenRouterModel
 from harness.spend_walls import SpendWallModel
 from harness.t3_client import T3Error
 from harness.t3_server import T3Server
-from harness.t3_sources import resolve_offer
+from harness.t3_sources import resolve_offer, subscription_window
 
 
 class ModelConfigurationError(ValueError):
@@ -410,14 +410,14 @@ class CompletionRouter:
     async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
         if model.startswith("subscription:") and self.subscription_server is not None:
             try:
-                key, _, offered = await resolve_offer(self.subscription_server, model)
+                key, source, offered = await resolve_offer(self.subscription_server, model)
+                window = await subscription_window(
+                    self.subscription_server, source["tool"], offered["id"]
+                )
             except T3Error as exc:
                 raise NamedModelResolutionError(str(exc)) from None
-            # T3 publishes no window. Use the configured Nocturne memory budget internally.
             levels = (offered.get("thinking") or {}).get("levels", [])
-            return ModelRoute(
-                key, self.settings.model_context_tokens, effort_levels=tuple(levels)
-            ), datetime.now(UTC)
+            return ModelRoute(key, window, effort_levels=tuple(levels)), datetime.now(UTC)
         if model.startswith("local:"):
             return await self.local.load_named_route(model)
         remote = self.remote_catalog
