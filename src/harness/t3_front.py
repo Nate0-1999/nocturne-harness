@@ -14,7 +14,7 @@ import httpx
 
 from harness.envelope import StopReason
 from harness.t3_client import TERMINAL, T3Client, T3Error, new_id
-from harness.t3_front_session import FrontSession
+from harness.t3_front_session import FrontSession, unsubmitted_messages
 from harness.t3_passthrough import T3PassThrough
 from harness.t3_server import T3Server
 
@@ -78,7 +78,10 @@ class FrontServer(T3Server):
             parent = self.root if len(os.fsencode(self.root)) < 78 else None
             self.directory = tempfile.TemporaryDirectory(prefix="nt3-", dir=parent)
             self.socket_path = Path(self.directory.name) / "agent"
-            self.listener = await asyncio.start_unix_server(self._session, path=self.socket_path)
+            # T3 sends base64 image blocks on one ACP line, including files above our 5 MiB limit.
+            self.listener = await asyncio.start_unix_server(
+                self._session, path=self.socket_path, limit=16 * 1024 * 1024
+            )
         return await super()._start()
 
     async def _session(self, reader, writer):
@@ -237,10 +240,12 @@ class FrontServer(T3Server):
         if any(r["status"] not in TERMINAL for r in projection["runs"]):
             return False
         transcript = await client.orchestration_get(f"threads/{quote(native, safe='')}/transcript")
+        skipped = unsubmitted_messages(projection, self.journal.front_prompts(row.thread_id))
         visible = [
             row["item"]["text"]
             for row in transcript["items"]
             if row["item"]["type"] == "user_message"
+            and row["item"].get("messageId") not in skipped
         ]
         title = projection["thread"]["title"]
         if visible != [m["content"] for m in users[: len(visible)]]:

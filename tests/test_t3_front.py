@@ -269,7 +269,11 @@ async def test_sync_continues_from_full_transcript_when_projection_drops_old_tur
         for i in range(12)
     ]
     history = SimpleNamespace(messages=[*users, {"role": "assistant"}])
-    journal = SimpleNamespace(current_thread=lambda _: history, front_thread=lambda *_: "thread")
+    journal = SimpleNamespace(
+        current_thread=lambda _: history,
+        front_thread=lambda *_: "thread",
+        front_prompts=lambda _: {},
+    )
     previous = [dict(role="user", text=m["content"]) for m in users[:-1]]
     client = SimpleNamespace(
         environment_id="env",
@@ -314,3 +318,123 @@ def test_a_thread_born_in_t3_is_the_open_thread_only_once_the_journal_holds_it(t
     assert front.open_thread() is None  # a journal thread with no T3 window is not T3's thread
     journal.bind_front_window("ours", "env")
     assert front.open_thread() == "ours"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["image", "file", "damaged", "multiple"])
+async def test_paperclip_preserves_image_bytes_or_explains_the_refusal(tmp_path, kind):
+    """P4 / FL-070: files from T3 must not disappear into a text-only paid turn."""
+    import base64
+
+    data = b"GIF89a" + bytes(range(256)) * 220
+    block = {"type": "image", "mimeType": "image/gif", "data": base64.b64encode(data).decode()}
+    files = [{"type": "image", "mimeType": "image/gif", "sizeBytes": len(data)}]
+    blocks = [{"type": "text", "text": "T3 instructions"}, block]
+    if kind == "file":
+        files = [{"type": "file", "mimeType": "text/plain"}]
+        blocks.pop()
+    elif kind == "damaged":
+        block["data"] = "AA=="
+    elif kind == "multiple":
+        files *= 2
+        blocks.append(block)
+    run = dict(status="running", providerInstanceId="nocturne", userMessageId="current")
+    message = dict(role="user", id="current", text="Describe this", attachments=files)
+    client = SimpleNamespace(
+        environment_id="env",
+        call=AsyncMock(return_value=dict(thread={}, runs=[run], messages=[message])),
+        orchestration_get=AsyncMock(
+            return_value={"items": [{"item": {"type": "user_message", "messageId": "current"}}]}
+        ),
+    )
+    loop = AsyncMock()
+
+    async def snapshot(thread, sink, **kwargs):
+        await sink(SimpleNamespace(payload=SimpleNamespace(messages=[])))
+
+    async def submit(**kwargs):
+        await kwargs["sink"](
+            SimpleNamespace(
+                type="run.done", payload=SimpleNamespace(run_id="run", stop_reason="end_turn")
+            )
+        )
+        return "run"
+
+    loop.request_snapshot.side_effect = snapshot
+    loop.submit.side_effect = submit
+    journal = TranscriptJournal(tmp_path)
+    session = FrontSession(
+        SimpleNamespace(journal=journal, loop=loop, client=AsyncMock(return_value=client)),
+        "native",
+        None,
+        None,
+    )
+    session.session, session.cwd = "thread", tmp_path
+    session.send, session.text = AsyncMock(), AsyncMock()
+    await session.prompt(7, blocks)
+    session.send.assert_awaited_once_with(id=7, result={"stopReason": "end_turn"})
+    if kind == "image":
+        sent = loop.submit.await_args.kwargs
+        assert sent["prompt"] == "Describe this"
+        assert sent["image"].decoded_bytes() == data
+    else:
+        loop.submit.assert_not_awaited()
+        assert "image" in session.text.await_args.args[0].lower()
+
+
+@pytest.mark.asyncio
+async def test_rejected_unbound_attachment_does_not_hide_a_rewound_turn(tmp_path):
+    """P4 / FL-070 / FL-076: resending after a failed start must preserve branch ancestry."""
+    journal = TranscriptJournal(tmp_path)
+    ids = ["rejected", "later"]
+    items = [{"item": {"type": "user_message", "messageId": key}} for key in ids]
+    client = SimpleNamespace(orchestration_get=AsyncMock(return_value={"items": items}))
+    projection = {
+        "thread": {},
+        "runs": [{"userMessageId": "rejected", "status": "failed"}],
+        "messages": [{"id": "rejected", "attachments": [{"type": "file"}]}],
+    }
+    session = FrontSession(SimpleNamespace(journal=journal), "native", None, None)
+    session.thread = "thread"
+    assert await session.admission_reason(client, projection, "later") is None
+    bound = journal.bind_front_prompt("thread", "env", "native", "rejected")
+    journal.append_message(
+        "thread", dict(role="user", message_id=bound, content="old"), parent_id=None
+    )
+    journal.rewind("thread", None)
+    assert "history changed" in await session.admission_reason(client, projection, "later")
+
+
+@pytest.mark.asyncio
+async def test_fresh_acp_sessions_resume_the_same_journal_even_before_first_accept(tmp_path):
+    """P4 / FL-070 / A-104: T3 rejects a recovery session with the old ID after a failed send."""
+    import asyncio
+    import json
+    from unittest.mock import Mock
+
+    front = SimpleNamespace(
+        journal=TranscriptJournal(tmp_path),
+        client=AsyncMock(return_value=SimpleNamespace(environment_id="env")),
+    )
+
+    async def exchange(method, **params):
+        reader = asyncio.StreamReader()
+        writer = Mock(drain=AsyncMock())
+        session = FrontSession(front, "native", reader, writer)
+        for rid, name, args in [
+            (1, "initialize", {}),
+            (2, method, {"cwd": str(tmp_path), **params}),
+        ]:
+            reader.feed_data(json.dumps(dict(id=rid, method=name, params=args)).encode() + b"\n")
+        reader.feed_eof()
+        await session.serve()
+        frames = [json.loads(c.args[0]) for c in writer.write.call_args_list]
+        assert frames[0]["result"]["agentCapabilities"]["promptCapabilities"]["image"]
+        assert "result" in next(f for f in frames if f.get("id") == 2)
+        return session
+
+    first = await exchange("session/new")
+    replacement = await exchange("session/new")
+    restored = await exchange("session/load", sessionId=replacement.session)
+    assert replacement.session != first.session
+    assert first.thread == replacement.thread == restored.thread

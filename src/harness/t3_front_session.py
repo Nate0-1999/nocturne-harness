@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import quote
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
-from harness.envelope import StopReason
+from harness.envelope import ImageInput, StopReason
 from harness.project_path import repository_root
 from harness.t3_client import T3Error
 
@@ -17,6 +17,35 @@ MODELS = {
     }
 }
 CLEARED = "T3 cleared its own context. Start a new thread in Nocturne for a fresh conversation."
+IMAGE_GUIDE = "Choose one PNG, JPEG, WebP or GIF image, up to 5 MiB."
+
+
+def prompt_image(attachments, blocks):
+    media = [block for block in blocks if block.get("type") != "text"]
+    if not attachments and not media:
+        return None
+    if len(attachments) != 1 or len(media) != 1:
+        raise ValueError(IMAGE_GUIDE)
+    attachment, block = attachments[0], media[0]
+    if (
+        attachment.get("type") != "image"
+        or block.get("type") != "image"
+        or block.get("mimeType") != attachment.get("mimeType")
+    ):
+        raise ValueError(IMAGE_GUIDE)
+    return ImageInput(kind="image", media_type=block.get("mimeType"), data_base64=block.get("data"))
+
+
+def unsubmitted_messages(projection, bindings):
+    # An ACP start failure or a declined attachment can leave a T3 row without a journal turn.
+    candidates = {m["id"] for m in projection.get("messages", ()) if m.get("attachments")} | {
+        r["userMessageId"]
+        for r in projection["runs"]
+        if r["status"] in {"failed", "interrupted", "cancelled"}
+    }
+    return {
+        key for key in candidates if key not in bindings and not key.startswith("nocturne-journal-")
+    }
 
 
 class FrontSession:
@@ -105,6 +134,7 @@ class FrontSession:
                         "protocolVersion": 1,
                         "agentCapabilities": {
                             "loadSession": True,
+                            "promptCapabilities": {"image": True},
                             "sessionCapabilities": {"list": {}},
                         },
                         "authMethods": [],
@@ -130,52 +160,50 @@ class FrontSession:
                 elif method in {"session/new", "session/load"}:
                     self.cwd = Path(params["cwd"]).resolve(strict=True)
                     self.workspace_root = str(self.cwd)
-                    if method == "session/new":
-                        if self.native:
-                            client = await self.front.client()
-                            self.session = str(
-                                uuid5(
-                                    NAMESPACE_URL,
-                                    f"nocturne:t3:{client.environment_id}/{self.native}",
-                                )
+                    journal_id = None
+                    if self.native:
+                        client = await self.front.client()
+                        journal_id = str(
+                            uuid5(
+                                NAMESPACE_URL, f"nocturne:t3:{client.environment_id}/{self.native}"
                             )
-                            existing = self.front.journal.current_thread(self.native)
-                            if (
-                                existing
-                                and self.front.journal.front_thread(
-                                    self.native, client.environment_id
-                                )
-                                == self.native
-                            ):
-                                self.session = self.native
+                        )
+                        if (
+                            self.front.journal.current_thread(self.native) is not None
+                            and self.front.journal.front_thread(self.native, client.environment_id)
+                            == self.native
+                        ):
+                            journal_id = self.native
+                    if method == "session/new":
+                        self.thread = journal_id
+                        self.session = str(uuid4())
+                        if journal_id:
+                            self.session = f"{journal_id}/{self.session}"
+                            existing = self.front.journal.current_thread(journal_id)
+                            if existing:
                                 self.workspace_root = existing.workspace_root
-                        else:
-                            self.session = str(uuid4())
                         result = {**MODELS, "sessionId": self.session}
                     else:
-                        transcript = self.front.journal.current_thread(params["sessionId"])
-                        if (
-                            transcript is None
-                            and self.native
-                            and params["sessionId"] == self.native
-                        ):
-                            client = await self.front.client()
-                            key = str(
-                                uuid5(
-                                    NAMESPACE_URL,
-                                    f"nocturne:t3:{client.environment_id}/{self.native}",
-                                )
+                        requested = params["sessionId"]
+                        belongs = journal_id is not None and (
+                            requested in {self.native, journal_id}
+                            or requested.startswith(journal_id + "/")
+                        )
+                        key = journal_id if belongs else requested
+                        transcript = self.front.journal.current_thread(key)
+                        if (belongs and transcript is None) or (
+                            transcript is not None
+                            and (
+                                not transcript.workspace_root
+                                or Path(transcript.workspace_root)
+                                in {self.cwd, repository_root(self.cwd)}
                             )
-                            transcript = self.front.journal.current_thread(key)
-                        if transcript is not None and (
-                            not transcript.workspace_root
-                            or Path(transcript.workspace_root)
-                            in {self.cwd, repository_root(self.cwd)}
                         ):
-                            self.thread = transcript.thread_id
-                            self.session = params["sessionId"]
-                            self.workspace_root = transcript.workspace_root
-                            for item in transcript.messages:
+                            self.thread = key
+                            self.session = requested
+                            if transcript:
+                                self.workspace_root = transcript.workspace_root
+                            for item in transcript.messages if transcript else ():
                                 role = item["role"]
                                 if role in {"user", "assistant"} and item.get("content"):
                                     await self.update(
@@ -258,11 +286,13 @@ class FrontSession:
             return "This message has not appeared in T3’s transcript. Open the thread in Nocturne."
         journal = self.front.journal
         bindings = journal.front_prompts(self.thread)
+        skipped = unsubmitted_messages(projection, bindings)
         previous = [
             key.removeprefix("nocturne-journal-")
             if key.startswith("nocturne-journal-")
             else bindings.get(key)
             for key in native_ids
+            if key not in skipped
         ]
         history = journal.current_thread(self.thread)
         active = (
@@ -301,13 +331,8 @@ class FrontSession:
         events = asyncio.Queue()
         sink = events.put
         try:
-            if (
-                not self.native
-                or self.cwd is None
-                or not blocks
-                or any(block.get("type") != "text" for block in blocks)
-            ):
-                raise T3Error("Open a project conversation and send a text prompt.")
+            if not self.native or self.cwd is None or not blocks:
+                raise T3Error("Open a project conversation and send a prompt.")
             client = await self.front.client()
             projection = await client.call(
                 "orchestration.getThreadProjection", {"threadId": self.native}
@@ -330,8 +355,8 @@ class FrontSession:
             self.native_run = runs[0].get("id")
             self.turn_client = client
             message = next(m for m in projection["messages"] if m["id"] == message_id)
-            if message["role"] != "user" or message.get("attachments"):
-                raise T3Error("This Nocturne conversation accepts text prompts.")
+            if message["role"] != "user":
+                raise T3Error("T3 could not match the user message for this turn.")
             replay = message_id.startswith("nocturne-journal-")
             if replay:
                 # Display an existing answer without selecting a thread or creating a model run.
@@ -344,6 +369,13 @@ class FrontSession:
                 reason = await self.admission_reason(client, projection, message_id)
                 if reason:
                     return await self.refuse(rid, reason)
+                try:
+                    image = prompt_image(message.get("attachments", []), blocks)
+                except ValueError:
+                    # The explanation completes the ACP exchange without starting a model turn.
+                    await self.text(IMAGE_GUIDE)
+                    await self.send(id=rid, result={"stopReason": "end_turn"})
+                    return
                 await loop.request_snapshot(self.thread, sink, workspace_root=self.workspace_root)
                 messages = (await events.get()).payload.messages
                 prompt_id = self.front.journal.bind_front_prompt(
@@ -372,7 +404,11 @@ class FrontSession:
                     raise T3Error(f"The Nocturne journal records this turn as {state}.")
                 raise T3Error("Nocturne already accepted this turn. Open its journal to review it.")
             self.run = await loop.submit(
-                thread_id=self.thread, prompt_id=prompt_id, prompt=message["text"], sink=sink
+                thread_id=self.thread,
+                prompt_id=prompt_id,
+                prompt=message["text"],
+                image=image,
+                sink=sink,
             )
             self.events = events
             if self.superseded:
