@@ -1602,7 +1602,7 @@ def create_dev_app(
                 ):
                     raise ValueError("This model is banned. Lift its ban in model settings.")
                 if role != "curator" and parsed.kind == "pinned":
-                    completion_router.model_for(str(parsed.value))
+                    completion_router.model_for(str(parsed.value), require_locations=True)
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
             if role == "curator":

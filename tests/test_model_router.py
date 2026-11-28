@@ -252,3 +252,47 @@ async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_t
     with pytest.raises(NamedModelResolutionError):
         await resolver.resolve_named("thread", "openai:not-listed")
     assert len(seen) == 2  # the miss refetched once
+
+
+@pytest.mark.asyncio
+async def test_anthropic_only_home_can_act_on_unscored_source_guidance(tmp_path, monkeypatch):
+    """SPEC C.5 / SD-100: the reconnect message traps a new home with a reachable direct
+    provider. The named picker must actually offer a model that the home can select."""
+    import httpx2
+    from spine.model_policy import ModelCatalogUnavailable
+
+    async def reply(client, request, **kwargs):
+        assert request.url.path == "/v1/models"
+        return httpx2.Response(
+            200,
+            request=request,
+            json={
+                "data": [
+                    {
+                        "type": "model",
+                        "id": "example",
+                        "display_name": "Example",
+                        "created_at": "2026-01-01T00:00:00Z",
+                        "max_input_tokens": 4096,
+                    }
+                ],
+                "has_more": False,
+                "first_id": "example",
+                "last_id": "example",
+            },
+        )
+
+    monkeypatch.setattr(httpx2.AsyncClient, "send", reply)
+    configured = settings(nocturne_home=tmp_path, anthropic_api_key=SecretStr("example"))
+    router = CompletionRouter(configured)
+    resolver = ModelPolicyResolver(
+        policy="elbow",
+        static_model=None,
+        static_context_tokens=None,
+        catalog=router,
+        choices=configured.model_choices,
+    )
+    with pytest.raises(ModelCatalogUnavailable, match="Pick a model in the Model Device"):
+        await resolver.resolve("new")
+    picked = await resolver.resolve_named("new", "anthropic:example")
+    assert (picked.model, picked.context_tokens) == ("anthropic:example", 4096)

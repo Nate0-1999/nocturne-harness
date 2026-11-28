@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from typing import Any, override
 
@@ -17,6 +17,7 @@ from pydantic_ai.models.openrouter import (
 )
 from pydantic_ai.settings import ModelSettings
 from spine.model_countries import HomeCountries
+from spine.model_policy import ModelCatalogUnavailable
 
 
 class PreservingOpenRouterStreamedResponse(OpenRouterStreamedResponse):
@@ -53,6 +54,14 @@ class PreservingOpenRouterModel(OpenRouterModel):
     """Use the metadata-preserving stream wrapper for every Harness OpenRouter route."""
 
     countries: HomeCountries | None = None
+    load_countries: Callable[[list[str]], Awaitable[None]] | None = None
+
+    async def _refresh_locations(self) -> None:
+        if self.countries and self.countries.filters().serving.countries and self.load_countries:
+            try:
+                await self.load_countries([self.model_name])
+            except ModelCatalogUnavailable as exc:
+                raise ModelAPIError(self.model_name, str(exc)) from exc
 
     @override
     def prepare_request(
@@ -83,6 +92,7 @@ class PreservingOpenRouterModel(OpenRouterModel):
 
     @override
     async def request(self, *args: Any, **kwargs: Any):  # type: ignore[no-untyped-def]
+        await self._refresh_locations()
         started = time.monotonic()
         try:
             return await super().request(*args, **kwargs)
@@ -94,6 +104,7 @@ class PreservingOpenRouterModel(OpenRouterModel):
     @override
     @asynccontextmanager
     async def request_stream(self, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
+        await self._refresh_locations()
         started = time.monotonic()
         try:
             async with super().request_stream(*args, **kwargs) as response:

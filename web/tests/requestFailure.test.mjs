@@ -7,6 +7,7 @@ test('the conversation displays the authored country and direct-source guidance'
   for (const sentence of [
     'No allowed provider serves this model. Change the filters or pick another model.',
     'A provider is missing location details. Select “Keep unknown provider countries” to allow it.',
+    'Provider locations could not be refreshed. Try again.',
     'Maker country FR is excluded.', 'Maker country is unknown.', 'Provider country is unknown.',
     'This source lists models without scores. Pick a model in the Model Device.',
   ]) assert.equal(serverMessage(sentence, 'Check the connection.'), sentence)

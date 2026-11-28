@@ -139,3 +139,101 @@ async def test_filtered_request_keeps_only_providers_with_eligible_locations(tmp
     )
     with pytest.raises(ModelAPIError, match="No allowed provider serves this model"):
         routing()
+
+
+@pytest.mark.asyncio
+async def test_resolved_conversation_refreshes_expired_provider_locations(tmp_path, monkeypatch):
+    """SPEC C.5 / SD-100: a retained conversation refreshes aged fleet data before dispatch;
+    a failed refresh must not send a completion or masquerade as an empty provider list."""
+    import json
+    import sqlite3
+
+    import httpx
+    from pydantic import SecretStr
+    from pydantic_ai.exceptions import ModelAPIError
+    from spine.model_countries import CountryFilters
+    from spine.model_policy import ModelPolicyResolver, OpenRouterCatalogClient
+
+    from harness.config import HarnessSettings
+
+    settings = HarnessSettings(
+        _env_file=None,
+        nocturne_home=tmp_path,
+        openrouter_api_key=SecretStr("example"),
+        spine_token=SecretStr("example"),
+    )
+    router = model_router.CompletionRouter(settings)
+    choices = settings.model_choices
+    choices.countries.save(
+        CountryFilters.model_validate({"serving": {"mode": "allow", "countries": ["FR"]}})
+    )
+    slug = "mistralai/example"
+    provider = "first"
+    destinations = []
+
+    def broker(request):
+        if request.url.path.endswith("/providers"):
+            if not provider:
+                return httpx.Response(503)
+            data = [{"slug": provider, "headquarters": "FR", "datacenters": ["FR"]}]
+        elif request.url.path.endswith(f"/models/{slug}/endpoints"):
+            data = {"endpoints": [{"tag": provider, "status": 0}]}
+        elif request.url.path.endswith("/models"):
+            data = [{"id": slug, "context_length": 4096}]
+        else:
+            assert request.url.path.endswith("/chat/completions")
+            destinations.append(json.loads(request.content)["provider"]["only"])
+            return httpx.Response(
+                200,
+                json={
+                    "id": "example",
+                    "model": slug,
+                    "created": 1,
+                    "object": "chat.completion",
+                    "provider": provider,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "finish_reason": "stop",
+                            "message": {"role": "assistant", "content": "ok"},
+                        }
+                    ],
+                },
+            )
+        return httpx.Response(200, json={"data": data})
+
+    def expire():
+        with sqlite3.connect(choices.countries.path) as db:
+            db.execute("UPDATE country_catalog SET checked=checked-86401")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(broker)) as client:
+        router._openrouter._catalog = OpenRouterCatalogClient("example", http_client=client)
+        await router.load_countries([f"openrouter:{slug}"])
+        assert choices.countries.catalog().models == {slug: ["first"]}
+        monkeypatch.setattr(
+            model_router,
+            "OpenRouterProvider",
+            lambda api_key: OpenRouterProvider(api_key=api_key, http_client=client),
+        )
+        resolver = ModelPolicyResolver(
+            policy=f"pinned:openrouter:{slug}",
+            static_model=None,
+            static_context_tokens=None,
+            catalog=router,
+            choices=choices,
+        )
+        pick = await resolver.resolve("same-thread")
+        agent = Agent(router.model_for(pick.model))
+        first = await agent.run("First turn.")
+        expire()
+        provider = "second"
+        assert await resolver.resolve("same-thread") is pick
+        second = await agent.run("Next turn.", message_history=first.all_messages())
+        assert second.output == "ok"
+        expire()
+        agent = Agent(router.model_for(pick.model))
+        provider = ""
+        with pytest.raises(ModelAPIError, match="Provider locations could not be refreshed"):
+            async with agent.run_stream("Again.", message_history=second.all_messages()):
+                pytest.fail("Refresh failure must precede streaming")
+        assert destinations == [["first"], ["second"]]

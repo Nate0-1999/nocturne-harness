@@ -10,6 +10,8 @@ from datetime import UTC, datetime
 from typing import Any, Protocol, cast
 
 import httpx
+from anthropic import APIError as AnthropicAPIError
+from anthropic import AsyncAnthropic
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.models import Model, infer_model
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -20,7 +22,7 @@ from pydantic_ai.providers.anthropic import AnthropicProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 from pydantic_ai.settings import ModelSettings
-from spine.model_countries import HomeCountries
+from spine.model_countries import LOCATION_REFRESH_FAILED, HomeCountries
 
 from harness.config import HarnessSettings
 from harness.model_policy import (
@@ -95,6 +97,7 @@ class OpenRouterCompletionAdapter:
             settings={"timeout": self._request_timeout_seconds},
         )
         result.countries = self.countries
+        result.load_countries = self.load_countries
         return result
 
     def request_settings(
@@ -169,12 +172,20 @@ class DirectCompletionAdapter:
         self._listing: tuple[float, ModelCatalog] | None = None
 
     @property
-    def catalog_available(self) -> bool:
-        """M3G single-key mode: an OpenAI-compatible source lists its own models (FL-202)."""
+    def _source(self) -> str:
+        if self._settings.chat_model:
+            return self._settings.chat_model.partition(":")[0]
+        return (
+            "anthropic"
+            if self._settings.anthropic_api_key and not self._settings.openai_api_key
+            else "openai"
+        )
 
-        return (self._settings.chat_model or "openai").split(":", 1)[
-            0
-        ] in _OPENAI_PROVIDERS and self._settings.openai_api_key is not None
+    @property
+    def catalog_available(self) -> bool:
+        if self._source == "anthropic":
+            return self._settings.anthropic_api_key is not None
+        return self._source in _OPENAI_PROVIDERS and self._settings.openai_api_key is not None
 
     def accepts(self, model: str) -> bool:
         return not model.startswith(("openrouter:", "local:"))
@@ -209,19 +220,37 @@ class DirectCompletionAdapter:
         # Fresh for a day, like the broker catalog: the chip and browser ask on every render.
         if self._listing is not None and time.monotonic() - self._listing[0] < 24 * 60 * 60:
             return self._listing[1]
-        api_key = _required_secret(self._settings.openai_api_key, "OPENAI_API_KEY")
-        base_url = (self._settings.openai_base_url or "https://api.openai.com/v1").rstrip("/")
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
-                response = await client.get(
-                    f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}
+            if self._source == "anthropic":
+                key = _required_secret(self._settings.anthropic_api_key, "ANTHROPIC_API_KEY")
+                async with AsyncAnthropic(api_key=key, timeout=10.0, max_retries=0) as source:
+                    payload = {
+                        "data": [
+                            {
+                                "id": item.id,
+                                "name": item.display_name,
+                                "context_length": item.max_input_tokens,
+                            }
+                            async for item in source.models.list()
+                            if item.lifecycle != "retired"
+                        ]
+                    }
+            else:
+                api_key = _required_secret(self._settings.openai_api_key, "OPENAI_API_KEY")
+                base_url = (self._settings.openai_base_url or "https://api.openai.com/v1").rstrip(
+                    "/"
                 )
-            response.raise_for_status()
+                async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
+                    response = await client.get(
+                        f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}
+                    )
+                response.raise_for_status()
+                payload = response.json()
             # This adapter sends no reasoning effort, so no model here offers a thinking level.
             listing = tuple(
-                replace(entry, reasoning=False) for entry in parse_model_listing(response.json())
+                replace(entry, reasoning=False) for entry in parse_model_listing(payload)
             )
-        except (httpx.HTTPError, ValueError, ModelCatalogUnavailable) as exc:
+        except (AnthropicAPIError, httpx.HTTPError, ValueError, ModelCatalogUnavailable) as exc:
             raise ModelCatalogUnavailable("the model source's list is unavailable") from exc
         catalog = ModelCatalog(
             rows=(), model_routes={}, fetched_at=datetime.now(UTC), listing=listing
@@ -248,10 +277,10 @@ class DirectCompletionAdapter:
         raise NamedModelResolutionError(f"unknown model: {model_id}")
 
     def qualify_model(self, model_id: str) -> str:
-        return f"{(self._settings.chat_model or 'openai').split(':', 1)[0]}:{model_id}"
+        return f"{self._source}:{model_id}"
 
     def parse_named_model(self, model: str) -> str:
-        provider = (self._settings.chat_model or "openai").split(":", 1)[0]
+        provider = self._source
         if not isinstance(model, str) or not model.startswith(f"{provider}:"):
             raise NamedModelResolutionError(f"model must be a {provider}:<model-id> string")
         return model.removeprefix(f"{provider}:")
@@ -510,7 +539,7 @@ class CompletionRouter:
                 request_parameters=resolution.request_parameters,
             )
 
-    def model_for(self, model: str) -> Model:
+    def model_for(self, model: str, *, require_locations: bool = False) -> Model:
         """Build a model through the first adapter that owns its route."""
 
         if not isinstance(model, str) or not model or model != model.strip():
@@ -519,7 +548,13 @@ class CompletionRouter:
             )
         adapter = self._adapter_for(model)
         if reason := self.settings.model_choices.countries.catalog().assess(model)[0]:
-            raise CountryExcluded(reason)
+            # A broker request can refresh missing locations asynchronously before dispatch.
+            if (
+                require_locations
+                or adapter is not self._openrouter
+                or reason != LOCATION_REFRESH_FAILED
+            ):
+                raise CountryExcluded(reason)
         try:
             return SpendWallModel(adapter.build_model(model))
         except ModelConfigurationError:

@@ -32,6 +32,7 @@ const PUBLIC_MESSAGES = new Set([
   'Provider country is unknown.',
   'No allowed provider serves this model. Change the filters or pick another model.',
   'A provider is missing location details. Select “Keep unknown provider countries” to allow it.',
+  'Provider locations could not be refreshed. Try again.',
   'This source lists models without scores. Pick a model in the Model Device.',
   'The memory service is unavailable. Try again.',
   'The memory service rejected this request. Refresh and try again.',
