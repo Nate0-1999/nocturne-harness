@@ -355,6 +355,7 @@ async def test_subscription_window_survives_native_catalog_changes(
     native, measured, configured, monkeypatch, tmp_path
 ):
     """A-112: a catalog format change must not strand a previously measured conversation."""
+    import asyncio
     import hashlib
     import json
     from types import SimpleNamespace
@@ -414,13 +415,20 @@ async def test_subscription_window_survives_native_catalog_changes(
     )
     if native or measured or configured:
         expected = sizes[0] if native else sizes[1] if measured else sizes[2]
-        for _ in range(3):
-            assert (await resolver.resolve_hydrated("thread", key)).context_tokens == expected
+        assert (await resolver.resolve_hydrated("thread", key)).context_tokens == expected
         if measured and not native:
             assert (await resolver.resolve_named("other", key)).context_tokens == sizes[2]
     else:
-        with pytest.raises(
-            NamedModelResolutionError, match="The tool did not report a context size"
-        ):
-            await resolver.resolve_hydrated("thread", key)
-    query.assert_called_once()
+
+        async def first_choice():
+            with pytest.raises(
+                NamedModelResolutionError, match="The tool did not report a context size"
+            ):
+                await resolver.resolve_hydrated("thread", key)
+
+        await asyncio.gather(first_choice(), first_choice())
+        query.assert_called_once()
+        query.return_value = SimpleNamespace(stdout=json.dumps(catalog))
+        for _ in range(3):
+            assert (await resolver.resolve_hydrated("thread", key)).context_tokens == sizes[0]
+        assert query.call_count == 2

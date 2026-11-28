@@ -418,9 +418,17 @@ class CompletionRouter:
             key, source, offered = await resolve_offer(server, model)
             cache_key = key, source.get("version")
             if cache_key not in self._windows:
-                self._windows[cache_key] = asyncio.create_task(
-                    subscription_window(server, source["tool"], offered["id"])
-                )
+
+                async def lookup():
+                    size = None
+                    try:
+                        size = await subscription_window(server, source["tool"], offered["id"])
+                        return size
+                    finally:
+                        if size is None:
+                            del self._windows[cache_key]
+
+                self._windows[cache_key] = asyncio.create_task(lookup())
             window = await asyncio.shield(self._windows[cache_key])
             if window is None and thread_id and self.subscription_binding:
                 window = await measured_window(server, self.subscription_binding(thread_id), key)
