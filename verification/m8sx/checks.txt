@@ -1,0 +1,19 @@
+M8SX · shell verification on macOS
+
+Harness code head 1a5199e96b947898373026fb8e0139920139cfd9
+Memory code head 937bb1c3a620ba49cb824a087c2c58149b85c8ad
+Independent Git origins:
+  https://github.com/Nate0-1999/nocturne-harness.git
+  https://github.com/Nate0-1999/nocturne-memory.git
+
+Harness pytest: 2043 passed, 4 skipped, 4 contract tests deselected, 1 failed.
+test_worktree_worker_creates_a_folder_and_commits_without_touching_parent:
+  Git 2.54 worktree creation could not write packed-refs.lock inside the shell fence.
+  The suite ran on a dedicated scratch volume with more than 10% free.
+Memory pytest (local PostgreSQL): 358 passed, 2 skipped.
+Web: lint passed; unit 213 passed; production build passed.
+Garden unittest: 38 passed.
+Ruff: both passed. Product rules and test motivations: both passed.
+Harness guard citations passed. Garden check_rules passed.
+Stock resolver test before change: both tool cases raised ValueError: context_tokens must be a positive integer.
+Stock resolver test after change: both passed. Model router and T3 client tests: 25 passed.
