@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "d5a1f1d426d5734f845590d82204c009cd83056f"
+      "head": "448754b24ee2469d7b8f2e8938f4696167f9aa84"
     }
   ],
   "unmapped": {
@@ -259,7 +259,7 @@
       "verdict": "PASS",
       "screenshot": "FL-085.png",
       "flag": "",
-      "observed": "A real Symphony completed on main. Review there offered approval. On release, one commit behind its start, the installed card displayed the refusal and saved branch at both widths. Two approval submissions kept release at its original commit and preserved the judged result."
+      "observed": "On phone and laptop, the installed card brought the judged result into the project after approval. Reviewing at the result and one commit beyond it displayed only “This result is already in the project.” with no question or buttons. The earlier release branch remained at its original commit."
     },
     "FL-098": {
       "label": "The symphony lifecycle shows its human touchpoints, the human prompt and any interjection or steering, so they can be seen.",
