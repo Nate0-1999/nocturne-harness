@@ -117,7 +117,13 @@ def standard_configurations(
         StandardConfiguration("max", *pick(ModelPolicy("max"))[:2]),
         StandardConfiguration("elbow", elbow_model, elbow_reason),
     ]
-    if pinned and not (choices and choices.excluded(choices.bans(), pinned)):
+    if pinned and not (
+        choices
+        and (
+            choices.excluded(choices.bans(), pinned)
+            or choices.countries.catalog().assess(pinned)[0]
+        )
+    ):
         configurations.insert(
             0, StandardConfiguration(f"pinned:{pinned}", pinned, "keeps this model")
         )
@@ -182,10 +188,18 @@ async def browse_models(
     fallback_model: str | None,
     burn: TokenBurn | None = None,
     choices: HomeModelChoices | None = None,
+    country_details: bool = False,
 ) -> dict[str, object]:
     """FL-202's read path: the listing in qualified ids plus the configurations now."""
 
     catalog = await loader.load()
+    location_error = None
+    if country_details and (read_countries := getattr(loader, "load_countries", None)):
+        try:
+            await read_countries([entry.model_id for entry in catalog.listing])
+        except ModelCatalogUnavailable as exc:
+            location_error = str(exc)
+    countries = choices.countries.catalog() if choices else None
     bans = choices.bans() if choices else {}
     if choices:
         catalog = choices.eligible(catalog)
@@ -203,10 +217,12 @@ async def browse_models(
         return None if value is None else format(value.normalize(), "f")
 
     return {
+        "country_error": location_error,
         "fetched_at": catalog.fetched_at.isoformat(),
         "models": [
             {
                 "model": qualify(entry.model_id),
+                **(countries.describe(qualify(entry.model_id)) if countries else {}),
                 "banned_by": choices.ban_target(bans, qualify(entry.model_id)) if choices else None,
                 "name": entry.name,
                 "context_tokens": entry.context_tokens,

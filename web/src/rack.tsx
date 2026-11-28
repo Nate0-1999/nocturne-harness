@@ -5,6 +5,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from 'react'
+import type { CountryFilters } from './modelBrowser'
 
 /* eslint-disable react-refresh/only-export-components -- this file intentionally exports the rack context hooks beside its provider */
 
@@ -102,7 +103,8 @@ export type RackAction =
   | { type: 'jobs.stop'; run_id: string }
   | { type: 'jobs.deliver'; workflow: string; target: string; action: 'push' | 'promote' }
   | { type: 'policies.load' }
-  | { type: 'models.load'; thread_id: string | null; subscriptions?: boolean }
+  | { type: 'models.load'; thread_id: string | null; subscriptions?: boolean; country_details?: boolean }
+  | { type: 'models.countries'; filters: CountryFilters }
   | { type: 'models.local'; url: string | null; model: string | null; when_offline: boolean }
   | { type: 'models.pin'; model: string; pinned: boolean }
   | { type: 'models.ban'; target: string; banned: boolean }
@@ -440,7 +442,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     class: 'control',
     slot: 'overlay',
     streams: ['parameter.change', 'parameter.refused', 'model.change'],
-    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin', 'models.ban', 'models.local',
+    actions: ['parameter.write', 'rack.scope.get', 'rack.scope.set', 'models.load', 'models.pin', 'models.ban', 'models.countries', 'models.local',
       'policies.save'],
     bindings: [
       'model.slug', 'model.temperature', 'model.top_p', 'model.top_k',
@@ -654,12 +656,18 @@ function dispatchRackAction<Action extends RackAction>(
         const query = new URLSearchParams()
         if (action.thread_id !== null) query.set('thread_id', action.thread_id)
         if (action.subscriptions) query.set('subscriptions', 'true')
+        if (action.country_details) query.set('country_details', 'true')
         return fetchJson(query.size ? `/v1/models?${query}` : '/v1/models') as Promise<RackActionResult<Action>>
       }
       case 'models.pin':
         return fetchJson('/v1/model-pins', {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ model: action.model, pinned: action.pinned }),
+        }) as Promise<RackActionResult<Action>>
+      case 'models.countries':
+        return fetchJson('/v1/model-countries', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(action.filters),
         }) as Promise<RackActionResult<Action>>
       case 'models.ban':
         return fetchJson('/v1/model-bans', {

@@ -27,6 +27,7 @@ from fastapi import (
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from spine.model_countries import CountryFilters
 
 from harness import __version__
 from harness.agent import HarnessAgent
@@ -66,7 +67,7 @@ from harness.model_policy import (
     measured_token_burn,
     parse_model_policy,
 )
-from harness.model_router import CompletionRouter, ModelConfigurationError
+from harness.model_router import CompletionRouter, CountryExcluded, ModelConfigurationError
 from harness.onboarding import load_config, nocturne_home, set_transcript_backup
 from harness.palace_mirror import LocalCopySnapshot, PalaceMirror
 from harness.parameter_registry import (
@@ -814,7 +815,11 @@ def create_app(
                             send,
                             factory.create(
                                 MessageType.ERROR,
-                                {"code": "model_unavailable", "message": str(exc)},
+                                {
+                                    "code": "model_unavailable",
+                                    "message": str(exc),
+                                    "prompt_id": message.id,
+                                },
                                 thread_id=message.thread_id,
                             ),
                         )
@@ -960,8 +965,14 @@ def create_dev_app(
     """Compose the real H3 agent loop with trusted local M1 run context."""
 
     configured = settings or HarnessSettings()
-    completion_router = CompletionRouter(configured)
     home = (configured.nocturne_home or nocturne_home()).expanduser().resolve()
+    principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
+    if (
+        principal_id.startswith("nocturne-verification-")
+        and home == (Path.home() / ".nocturne").resolve()
+    ):
+        raise ValueError("Verification requires NOCTURNE_HOME to name a disposable folder.")
+    completion_router = CompletionRouter(configured)
     t3 = T3Server(home)
     completion_router.subscription_server = t3
     role_policy_path = home / "model-policies.json"
@@ -997,6 +1008,8 @@ def create_dev_app(
                 if parsed.kind == "pinned":
                     try:
                         completion_router.model_for(str(parsed.value))
+                    except CountryExcluded:
+                        pass  # Preserve the explicit pin so its turn reports the refusal.
                     except ModelConfigurationError as exc:
                         policy_errors[role] = (
                             f"Saved {role} policy is unavailable: {exc}. "
@@ -1014,12 +1027,6 @@ def create_dev_app(
     for role, policy in role_policies.items():
         setattr(configured, f"model_policy_{role}", policy)
     discovery_root = Path.cwd() if seed_discovery_root is None else Path(seed_discovery_root)
-    principal_id = _required_identity(configured.principal_id, "PRINCIPAL_ID")
-    if (
-        principal_id.startswith("nocturne-verification-")
-        and home == (Path.home() / ".nocturne").resolve()
-    ):
-        raise ValueError("Verification requires NOCTURNE_HOME to name a disposable folder.")
     machine_id = _required_identity(configured.machine_id, "MACHINE_ID")
     agent_id = _required_identity(configured.agent_id, "AGENT_ID")
     owned_spine = spine
@@ -1595,7 +1602,7 @@ def create_dev_app(
                 ):
                     raise ValueError("This model is banned. Lift its ban in model settings.")
                 if role != "curator" and parsed.kind == "pinned":
-                    completion_router.model_for(str(parsed.value))
+                    completion_router.model_for(str(parsed.value), require_locations=True)
             except ValueError as exc:
                 raise HTTPException(422, str(exc)) from exc
             if role == "curator":
@@ -1632,7 +1639,9 @@ def create_dev_app(
                 raise HTTPException(503, str(exc)) from None
 
         @app.get("/v1/models")
-        async def model_browser(thread_id: str | None = None, subscriptions: bool = False):
+        async def model_browser(
+            thread_id: str | None = None, subscriptions: bool = False, country_details: bool = False
+        ):
             """FL-202: the token source's models, the owner's pins, the four policies now."""
             catalog = completion_router.catalog
             active_policy = (
@@ -1669,6 +1678,7 @@ def create_dev_app(
                             else current["model"]
                         ),
                         fallback_model=configured.chat_model,
+                        country_details=country_details,
                         choices=configured.model_choices,
                         burn=await measured_token_burn(owned_spine),
                     )
@@ -1695,6 +1705,8 @@ def create_dev_app(
                 except ModelCatalogUnavailable as exc:
                     browser["unavailable"] = str(exc)
             bans = configured.model_choices.bans()
+            countries = configured.model_choices.countries.catalog()
+            last_pick = configured.model_choices.last(active_policy)
             if subscriptions and t3.binary.is_file() or t3.running:
                 try:
                     native = await sources(t3)
@@ -1722,19 +1734,31 @@ def create_dev_app(
             return {
                 **browser,
                 "bans": bans,
-                "last_pick": configured.model_choices.last(active_policy),
+                "country_filters": countries.filters.model_dump(),
+                "country_options": countries.options(),
+                "last_pick": last_pick
+                if last_pick and not countries.assess(last_pick["model"])[0]
+                else None,
                 "local": {
                     "url": configured.local_model_url,
                     "model": configured.local_model,
                     "when_offline": configured.local_when_offline,
                 },
                 "pins": [
-                    pin for pin in model_pins() if not configured.model_choices.excluded(bans, pin)
+                    pin
+                    for pin in model_pins()
+                    if not configured.model_choices.excluded(bans, pin)
+                    and not countries.assess(pin)[0]
                 ],
                 "chat_policy": active_policy,
                 "requested_policy": role_policies["chat"],
                 "current": current,
             }
+
+        @app.put("/v1/model-countries")
+        async def update_country_filters(body: CountryFilters):
+            configured.model_choices.countries.save(body)
+            return body
 
         @app.put("/v1/model-bans")
         async def update_model_ban(body: ModelBanUpdate):
@@ -1760,6 +1784,8 @@ def create_dev_app(
         async def pin_model(body: ModelPinUpdate):
             pins = [pin for pin in model_pins() if pin != body.model]
             if body.pinned:
+                if reason := configured.model_choices.countries.catalog().assess(body.model)[0]:
+                    raise HTTPException(422, reason)
                 if configured.model_choices.excluded(configured.model_choices.bans(), body.model):
                     raise HTTPException(
                         422, "This model is banned. Lift its ban in model settings."

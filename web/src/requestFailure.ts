@@ -28,6 +28,12 @@ const PUBLIC_MESSAGES = new Set([
   'Memory is unavailable; continuing without injected context.',
   'Memory instrumentation is unavailable.',
   'Memory scoring unavailable',
+  'Maker country is unknown.',
+  'Provider country is unknown.',
+  'No allowed provider serves this model. Change the filters or pick another model.',
+  'A provider is missing location details. Select “Keep unknown provider countries” to allow it.',
+  'Provider locations could not be refreshed. Try again.',
+  'This source lists models without scores. Pick a model in the Model Device.',
   'The memory service is unavailable. Try again.',
   'The memory service rejected this request. Refresh and try again.',
   'The memory service returned an invalid response.',
@@ -86,6 +92,7 @@ const PUBLIC_MESSAGES = new Set([
 export function publicMessage(value: unknown): string | null {
   if (typeof value !== 'string') return null
   if (PUBLIC_MESSAGES.has(value)) return value
+  if (/^Maker country [A-Z]{2} is excluded\.$/.test(value)) return value
   if (/^This thread already belongs to (?:project [^\n]+|unscoped history)\. Start a new thread in project [^\n]+\.$/.test(value)) return value
   // F230: with the Palace down this notice follows the local-copy one in the same run.
   if (/^Answer delivered; \d+ spend receipt line\(s\) are waiting for the ledger \((?:durably on disk|in degraded memory)\)\.$/.test(value)) return value

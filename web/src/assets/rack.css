@@ -996,6 +996,14 @@ button.rack-module__resize-handle--nw {
 .model-bans > div { display: flex; align-items: center; gap: .75rem; padding-block: .35rem; }
 .model-bans select { min-width: 0; max-width: 100%; flex: 1; }
 .model-bans button { flex: none; }
+.model-countries { margin-block: 1rem; }
+.model-countries fieldset { display: grid; gap: .75rem; margin: .5rem 0; padding: 0; border: 0; }
+.model-countries:not([open]) > fieldset { display: none; }
+.model-countries small, .model-row__countries, .model-row__countries strong { display: block; }
+.model-countries fieldset > button { justify-self: start; }
+.country-rule { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
+.model-row__countries { white-space: normal; }
+.model-row__pick:disabled[data-country-excluded] { opacity: 1; color: var(--muted); }
 
 .model-device__truth strong {
   flex: 1 1 16rem;

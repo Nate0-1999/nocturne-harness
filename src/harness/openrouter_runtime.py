@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from typing import Any, override
 
 from openai import APIError, APITimeoutError
 from pydantic_ai.exceptions import ModelAPIError, ModelHTTPError
-from pydantic_ai.models import DEFAULT_HTTP_TIMEOUT
+from pydantic_ai.models import DEFAULT_HTTP_TIMEOUT, ModelRequestParameters
 from pydantic_ai.models.openrouter import (
     OpenRouterModel,
     OpenRouterStreamedResponse,
     _OpenRouterChatCompletionChunk,
 )
+from pydantic_ai.settings import ModelSettings
+from spine.model_countries import HomeCountries
+from spine.model_policy import ModelCatalogUnavailable
 
 
 class PreservingOpenRouterStreamedResponse(OpenRouterStreamedResponse):
@@ -50,6 +53,38 @@ class ModelStalled(ModelAPIError):
 class PreservingOpenRouterModel(OpenRouterModel):
     """Use the metadata-preserving stream wrapper for every Harness OpenRouter route."""
 
+    countries: HomeCountries | None = None
+    load_countries: Callable[[list[str]], Awaitable[None]] | None = None
+
+    async def _refresh_locations(self) -> None:
+        if self.countries and self.countries.filters().serving.countries and self.load_countries:
+            try:
+                await self.load_countries([self.model_name])
+            except ModelCatalogUnavailable as exc:
+                raise ModelAPIError(self.model_name, str(exc)) from exc
+
+    @override
+    def prepare_request(
+        self, model_settings: ModelSettings | None, model_request_parameters: ModelRequestParameters
+    ):
+        settings, parameters = super().prepare_request(model_settings, model_request_parameters)
+        if self.countries:
+            reason, only = self.countries.catalog().assess(f"openrouter:{self.model_name}")
+            if reason:
+                raise ModelAPIError(self.model_name, reason)
+            if only:
+                body = dict((settings or {}).get("extra_body") or {})
+                provider = body.get("provider") or {}
+                if "only" in provider:
+                    only = [slug for slug in provider["only"] if slug.partition("/")[0] in only]
+                    if not only:
+                        raise ModelAPIError(
+                            self.model_name, "No allowed provider serves this model."
+                        )
+                body["provider"] = {**provider, "only": only}
+                settings = {**(settings or {}), "extra_body": body}
+        return settings, parameters
+
     @property
     @override
     def _streamed_response_cls(self):  # type: ignore[no-untyped-def]
@@ -57,6 +92,7 @@ class PreservingOpenRouterModel(OpenRouterModel):
 
     @override
     async def request(self, *args: Any, **kwargs: Any):  # type: ignore[no-untyped-def]
+        await self._refresh_locations()
         started = time.monotonic()
         try:
             return await super().request(*args, **kwargs)
@@ -68,6 +104,7 @@ class PreservingOpenRouterModel(OpenRouterModel):
     @override
     @asynccontextmanager
     async def request_stream(self, *args: Any, **kwargs: Any) -> AsyncIterator[Any]:
+        await self._refresh_locations()
         started = time.monotonic()
         try:
             async with super().request_stream(*args, **kwargs) as response:

@@ -973,6 +973,25 @@ export const useHarnessStore = create<HarnessStoreState>()(
         }
 
         const selectedThreadId = get().selectedThreadId
+        if (event.type === 'error' && envelope.thread_id !== undefined) {
+          const detail = event.payload as { code?: string; prompt_id?: string } | null
+          const threadId = envelope.thread_id
+          const refused = detail?.code === 'model_unavailable'
+            ? get().threads[threadId]?.outboundPrompts.find(item => item.prompt_id === detail.prompt_id)
+            : undefined
+          if (refused) {
+            set(state => ({ threads: replaceThread(state.threads, threadId, thread => ({
+              ...thread,
+              lastError: errorFromPayload(event.payload),
+              outboundPrompts: thread.outboundPrompts.filter(item => item.prompt_id !== refused.prompt_id),
+              messages: [...thread.messages, {
+                role: 'user', state: 'refused', run_id: null, message_id: refused.prompt_id,
+                content: refused.prompt, image: refused.image_view, image_preview_data_url: refused.image_preview_data_url,
+              }],
+            })) }))
+            return false
+          }
+        }
         if (event.type === 'error' && envelope.thread_id === undefined) {
           set({ globalError: errorFromPayload(event.payload) })
           return false

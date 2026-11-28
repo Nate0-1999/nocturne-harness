@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { JsonValue } from './protocol'
+import type { CountryFilters, CountryRule, ListedModel } from './modelBrowser'
 import { RACK_MANIFESTS, useRackPlugin, useRackSnapshot } from './rack'
 import { Button, Select, TextField } from './kit'
 import { formatHumanCount } from './humanNumbers'
@@ -12,6 +13,55 @@ import {
 } from './modelBrowser'
 
 type ParameterValue = string | number | null
+
+const regions = new Intl.DisplayNames(['en'], { type: 'region' })
+function locationList(codes: string[] = [], unknown = false) {
+  return [...codes.map(code => regions.of(code)), ...(unknown || !codes.length ? ['Unknown'] : [])].join(', ')
+}
+
+function ModelCountries({ item }: { item: ListedModel }) {
+  return <small className="model-row__countries">
+    Maker {item.maker_country ? regions.of(item.maker_country) : 'Unknown'} · HQ {locationList(item.headquarters, item.unknown_headquarters)} · Datacenters {locationList(item.datacenters, item.unknown_datacenters)}
+    {item.country_exclusion && <strong>{item.country_exclusion}</strong>}
+  </small>
+}
+
+function CountryControls({ filters, options, models, save }: {
+  filters: CountryFilters; options: string[]; models: ListedModel[]; save: (filters: CountryFilters) => Promise<void>
+}) {
+  const [saving, setSaving] = useState(false)
+  const homeModels = models.filter(item => !item.model.startsWith('subscription:'))
+  const eligible = homeModels.filter(item => !item.country_exclusion).length
+  async function update(key: 'maker' | 'serving', rule: Partial<CountryRule>) {
+    setSaving(true)
+    try { await save({ ...filters, [key]: { ...filters[key], ...rule } }) } finally { setSaving(false) }
+  }
+  return <details className="model-countries">
+    <summary>Country filters · <span aria-live="polite">{eligible} of {homeModels.length} models</span></summary>
+    <fieldset disabled={saving}>
+      <small>Filters cover this home’s non-subscription chat, sub-agents, judges and background calls, and the Palace curator is set separately.</small>
+      {(['maker', 'serving'] as const).map(key => {
+        const label = key === 'maker' ? 'Maker country' : 'Provider countries'
+        const rule = filters[key]
+        return <div key={key}>
+          <strong>{label}</strong>
+          {key === 'serving' && <small>Applies to the provider’s reported headquarters and datacenters.</small>}
+          <div className="country-rule">
+            <Select aria-label={label + ' rule'} value={rule.mode} onChange={e => update(key, { mode: e.target.value as CountryRule['mode'] })}>
+              <option value="allow">Allow only</option><option value="exclude">Exclude</option>
+            </Select>
+            <Select aria-label={label + ' to add'} value="" onChange={e => update(key, { countries: [...rule.countries, e.target.value] })}>
+              <option value="">Add country</option>
+              {options.filter(code => !rule.countries.includes(code)).map(code => <option key={code} value={code}>{regions.of(code)}</option>)}
+            </Select>
+            {rule.countries.map(code => <Button key={code} action="remove" type="button" aria-label={'Remove ' + regions.of(code) + ' from ' + label} onClick={() => update(key, { countries: rule.countries.filter(c => c !== code) })}>{regions.of(code)}</Button>)}
+          </div>
+          <label><input type="checkbox" checked={rule.keep_unknown} onChange={e => { void update(key, { keep_unknown: e.target.checked }) }} /> Keep unknown {key === 'maker' ? 'maker' : 'provider'} countries</label>
+        </div>
+      })}
+    </fieldset>
+  </details>
+}
 
 interface Descriptor {
   id: string
@@ -238,6 +288,8 @@ export function ModelDevice() {
   const [status, setStatus] = useState('Ready')
   const [browser, setBrowser] = useState<ModelBrowser | null>(null)
   const [browserError, setBrowserError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<'models' | 'locations' | null>('models')
+  const browserRead = useRef(0)
   const [search, setSearch] = useState('')
   const [banTarget, setBanTarget] = useState('')
   const [sort, setSort] = useState<SortKey>('rank')
@@ -273,18 +325,35 @@ export function ModelDevice() {
   }, [events])
 
   const liveModel = live?.resolved_model ?? null
-  const loadBrowser = useCallback(async () => {
+  const loadBrowser = useCallback(async (listFirst = false) => {
+    const read = ++browserRead.current
+    setLoading('models')
+    setBrowserError(null)
+    const request = { type: 'models.load' as const, thread_id: threadId, subscriptions: true }
     try {
-      setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId, subscriptions: true })))
-      setBrowserError(null)
+      if (listFirst) {
+        const list = parseBrowser(await events.dispatch(request))
+        if (read !== browserRead.current) return
+        if (!list.models.some(item => item.model.startsWith('openrouter:'))) {
+          setBrowser(list)
+          return
+        }
+        if (!list.country_filters?.serving.countries.length) setBrowser(list)
+        setLoading('locations')
+      }
+      const detailed = parseBrowser(await events.dispatch({ ...request, country_details: true }))
+      if (read !== browserRead.current) return
+      setBrowser(detailed)
     } catch (error) {
-      setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
+      if (read === browserRead.current) setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
+    } finally {
+      if (read === browserRead.current) setLoading(null)
     }
   }, [events, threadId])
 
   useEffect(() => {
-    const timer = globalThis.setTimeout(() => { void loadBrowser() }, 0)
-    return () => globalThis.clearTimeout(timer)
+    const timer = globalThis.setTimeout(() => { void loadBrowser(true) }, 0)
+    return () => { globalThis.clearTimeout(timer); browserRead.current++ }
   }, [loadBrowser, liveModel])
 
   useEffect(() => {
@@ -370,6 +439,11 @@ export function ModelDevice() {
     () => browseOrder(browser?.models ?? [], pins, search, sort),
     [browser?.models, pins, search, sort],
   )
+
+  let listStatus = `${listed.length} models`
+  if (loading === 'models') listStatus = 'Loading models…'
+  else if (loading === 'locations') listStatus = 'Loading provider locations…'
+  else if (browser?.unavailable) listStatus = serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.')
 
   async function pin(model: string, pinned: boolean) {
     try {
@@ -473,6 +547,14 @@ export function ModelDevice() {
           <Button type="button" disabled={!banTarget} onClick={() => { void ban(banTarget, true) }}>Add ban</Button>
         </div>
       </section>}
+      {browser?.country_error && <p role="status">{browser.country_error}</p>}
+      {browser?.country_filters && loading !== 'locations' && <CountryControls filters={browser.country_filters} options={browser.country_options ?? []} models={browser.models} save={async filters => {
+        try {
+          await events.dispatch({ type: 'models.countries', filters })
+          await loadBrowser()
+          setStatus('Country filters saved')
+        } catch (error) { setStatus(failureMessage(error, 'The country filters could not be saved.')) }
+      }} />}
       <div className={subscription ? 'model-panel model-panel--subscription' : 'model-panel'}>
       {/* FL-206: the strategies rail — each one's meaning and the model it picks now; the one in
           force is marked; picking one is the same act as before (policies.save for the chat role). */}
@@ -521,7 +603,7 @@ export function ModelDevice() {
                   model: resolved?.startsWith('local:') ? resolved : browser.local?.model ?? null,
                   when_offline: !browser.local?.when_offline }
                 setBrowser((current) => current === null ? current : { ...current, local })
-                void events.dispatch({ type: 'models.local', ...local }).then(loadBrowser).catch((error) => {
+                void events.dispatch({ type: 'models.local', ...local }).then(() => loadBrowser()).catch((error) => {
                   setBrowserError(failureMessage(error, 'The configuration was not deleted. Try again.')); void loadBrowser()
                 })
               }}
@@ -581,7 +663,7 @@ export function ModelDevice() {
             <option value="price">Price</option>
             <option value="context">Context</option>
           </Select>
-          <span>{browserError ?? (browser?.unavailable ? serverMessage(browser.unavailable, 'The model list could not be loaded. Close this device and open it again.') : `${listed.length} models`)}</span>
+          <span role="status">{browserError ?? listStatus}</span>
         </div>}
         <div className="model-browser__tools">
           <TextField aria-label="Local model server" placeholder="Local server URL (automatic when blank)"
@@ -590,7 +672,7 @@ export function ModelDevice() {
           <Button type="button" onClick={() => { void events.dispatch({
             type: 'models.local', url: (localUrl ?? browser?.local?.url) || null, model: browser?.local?.model ?? null,
             when_offline: browser?.local?.when_offline ?? false,
-          }).then(loadBrowser).catch((error: unknown) => setBrowserError(failureMessage(error, 'Local models could not be found. Start the local model service and try again.'))) }}>Find local models</Button>
+          }).then(() => loadBrowser()).catch((error: unknown) => setBrowserError(failureMessage(error, 'Local models could not be found. Start the local model service and try again.'))) }}>Find local models</Button>
         </div>
         <div className="model-row model-row--head" aria-hidden="true">
           <span>Model</span><span>Score</span><span>$/M in · out</span><span>Context</span><span />
@@ -606,13 +688,16 @@ export function ModelDevice() {
                   type="button"
                   className="model-row__pick"
                   data-model={item.model}
+                  data-country-excluded={item.country_exclusion ? true : undefined}
                   data-tooltip={item.model}
-                  data-tooltip-detail={current ? 'This conversation uses it now.' : item.model.startsWith('subscription:')
-                    ? 'Use this subscription for this conversation.' : 'Use it here and for new conversations, until you change it.'}
-                  disabled={!editable || current || Boolean(item.banned_by)}
+                  data-tooltip-detail={item.country_exclusion || (current ? 'This conversation uses it now.' : item.model.startsWith('subscription:')
+                    ? 'Use this subscription for this conversation.' : 'Use it here and for new conversations, until you change it.')}
+                  disabled={!editable || current || Boolean(item.banned_by || item.country_exclusion)}
                   onClick={() => { void configure({ policy: `pinned:${item.model}`, model: item.model, reason: 'keeps this model' }) }}
                 >
-                  <span className="model-row__name">{item.name}{item.banned_by ? <small> · banned</small> : item.reasoning && <small> · thinks</small>}</span>
+                  <span className="model-row__name">{item.name}{item.banned_by ? <small> · banned</small> : item.reasoning && <small> · thinks</small>}
+                    {loading !== 'locations' && <ModelCountries item={item} />}
+                  </span>
                   <span>{item.score ?? '—'}</span>
                   <span>{formatPrice(item)}</span>
                   <span>{item.context_tokens === null ? '—' : formatHumanCount(item.context_tokens)}</span>
@@ -621,6 +706,7 @@ export function ModelDevice() {
                   type="button"
                   iconOnly
                   action={pinned ? 'unpin' : 'pin'}
+                  disabled={!pinned && Boolean(item.country_exclusion)}
                   aria-pressed={pinned}
                   data-tooltip={pinned ? 'Unpin' : 'Pin model'}
                   data-tooltip-detail={pinned ? 'Return it to its ranked place.' : 'Keep it at the top of this list.'}
