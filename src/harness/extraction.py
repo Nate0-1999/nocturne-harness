@@ -31,6 +31,20 @@ from harness.transcript import TranscriptJournal
 logger = logging.getLogger(__name__)
 
 
+def sourced_candidates(draft: ExtractionDraft, verifying_ids, agent: HarnessAgent):
+    """v2.133: mark claims without a user or tool source before proposing them."""
+    for item in draft.candidates:
+        if (
+            verifying_ids is not None
+            and not verifying_ids.intersection(item.source_message_ids)
+            and not item.body.lower().startswith("unverified")
+        ):
+            item = item.model_copy(
+                update={"body": _within_cap(f"Unverified: {item.body}", agent.memory_max_tokens)}
+            )
+        yield item
+
+
 @dataclass(frozen=True, slots=True)
 class ThreadEndResult:
     thread_id: UUID
@@ -202,20 +216,7 @@ class ExtractionService:
         account = origin == "compaction"
         group_ids: dict[str | None, list[UUID]] = {}
         outcomes = {}
-        for item in draft.candidates:
-            # Owner 2026-10-07 (v2.133): a fact no user message or tool result verified says so.
-            if (
-                verifying_ids is not None
-                and not verifying_ids.intersection(item.source_message_ids)
-                and not item.body.lower().startswith("unverified")
-            ):
-                item = item.model_copy(
-                    update={
-                        "body": _within_cap(
-                            f"Unverified: {item.body}", self._agent.memory_max_tokens
-                        )
-                    }
-                )
+        for item in sourced_candidates(draft, verifying_ids, self._agent):
             verdict, target_ids = "new", []
             if not offline:
                 try:

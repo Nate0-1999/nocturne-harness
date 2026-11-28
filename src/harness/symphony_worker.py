@@ -11,19 +11,23 @@ from pathlib import Path, PurePosixPath
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, ValidationError, create_model
 from pydantic_ai import Agent, ModelRetry, PromptedOutput, capture_run_messages
-from pydantic_ai.exceptions import AgentRunError
+from pydantic_ai.exceptions import AgentRunError, ModelHTTPError, ModelTimeoutError
 from pydantic_ai.messages import (
     ModelMessagesTypeAdapter,
+    ModelRequest,
     ModelResponse,
     ToolCallPart,
+    ToolReturnPart,
+    UserPromptPart,
 )
 from pydantic_ai.usage import UsageLimits
 
-from harness.agent import ExtractionCandidateDraft
+from harness.agent import HarnessAgent
 from harness.conductor import ProductBaton, SmokeGateResult, TypedDistillate
 from harness.config import HarnessSettings
+from harness.extraction import sourced_candidates
 from harness.judge_panel import (
     JudgeEvidence,
     JudgeFeedback,
@@ -36,9 +40,10 @@ from harness.judge_panel import (
 from harness.model_policy import ModelPolicyResolver, measured_token_burn
 from harness.model_router import CompletionRouter, model_settings_for
 from harness.pydantic_ai_adapter import WorkspaceCapability, adopted_skill_capabilities
+from harness.pydantic_harness_adapter import located_transcript
 from harness.receipt_queue import SpendReceiptQueue
 from harness.spend import SpendLineage, model_response_receipts
-from harness.spine_client import SpineClient
+from harness.spine_client import SpendEventsRequest, SpineClient
 from harness.symphony_context import WorkerContext
 from harness.tools_memory import MemoryToolContext
 from harness.toolset_runtime import LazyStandardToolset
@@ -52,7 +57,6 @@ class WorkResult(BaseModel):
     claims: list[str]
     evidence_refs: list[str]
     uncertainties: list[str]
-    memories: list[ExtractionCandidateDraft]
 
 
 class MetricObservation(BaseModel):
@@ -109,6 +113,21 @@ def _write(path: Path, value: str) -> None:
     temporary.write_text(value, encoding="utf-8")
     temporary.chmod(0o600)
     temporary.replace(path)
+
+
+def _lesson_failure(exc: Exception) -> str:
+    cause = exc
+    while cause is not None:
+        if isinstance(cause, ValidationError):
+            error = cause.errors(include_input=False)[0]
+            field = ".".join(map(str, error["loc"]))
+            return f"No lessons proposed. Invalid {field}: {error['msg']}."
+        if isinstance(cause, (TimeoutError, ModelTimeoutError)):
+            return "No lessons proposed. The model request timed out."
+        if isinstance(cause, ModelHTTPError):
+            return f"No lessons proposed. The model provider returned HTTP {cause.status_code}."
+        cause = cause.__cause__
+    return f"No lessons proposed. Extraction failed: {str(exc) or type(exc).__name__}."
 
 
 def _capture_product(root: Path, base: str, title: str) -> str:
@@ -228,6 +247,7 @@ async def run(assignment_path: Path) -> None:
         prompt_id=assignment["prompt_id"],
     )
     captured = []
+    extraction_events = []
     worker_context = WorkerContext(
         assignment=assignment,
         output=output,
@@ -239,11 +259,23 @@ async def run(assignment_path: Path) -> None:
         return await worker_context.render(captured)
 
     def receipt():
-        return model_response_receipts(
+        work = model_response_receipts(
             [message for message in captured if isinstance(message, ModelResponse)],
             lineage=lineage,
             purpose="judge" if stage == "judge" else "building",
         )
+        if extraction_events:
+            return SpendEventsRequest(events=[*(work.events if work else []), *extraction_events])
+        return work
+
+    async def record_extraction(messages):
+        batch = model_response_receipts(
+            [message for message in messages if isinstance(message, ModelResponse)],
+            lineage=lineage,
+            purpose="extraction",
+        )
+        if batch is not None:
+            extraction_events.extend(batch.events)
 
     async def observe(_context, events):
         async for _event in events:
@@ -326,9 +358,7 @@ async def run(assignment_path: Path) -> None:
             "Commit when the task asks; otherwise the supervisor captures your exact patch. "
             "The original task's prohibitions govern every stratagem and retry. Evidence can "
             "be a tool observation; never create a file the task forbids. "
-            "You have no memory tools. "
-            "Return any durable lessons as atomic memories of at most 128 tokens each, "
-            "or an empty memories list when nothing was learned."
+            "You have no memory tools."
         )
     task = asyncio.current_task()
     asyncio.get_running_loop().add_signal_handler(signal.SIGTERM, task.cancel)
@@ -371,10 +401,34 @@ async def run(assignment_path: Path) -> None:
             )
             # M3SF: artifacts are worktree-relative; a model may cite them by absolute path.
             artifacts = [ref.removeprefix(f"{root}/") for ref in work.evidence_refs]
-            _write(
-                output / "memories.json",
-                json.dumps([memory.model_dump() for memory in work.memories]),
-            )
+            sources = {
+                f"m{index}"
+                for index, message in enumerate(captured)
+                if isinstance(message, ModelRequest)
+                and any(
+                    isinstance(part, (UserPromptPart, ToolReturnPart)) for part in message.parts
+                )
+            }
+            try:
+                transcript, _ = located_transcript(captured)
+                extractor = HarnessAgent(settings, router=router)
+                draft = await extractor.extract_thread(
+                    transcript,
+                    on_result=record_extraction,
+                    memory_size=settings.memory_max_tokens,
+                    worker_memories=sorted(worker_context.given_memories),
+                )
+                lessons = [m.model_dump() for m in sourced_candidates(draft, sources, extractor)]
+            except Exception as exc:
+                # M8SY / ADR-021: a failed proposal cannot invalidate the captured work.
+                lessons = []
+                _write(
+                    output / "lesson-error.json",
+                    json.dumps(
+                        {"attempt_id": assignment["attempt_id"], "reason": _lesson_failure(exc)}
+                    ),
+                )
+            _write(output / "memories.json", json.dumps(lessons))
             value = TypedDistillate.model_validate_json(
                 json.dumps(
                     {

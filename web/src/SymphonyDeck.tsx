@@ -477,7 +477,15 @@ function ProposedResponseCardView({
 }
 
 function DeckStackCard({ stack }: { stack: DeckStack }) {
-  const { events } = useRackPlugin()
+  const { events, selection } = useRackPlugin()
+  const batches = new Map<string, string>()
+  let winner: string | undefined
+  for (const entry of stack.evidence) {
+    if (typeof entry.winner_attempt_id === 'string') winner = entry.winner_attempt_id
+    if (winner && Array.isArray(entry.queue_cards) && typeof entry.batch_uid === 'string') {
+      batches.set(winner, entry.batch_uid)
+    }
+  }
   const running = stack.attempts.filter((attempt) => attempt.state === 'running')
   const [attemptId, setAttemptId] = useState(running[0]?.attempt_id ?? '')
   const selectedAttemptId = running.some((attempt) => attempt.attempt_id === attemptId)
@@ -491,7 +499,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
   const [signed, setSigned] = useState(false)
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
-  const [contextAttempt, setContextAttempt] = useState<string | null>(null)
+  const [contextAttempt, setContextAttempt] = useState<string | null>()
 
   function chooseSeat(next: SymphonyJudgeCharter['seat']) {
     const charter = stack.launch.judge_charters.find((candidate) => candidate.seat === next)
@@ -557,9 +565,13 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         {stack.attempts.map((attempt) => (
           <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
             <div><Button type="button" onClick={() => setContextAttempt(
-              contextAttempt === attempt.attempt_id ? null : attempt.attempt_id
+              contextAttempt === attempt.attempt_id ? undefined : attempt.attempt_id
             )}>{attempt.attempt_id}</Button><span>{attempt.state}</span></div>
-            <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
+            <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted
+              ? <Button type="button" onClick={() => selection.select({
+                kind: 'module', id: 'palace_queue', batch_uid: batches.get(attempt.attempt_id),
+              })}>Memories queued for review</Button>
+              : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
               <ConfirmButton action="stop" iconOnly variant="danger" type="button" disabled={busy}
@@ -572,14 +584,21 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
           </div>
         ))}
       </div>
-      {contextAttempt !== null && <WorkerContext
+      <Button type="button" aria-expanded={contextAttempt === null}
+        onClick={() => setContextAttempt(contextAttempt === null ? undefined : null)}>
+        Worker memories
+      </Button>
+      {contextAttempt !== undefined && <WorkerContext
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
       <SymphonyFeedback stack={stack} />
       {stack.evidence.map((entry, index) => (
         <details key={index}>
-          <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>
-          {Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
+          <summary>{Array.isArray(entry.queue_cards) ? 'Lessons queued for review' : Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>
+          {Array.isArray(entry.queue_cards) ? entry.queue_cards.map((value, lessonIndex) => {
+            const candidate = record(record(value)?.candidate)
+            return typeof candidate?.body === 'string' && <p key={lessonIndex}>{candidate.body}</p>
+          }) : Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
             const verdict = record(value)
             return verdict === null ? null : <p key={seatIndex}>
               <strong>{String(verdict.seat)} · {String(verdict.outcome)}</strong><br />

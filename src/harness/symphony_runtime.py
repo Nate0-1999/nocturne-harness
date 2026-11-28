@@ -33,7 +33,15 @@ from harness.envelope import generate_ulid
 from harness.judge_panel import FeedbackPacketReceipt, JudgeLaunch, JudgePanel, stopped_verdict
 from harness.memory_bridge import SymphonyMemoryBridge
 from harness.rounds import AcceptedWork, GraftReceipt, RoundAttemptPlan, SymphonyRounds
-from harness.spine_client import JudgedContext, MemoryKind, MemoryStatus, PatchMemoryRequest
+from harness.spine_client import (
+    JudgedContext,
+    MemoryKind,
+    MemoryStatus,
+    PatchMemoryRequest,
+    SpineProblemError,
+    SpineResponseError,
+    SpineTransportError,
+)
 from harness.supervisor import WorkerSupervisor
 from harness.symphony_experience import SymphonyAttemptRecord
 
@@ -55,6 +63,24 @@ def _publish_result(root: Path, symphony_id: str, checkpoint: str) -> str:
     branch = f"symphony/{symphony_id}"
     _git(root, "branch", branch, checkpoint)
     return branch
+
+
+def _lesson_save_error(exc: Exception, *, resolving: bool) -> str:
+    if isinstance(exc, SpineResponseError) and exc.status_code >= 400:
+        if isinstance(exc, SpineProblemError) and exc.problem.detail:
+            return f"Lessons were not queued. {exc.problem.detail} (HTTP {exc.status_code})."
+        if exc.status_code == 503:
+            return "Lessons were not queued. The Palace was unavailable (HTTP 503)."
+        return f"Lessons were not queued. The Palace refused the request (HTTP {exc.status_code})."
+    detail = (
+        "The Palace did not answer."
+        if isinstance(exc, (SpineTransportError, TimeoutError))
+        else str(exc) or type(exc).__name__
+    )
+    # A-059: resolution is atomic; a lost reply can follow a committed judged batch.
+    if resolving:
+        return f"The Palace did not confirm whether lessons were queued. {detail}"
+    return f"Lessons were not queued. {detail}"
 
 
 def _carry_environment(root: Path, location: Path) -> None:
@@ -187,6 +213,14 @@ class SymphonyExecution:
         def command(location, stage, brief, model_policy, origin_agent, name):
             output = run_home / name
             assignment = output / "assignment.json"
+            if stage != "judge" and reviewed is not None:
+                _json(
+                    output / "memory-selection.json",
+                    {
+                        "added": [str(key) for key in reviewed.confirmed_memory_ids],
+                        "removed": [str(key) for key in reviewed.excluded_memory_ids],
+                    },
+                )
             _json(
                 assignment,
                 {
@@ -205,7 +239,7 @@ class SymphonyExecution:
                     "model_policy": model_policy,
                     "origin_agent": origin_agent,
                     "thread_id": stack.thread_id,
-                    "project_key": str(root),
+                    "project_key": context.project_key,
                     "run_id": round_run,
                     "prompt_id": generate_ulid(),
                     "home": str(self.home),
@@ -233,9 +267,12 @@ class SymphonyExecution:
             thread_id=UUID(stack.thread_id),
         )
         last_decision = None
-        unresolved = []
+        unresolved = set()
         passed_work = []
         try:
+            reviewed = await context.spine.restore_injection(
+                UUID(stack.thread_id), context.principal_id
+            )
             for step_index, step in enumerate(stack.launch.recipe):
                 feedback = ""
                 prior_decision = None
@@ -544,6 +581,11 @@ class SymphonyExecution:
                             brief.attempt_id,
                             TypedDistillate.model_validate_json(path.read_text()),
                         )
+                        lesson_error = path.with_name("lesson-error.json")
+                        if lesson_error.is_file():
+                            await update(
+                                "running", {"evidence": [json.loads(lesson_error.read_text())]}
+                            )
                     await update(
                         "running",
                         {
@@ -612,57 +654,71 @@ class SymphonyExecution:
                             if item.attempt_id == decision.winner_attempt_id
                         )
                         checkpoint = winner.distillate.product.commit
-                        memory_run = round_run
-                        origins = {}
-                        staged = []
-                        for number, brief in enumerate(selected, 1):
-                            if brief.attempt_id in state["cancelled"]:
-                                continue
-                            origin = f"{memory_run}/root.{briefs.index(brief) + 1}"
-                            origins[brief.attempt_id] = origin
-                            memories = json.loads(
-                                (outputs[brief.attempt_id] / "memories.json").read_text()
-                            )
-                            for memory in memories:
-                                response = await bridge.stage(
-                                    memory_id=uuid4(),
-                                    run_id=memory_run,
-                                    origin_agent=origin,
-                                    label=memory["label"],
-                                    body=memory["body"],
-                                    kind=MemoryKind(memory["kind"]),
-                                    keywords=memory["keywords"],
-                                    project_key=str(root),
-                                    origin_path=".",
-                                    origin_location=str(root),
+                        staged = set()
+                        winner_origin = None
+                        resolving = False
+                        resolution = None
+                        lesson_attempt = winner.attempt_id
+                        try:
+                            for brief in selected:
+                                if brief.attempt_id in state["cancelled"]:
+                                    continue
+                                lesson_attempt = brief.attempt_id
+                                origin = f"{round_run}/root.{briefs.index(brief) + 1}"
+                                memories = json.loads(
+                                    (outputs[brief.attempt_id] / "memories.json").read_text()
                                 )
-                                staged.append(response.memory.memory_id)
-                                unresolved.append(response.memory.memory_id)
-                        winner_memories = json.loads(
-                            (outputs[decision.winner_attempt_id] / "memories.json").read_text()
-                        )
-                        if staged and winner_memories:
-                            resolution = await bridge.resolve(
-                                run_id=memory_run,
-                                batch_uid=uuid4(),
-                                winner_origin_agent=origins[decision.winner_attempt_id],
-                                judged_context=JudgedContext(
-                                    verdict="unanimous_pass",
-                                    summary=step.done_when,
-                                    judge_ids=[v.judge_session_id for v in decision.verdicts],
-                                    evidence_refs=[
-                                        str(judge_outputs[v.seat] / "result.json")
-                                        for v in decision.verdicts
-                                    ],
-                                ),
-                            )
+                                for memory in memories:
+                                    memory_id = uuid4()
+                                    # A-059: a lost reply can still leave a staged revision 1.
+                                    staged.add(memory_id)
+                                    unresolved.add(memory_id)
+                                    await bridge.stage(
+                                        memory_id=memory_id,
+                                        run_id=round_run,
+                                        origin_agent=origin,
+                                        label=memory["label"],
+                                        body=memory["body"],
+                                        kind=MemoryKind(memory["kind"]),
+                                        keywords=memory["keywords"],
+                                        project_key=context.project_key,
+                                        origin_path=".",
+                                        origin_location=str(root),
+                                    )
+                                if memories and brief.attempt_id == winner.attempt_id:
+                                    winner_origin = origin
+                            if winner_origin is not None:
+                                lesson_attempt = winner.attempt_id
+                                resolving = True
+                                resolution = await bridge.resolve(
+                                    run_id=round_run,
+                                    batch_uid=uuid4(),
+                                    winner_origin_agent=winner_origin,
+                                    judged_context=JudgedContext(
+                                        verdict="unanimous_pass",
+                                        summary=step.done_when,
+                                        judge_ids=[v.judge_session_id for v in decision.verdicts],
+                                        evidence_refs=[
+                                            str(judge_outputs[v.seat] / "result.json")
+                                            for v in decision.verdicts
+                                        ],
+                                    ),
+                                )
+                        except Exception as exc:
+                            note = {
+                                "attempt_id": lesson_attempt,
+                                "reason": _lesson_save_error(exc, resolving=resolving),
+                            }
+                            record({"event": "lesson_error", **note})
+                            await update("running", {"evidence": [note]})
+                        if resolution is not None:
+                            unresolved.difference_update(staged)
                             record(
                                 {
                                     "event": "memory_resolution",
                                     "resolution": resolution.model_dump(mode="json"),
                                 }
                             )
-                            unresolved.clear()
                             await update(
                                 "running",
                                 {
@@ -732,16 +788,25 @@ class SymphonyExecution:
             self.live.pop(stack.symphony_id, None)
             settings_path.unlink(missing_ok=True)
             for memory_id in unresolved:
-                await context.spine.patch_memory(
-                    memory_id,
-                    PatchMemoryRequest(
-                        expected_revision=1,
-                        status=MemoryStatus.TOMBSTONED,
-                        editor=f"agent:{context.agent_id}",
-                        reason="symphony/unresolved-tombstone",
-                        machine_id=context.machine_id,
-                    ),
-                )
+                try:
+                    await context.spine.patch_memory(
+                        memory_id,
+                        PatchMemoryRequest(
+                            expected_revision=1,
+                            status=MemoryStatus.TOMBSTONED,
+                            editor=f"agent:{context.agent_id}",
+                            reason="symphony/unresolved-tombstone",
+                            machine_id=context.machine_id,
+                        ),
+                    )
+                except Exception as exc:
+                    record(
+                        {
+                            "event": "lesson_cleanup_unconfirmed",
+                            "memory_id": str(memory_id),
+                            "reason": str(exc),
+                        }
+                    )
 
     async def cancel_attempt(self, symphony_id, attempt_id):
         state = self.live[symphony_id]

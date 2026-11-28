@@ -2,6 +2,40 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
+/** SPEC B.6 / M8SY item 3: a long worker list must scroll inside the Conversation frame. */
+test('the Deck bounds its own scrollable viewport', async () => {
+  const css = await readFile(new URL('../src/assets/symphonyDeck.css', import.meta.url), 'utf8')
+  const rule = css.match(/\.symphony-deck\s*\{([^}]+)\}/u)?.[1] ?? ''
+  assert.match(rule, /(?:^|;)\s*(?:height|max-height|block-size):\s*100%/u)
+  assert.match(rule, /overflow(?:-y)?:\s*(?:auto|scroll)/u)
+})
+
+/** ADR-021 C4: the winner's card leads to the living queue for explicit review. */
+test('a queued attempt opens Memory Ingest, whose count includes pending Symphony lessons', async () => {
+  const deck = await readFile(new URL('../src/SymphonyDeck.tsx', import.meta.url), 'utf8')
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  const queue = app.slice(app.indexOf('function PalaceQueueModule()'), app.indexOf('function MemoryModule()'))
+  assert.match(deck, /selection\.select\(\{\s*kind: 'module', id: 'palace_queue'[\s\S]*?Memories queued for review/u)
+  assert.match(queue, /cards\.length[^}]*\} waiting/u)
+  assert.match(queue, /setTimeout\(refresh/u)
+})
+
+/** ADR-021 C4: a reviewable lesson is the candidate fact, never the Palace resolution payload. */
+test('the Deck projects the fact out of each queued lesson', async () => {
+  const deck = await readFile(new URL('../src/SymphonyDeck.tsx', import.meta.url), 'utf8')
+  const lessons = deck.match(/entry\.queue_cards\.map\(([\s\S]*?)\}\) :/u)?.[1] ?? ''
+  assert.match(lessons, /candidate\.body/u)
+  assert.doesNotMatch(lessons, /JSON\.stringify|principal_id|evidence_refs/u)
+})
+
+/** ADR-012 §3 and B.6: the judge's inputs explain why its memory list is empty. */
+test('the Deck explains what judges read beside their memory observation', async () => {
+  const context = await readFile(new URL('../src/WorkerContext.tsx', import.meta.url), 'utf8')
+  const line = context.match(/worker\.stage === 'judge'\s*\? <p>([^<]+)<\/p>/u)?.[1] ?? ''
+  assert.match(line, /judges read the signed charge and the work without Palace memories/iu)
+  assert.match(line, /put any memory you want them to weigh in the charge/iu)
+})
+
 /** ADR-014 and G19-G20 require one current Deck surface for typed steering and exact lineage. */
 test('The Deck exposes all three conductor interventions and an owner demand lineage', async () => {
   const [deck, rack, stage, daemon] = await Promise.all([

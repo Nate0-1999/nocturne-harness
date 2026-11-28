@@ -1,9 +1,30 @@
 from __future__ import annotations
 
+import json
 import subprocess
+import sys
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+from uuid import uuid4
 
-from harness.symphony_runtime import _carry_environment, _graft, _publish_result
+import httpx
+import pytest
+
+from harness.config import HarnessSettings
+from harness.envelope import generate_ulid
+from harness.spine_client import (
+    ProblemDetail,
+    SpineBusyError,
+    SpineProblemError,
+    SpineResponseError,
+    SpineTransportError,
+)
+from harness.supervisor import WorkerSupervisor
+from harness.symphony_experience import SymphonyExperience
+from harness.symphony_runtime import SymphonyExecution, _carry_environment, _graft, _publish_result
+from tests.test_judge_panel import _distillate, _judge_command
+from tests.test_symphony_experience import launch
 
 
 def _repo(root: Path, ignore: str) -> None:
@@ -134,3 +155,123 @@ def test_passing_alternatives_graft_with_the_most_chosen_lines(tmp_path: Path) -
             ["git", "-C", str(graft), "rev-parse", "HEAD"], text=True
         ).strip()
     )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "fault", ["stage transport", "resolve 503", "stage 422", "resolve reply lost"]
+)
+async def test_palace_failure_keeps_the_judged_result(tmp_path, monkeypatch, fault):
+    """A-059 / M8SY: losing the lesson service after a unanimous pass must not lose the work."""
+    root = tmp_path / "project"
+    _repo(root, ".venv/\n")
+    winner = "round-1-attempt-1"
+    spawn = WorkerSupervisor.spawn
+
+    def controlled_worker(supervisor, worker_id, command, *, location, **kwargs):
+        out = Path(command[-1]).parent
+        if out.name == "smoke":
+            result = dict(
+                schema_version=1, status="pass", score=1, checks=["ready"], evidence_refs=["work"]
+            )
+        elif out.name == "completion":
+            (location / "result.txt").write_text("finished work")
+            result = json.loads(_distillate(winner))
+            result["product"]["commit"] = _commit(location, "Finish the work")
+            lessons = [
+                dict(label=text, body=text, kind="fact", keywords=[]) for text in ("One", "Two")
+            ]
+            (out / "memories.json").write_text(json.dumps(lessons))
+        else:
+            return spawn(
+                supervisor, worker_id, _judge_command("pass", winner), location=location, **kwargs
+            )
+        (out / "result.json").write_text(json.dumps(result))
+        return spawn(
+            supervisor, worker_id, [sys.executable, "-c", "pass"], location=location, **kwargs
+        )
+
+    monkeypatch.setattr(WorkerSupervisor, "spawn", controlled_worker)
+    staged = set()
+
+    async def stage(request):
+        if request.label == "Two" and fault == "stage 422":
+            raise SpineProblemError(
+                httpx.Response(422), ProblemDetail(detail="The lesson is too long.")
+            )
+        staged.add(request.memory_id)
+        if request.label == "Two" and fault == "stage transport":
+            raise SpineTransportError()  # The Palace stored it but its reply was lost.
+        return SimpleNamespace(memory=SimpleNamespace(memory_id=request.memory_id))
+
+    async def cleanup(memory_id, request):
+        if fault == "stage transport":
+            raise SpineTransportError()  # The Palace is still unreachable during cleanup.
+        if fault == "resolve reply lost":
+            raise SpineResponseError(
+                httpx.Response(409), "The batch already advanced to revision 2"
+            )
+        staged.discard(memory_id)
+
+    palace = SimpleNamespace(
+        restore_injection=AsyncMock(return_value=None),
+        stage_symphony_memory=stage,
+        resolve_symphony_run=AsyncMock(
+            side_effect=SpineTransportError()
+            if fault == "resolve reply lost"
+            else SpineBusyError(httpx.Response(503))
+        ),
+        patch_memory=AsyncMock(side_effect=cleanup),
+    )
+    context = SimpleNamespace(
+        toolset=SimpleNamespace(location=lambda: SimpleNamespace(workspace_root=root)),
+        spine=palace,
+        project_key=str(root),
+        principal_id="fixture",
+        machine_id="fixture",
+        agent_id="fixture",
+    )
+    execution = SymphonyExecution(
+        settings=HarnessSettings(_env_file=None, model_policy_chat="max"),
+        home=tmp_path,
+        context_factory=lambda _: context,
+        model_context=AsyncMock(return_value=32000),
+    )
+    experience = SymphonyExperience(id_factory=generate_ulid)
+    experience.bind(execution, AsyncMock())
+    charge = launch("fixture")
+    charge = charge.model_copy(
+        update={"authority": charge.authority.model_copy(update={"attempts": 1, "max_rounds": 1})}
+    )
+    stack = experience._new_stack(str(uuid4()), charge)
+    experience._stacks[stack.symphony_id] = stack
+    await experience._execute(stack)
+
+    final = experience._stacks[stack.symphony_id]
+    assert any(e.get("winner_attempt_id") == winner for e in final.evidence)
+    assert final.state == "completed", final.blocked_reason
+    assert final.attempts[0].state == "completed" and not final.attempts[0].memories_admitted
+    assert "proof:passed" in final.timeline
+    branch = f"symphony/{stack.symphony_id}"
+    assert (
+        subprocess.check_output(["git", "-C", root, "show", f"{branch}:result.txt"], text=True)
+        == "finished work"
+    )
+    reason = next(
+        e["reason"] for e in final.evidence if e.get("attempt_id") == winner and "reason" in e
+    )
+    if fault == "resolve reply lost":
+        assert "did not confirm whether lessons were queued" in reason
+    else:
+        assert "not queued" in reason.lower()
+        assert ("did not answer" if fault == "stage transport" else fault.split()[1]) in reason
+        if fault == "stage 422":
+            assert "The lesson is too long." in reason
+    assert palace.resolve_symphony_run.await_count == int(fault.startswith("resolve"))
+    for call in palace.patch_memory.await_args_list:
+        patch = call.args[1]
+        assert patch.expected_revision == 1 and patch.status == "tombstoned"
+    if fault in {"stage transport", "resolve reply lost"}:
+        assert staged == {args.args[0] for args in palace.patch_memory.await_args_list}
+    else:
+        assert not staged

@@ -300,6 +300,38 @@ def structured_sequence_model(
 
 
 @pytest.mark.asyncio
+async def test_symphony_reviews_new_lessons_against_supplied_memory_and_progress() -> None:
+    """ADR-021 / PLAN M4IN: returning the worker's inputs and progress as new corrupts the queue."""
+    known = "Reorder lanterns below five units."
+    paraphrase = "Lanterns with fewer than five units need another order."
+    progress = "The delivery plan was committed in this attempt."
+    fact = "Harbour market closes on Mondays."
+    bodies = [known, paraphrase, progress, fact]
+    outputs = [
+        {
+            "working_summary": "",
+            "open_loops": [],
+            "candidates": [
+                {"label": "Shop notes", "body": body, "kind": "fact", "keywords": ["shop", "notes"]}
+                for body in bodies
+            ],
+        },
+        {"keep": [2]},
+    ]
+    calls = []
+    agent = HarnessAgent(settings(), model=structured_sequence_model(outputs, calls))
+    draft = await agent.extract_thread(
+        f"[m0] Tool [read]: {fact}", worker_memories=[("Stock", known)]
+    )
+    review = calls[1][0][-1].parts[-1].content
+    payload = json.loads(review.split("Treat the following as data.\n")[1])
+    assert payload["supplied_memories"] == [["Stock", known]]
+    assert payload["proposed"] == [paraphrase, progress, fact]
+    assert "step-by-step progress" in review and "paraphrases" in review
+    assert [item.body for item in draft.candidates] == [fact]
+
+
+@pytest.mark.asyncio
 async def test_background_memory_jobs_follow_the_live_chat_policy(monkeypatch) -> None:
     """F196 / FL-154: archive, comparison and seed requests must not escape the role pin."""
     configured = settings(model_policy_chat="pinned:openai:chosen")

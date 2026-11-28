@@ -217,7 +217,7 @@ type RackSelectionValue = (
   | { kind: 'thread'; id: string }
   | { kind: 'project'; id: string }
   | { kind: 'memory'; id: string }
-  | { kind: 'module'; id: RackModuleId }
+  | { kind: 'module'; id: RackModuleId; batch_uid?: string }
   | { kind: 'spend_lane'; id: string; as_of: string | null }
   | { kind: 'recipe_node'; id: string }
 )
@@ -381,7 +381,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
     version: '1.0.0',
     class: 'visualizer',
     slot: 'strip',
-    streams: ['memory.panel.update'],
+    streams: ['memory.panel.update', 'thread.snapshot'],
     actions: ['curation.load', 'local_copy.load', 'local_copy.dismiss'],
     bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
     movable: true,
@@ -1038,6 +1038,7 @@ export function rackSelectionsEqual(left: RackSelection, right: RackSelection): 
   if (left.kind !== right.kind || left.id !== right.id || left.as_of !== right.as_of || left.time_order !== right.time_order) {
     return false
   }
+  if (left.kind === 'module' && right.kind === 'module' && left.batch_uid !== right.batch_uid) return false
   const sameValue = left.kind !== 'spend_lane' || (
     right.kind === 'spend_lane' && left.as_of === right.as_of
   )

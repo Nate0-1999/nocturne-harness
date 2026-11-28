@@ -86,7 +86,7 @@ export function PalaceStateModule() {
     let active = true
     let pending = false
     const unsubscribe = events.subscribe((event) => {
-      if (event.direction === 'inbound' && event.envelope.type === 'memory.panel.update') {
+      if (event.direction === 'inbound' && (event.envelope.type === 'memory.panel.update' || event.envelope.type === 'thread.snapshot')) {
         setSequence((value) => value + 1)
       }
     })
@@ -167,7 +167,7 @@ export function PalaceStateModule() {
       <div className="palace-state__curators" aria-label="Curator activity" data-testid="curator-state">
         <div>
           <span>Curators</span>
-          <strong>{curatorActivity === null ? 'Activity unavailable' : `${curatorActivity.pending_cards} proposals waiting`}</strong>
+          <strong>{snapshot.palace_counts.find((item) => item.metric === 'queue_depth')?.count ?? '—'} proposals waiting</strong>
         </div>
         <p>
           {curatorActivity === null
