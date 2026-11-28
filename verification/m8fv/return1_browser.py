@@ -5,6 +5,7 @@ import json
 import re
 import socket
 from pathlib import Path
+
 from playwright.sync_api import sync_playwright
 
 parser = argparse.ArgumentParser()
@@ -12,10 +13,12 @@ for key in ("url", "chrome", "profile", "thread", "out"):
     parser.add_argument("--" + key, required=True)
 parser.add_argument("--width", type=int, choices=[390, 1267], required=True)
 parser.add_argument("--before", action="store_true")
+parser.add_argument("--input", choices=["wheel", "touch"])
 parser.add_argument("--blocked-run")
 args = parser.parse_args()
 width = args.width
 height = 844 if width == 390 else 928
+use_touch = (args.input or ("touch" if width == 390 else "wheel")) == "touch"
 out = Path(args.out)
 out.mkdir(exist_ok=True, parents=True)
 readings = {}
@@ -25,7 +28,7 @@ with sync_playwright() as p:
         executable_path=args.chrome,
         headless=True,
         viewport={"width": width, "height": height},
-        has_touch=width == 390,
+        has_touch=use_touch or width == 390,
         args=["--disable-background-networking"],
     )
     try:
@@ -42,12 +45,13 @@ with sync_playwright() as p:
               const store='nocturne.stage.layout.v5',l=JSON.parse(localStorage.getItem(store));
               const layer=l.layers.find(x=>x.layer_id===l.active_layer_id), cols=w===390?8:18;
               const make=(id,x,y,h)=>({instance_id:id,module_id:id,x,y,width:cols,height:h});
-              const deck={...make('conversation',key==='context_bars'?cols+1:0,0,15),conversation_mode:'stack',source_thread_id:tid};
-              const bars={...make('context_bars',0,key==='context_bars'?0:16,10),attunement_source_id:'conversation'};
+              const deck={...make('conversation',0,0,15),
+                conversation_mode:'stack',source_thread_id:tid};
+              const bars=make('context_bars',0,key==='context_bars'?0:16,10);
               if(key==='context_bars'){
                 deck.conversation_mode=mode;
-                if(w===390){deck.x=0;deck.height=6;bars.y=6.25;bars.height=9}
-                else{deck.x=0;deck.width=12;bars.x=12.25;bars.width=12}
+                if(w===390){deck.x=0;deck.height=6;bars.y=7;bars.height=9}
+                else{deck.x=0;deck.width=12;bars.x=13;bars.width=12}
               }
               layer.modules=key==='farm'?[{...make('farm',0,0,15),width:18}]:key==='threads'?[make('threads',0,0,15)]:[deck,bars];
               l.layers=[layer];l.removed_layers=[];layer.removed_modules=[];
@@ -83,7 +87,7 @@ with sync_playwright() as p:
                     box["y"] + (box["height"] * 0.88 if table else min(104, box["height"] * 0.66)),
                 ),
             )
-            if width == 1267:
+            if not use_touch:
                 page.mouse.move(x, y)
                 page.mouse.wheel(0, delta)
             else:
@@ -118,7 +122,8 @@ with sync_playwright() as p:
                     0 <= r["top"]
                     and r["bottom"] <= r["vh"]
                     and target.evaluate(
-                        "e=>{const b=e.getBoundingClientRect();return e.contains(document.elementFromPoint(b.x+5,b.y+b.height/2))}"
+                        "e=>{const b=e.getBoundingClientRect();"
+                        "return e.contains(document.elementFromPoint(b.x+5,b.y+b.height/2))}"
                     )
                 ):
                     return True
@@ -201,9 +206,14 @@ with sync_playwright() as p:
         page.wait_for_timeout(1200)
         picker = fr.get_by_label("Context run")
         readings["Context Bars"] = {"offered with Deck": picker.count() > 0}
+        deck_panel = page.frame_locator('[data-rack-module="conversation"] iframe').first
+        deck_panel.locator(".symphony-deck").wait_for()
+        for module in ("conversation", "context_bars"):
+            box = page.locator(f'[data-rack-module="{module}"] iframe').first.bounding_box()
+            assert 0 <= box["x"] < width and 0 <= box["y"] < height
         shot("stage-context-with-deck")
         if args.before and not picker.count():
-            fr = layout("context_bars", "focused")
+            page.get_by_role("button", name="Focused", exact=True).first.click()
             picker = fr.get_by_label("Context run")
             picker.wait_for(timeout=12000)
         if picker.count():
@@ -220,7 +230,8 @@ with sync_playwright() as p:
         shot("stage-context-selected")
         if not args.before:
             deck_ids = picker.locator("option").evaluate_all("els=>els.map(e=>e.value)")
-            focused = layout("context_bars", "focused").get_by_label("Context run")
+            page.get_by_role("button", name="Focused", exact=True).first.click()
+            focused = fr.get_by_label("Context run")
             focused.wait_for(timeout=12000)
             readings["Context Bars"]["same runs in Focused"] = deck_ids == focused.locator(
                 "option"
