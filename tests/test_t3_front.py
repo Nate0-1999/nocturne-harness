@@ -9,7 +9,7 @@ from harness.transcript import TranscriptJournal
 
 @pytest.mark.asyncio
 async def test_restored_window_can_send_the_existing_compact_command(tmp_path):
-    """FL-044: T3 rejects /compact before contacting an agent unless the session advertises it."""
+    """P4 / FL-044: T3 rejects /compact unless the session advertises journaled compaction."""
     import asyncio
     import json
     from unittest.mock import Mock
@@ -44,7 +44,7 @@ async def test_restored_window_can_send_the_existing_compact_command(tmp_path):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("change", ["rewind", "archive", "fork", "clear"])
 async def test_a_stale_window_cannot_start_work_or_reopen_the_journal(tmp_path, change):
-    """FL-076 / FL-124 / SD-128: a restart cannot turn a stale window into an accepted prompt."""
+    """P4 / FL-076 / FL-124: a restart cannot turn a stale window into an accepted prompt."""
     journal = TranscriptJournal(tmp_path)
     earlier = journal.bind_front_prompt("thread", "env", "native", "m1")
     journal.append_message(
@@ -96,7 +96,7 @@ async def test_a_stale_window_cannot_start_work_or_reopen_the_journal(tmp_path, 
 async def test_window_cancel_preserves_work_only_for_its_own_steering_restart(
     reason, should_cancel
 ):
-    """FL-075: a second message keeps the original task; an explicit Stop still stops it."""
+    """P4 / FL-075: a second message keeps the original task; an explicit Stop still stops it."""
     import asyncio
 
     projection = {
