@@ -301,7 +301,15 @@ async def test_stock_subscription_choice_uses_the_offered_models_window(
     def native(args, **kwargs):
         if tool == "codex":
             assert args[1:] == ["debug", "models"]
-            output = {"models": [{"slug": slug, "context_window": window}]}
+            output = {
+                "models": [
+                    {
+                        "slug": slug,
+                        "context_window": window * 2,
+                        "effective_context_window_percent": 50,
+                    }
+                ]
+            }
         else:
             assert args[args.index("--model") + 1] == slug
             request = json.loads(kwargs["input"])

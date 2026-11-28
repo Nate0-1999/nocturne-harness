@@ -216,17 +216,16 @@ async def subscription_window(server, tool, slug) -> int:
                 "DISABLE_TELEMETRY": "1",
             },
         )
+        window = None
         if tool == "codex":
-            window = next(
-                (
-                    m.get("context_window")
-                    for m in json.loads(result.stdout)["models"]
-                    if m.get("slug") == slug
-                ),
-                None,
-            )
+            for model in json.loads(result.stdout)["models"]:
+                if model.get("slug") == slug:
+                    nominal = model.get("context_window")
+                    percent = model.get("effective_context_window_percent")
+                    if type(nominal) is int and type(percent) is int and 0 < percent <= 100:
+                        window = nominal * percent // 100
+                    break
         else:
-            window = None
             for line in result.stdout.splitlines():
                 frame = json.loads(line)
                 response = frame.get("response") or {}
