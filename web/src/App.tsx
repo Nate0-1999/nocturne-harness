@@ -46,7 +46,7 @@ import { VitalsModule } from './VitalsModule'
 import { SpendStrip } from './SpendStrip'
 import { PalaceStateModule } from './PalaceStateModule'
 import { CuratorProposal } from './CuratorProposal'
-import { ContextBars } from './ContextBars'
+import { SwarmContextBars } from './SwarmContextBars'
 import { CompactionRecord } from './CompactionRecord'
 import {
   IMAGE_ACCEPT,
@@ -1850,7 +1850,7 @@ function RackRemoteSurface({ moduleId }: { moduleId: RackModuleManifest['id'] })
       ) : moduleId === 'palace_state' ? (
         <PalaceStateModule />
       ) : moduleId === 'context_bars' ? (
-        <ContextBars />
+        <SwarmContextBars />
       ) : moduleId === 'thread_end' ? (
         <ThreadEndModule />
       ) : moduleId === 'palace_queue' ? (

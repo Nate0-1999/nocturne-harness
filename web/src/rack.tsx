@@ -393,7 +393,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   context_bars: {
     id: 'context_bars', name: 'Context Bars', version: '1.0.0', class: 'visualizer',
-    slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
+    slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set', 'symphony.context'],
     bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
     movable: true, law_bound: false, default_scope: 'ATTUNED',
   },
