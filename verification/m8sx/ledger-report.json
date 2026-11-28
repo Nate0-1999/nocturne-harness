@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "5f3a8989ba07268aae6289e79d5a1073e8e52796"
+      "head": "0e9f2597e662ba2e7932631d345b5a4c5510e913"
     }
   ],
   "unmapped": {
@@ -47,9 +47,11 @@
     "harness/verification/m8sx/SHA256SUMS": "M8SX verification evidence or its integrity record. Changes no runtime behavior.",
     "harness/verification/m8sx/checks.txt": "M8SX verification evidence or its integrity record. Changes no runtime behavior.",
     "harness/verification/m8sx/ledger-report.json": "M8SX verification evidence or its integrity record. Changes no runtime behavior.",
+    "harness/web/dist/assets/index-B5ZMXFJZ.js": "Generated JavaScript for Model Device subscription discovery.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated JavaScript for the Model Device retry text, including replacement of its previous content hash.",
     "harness/web/dist/assets/index-COcc37-2.js": "Generated JavaScript for the Model Device retry text, including replacement of its previous content hash.",
-    "harness/web/dist/index.html": "Generated entry point for the tested Model Device build."
+    "harness/web/dist/index.html": "Generated entry point for the tested Model Device build.",
+    "harness/web/tests/modelBrowser.test.mjs": "Regression coverage for subscription statuses and automatic inventory refresh."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
   "rows": {
@@ -222,7 +224,7 @@
       "verdict": "FAIL",
       "screenshot": "FL-202.png",
       "flag": "F086",
-      "observed": "The subscription selection survived reload at both widths. Full-row proof remains outstanding for the separate walk: Open the model chip on a conversation: the source's models are listed ranked with price and context window; pin one and it stays on top; pick another and the thread switches to it and stays on it — new conversations start on it too, until you change it, and the chip says so; set the thinking level beside it; pick a standard configuration (pinned, max, elbow, floor) and see what it selects now; switching back from a model to a policy is one click. Ban the model the strategy picked. The next new conversation starts on the next best eligible model, the first keeps its model, and the banned model cannot be pinned. Lift the ban. Check the strategy, ban reason and dated saved pick at phone and desktop width."
+      "observed": "Both installed Stage sizes filled the first open with 24 models from the private inventory. Return 1 verified saved choice after reload. Full-row proof remains outstanding for the separate walk: Open the model chip on a conversation: the source's models are listed ranked with price and context window; pin one and it stays on top; pick another and the thread switches to it and stays on it — new conversations start on it too, until you change it, and the chip says so; set the thinking level beside it; pick a standard configuration (pinned, max, elbow, floor) and see what it selects now; switching back from a model to a policy is one click. Ban the model the strategy picked. The next new conversation starts on the next best eligible model, the first keeps its model, and the banned model cannot be pinned. Lift the ban. Check the strategy, ban reason and dated saved pick at phone and desktop width."
     },
     "FL-009": {
       "label": "Record files (history, transcripts) live apart from code so code can be deleted and re-downloaded without losing history.",
