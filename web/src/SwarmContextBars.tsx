@@ -18,7 +18,7 @@ export function SwarmContextBars() {
       value={run?.symphony_id ?? ''} onChange={event => setRunId(event.target.value)}>
       <option value="">Conversation context</option>
       {runs.map(entry => <option key={entry.symphony_id} value={entry.symphony_id}>
-        {entry.launch.objective} · {entry.symphony_id.slice(-8)}
+        {entry.symphony_id.slice(-8)} · {entry.launch.objective}
       </option>)}
     </Select>}
     {run ? <WorkerBars key={run.symphony_id} id={run.symphony_id} live={run.state === 'running'} /> : <ContextBars />}

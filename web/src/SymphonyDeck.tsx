@@ -594,7 +594,7 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
       <SymphonyFeedback stack={stack} />
       {deckEvidence(stack.evidence).map((entry, index) => (
         typeof entry.worker_id === 'string' && typeof entry.location === 'string' ? <details key={index}>
-          <summary>Worker evidence · {String(entry.attempt_id)}</summary>
+          <summary>Worker evidence · {entry.location.split('/').at(-1)}</summary>
           <dl className="deck-lineage">
             <div><dt>Folder</dt><dd>{entry.location}</dd></div>
             <div><dt>Model policy</dt><dd>{String(entry.model_policy)}</dd></div>
@@ -602,8 +602,11 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
             <div><dt>Accepted commit</dt><dd>{String(entry.accepted_commit)}</dd></div>
           </dl>
         </details> : <details key={index}>
-          <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>
-          {Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
+          <summary>{Array.isArray(entry.queue_cards) ? 'Lessons queued for review' : Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Run evidence'}</summary>
+          {Array.isArray(entry.queue_cards) ? entry.queue_cards.map((value, lessonIndex) => {
+            const candidate = record(record(value)?.candidate)
+            return typeof candidate?.body === 'string' && <p key={lessonIndex}>{candidate.body}</p>
+          }) : Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
             const verdict = record(value)
             return verdict === null ? null : <p key={seatIndex}>
               <strong>{String(verdict.seat)} · {String(verdict.outcome)}</strong><br />

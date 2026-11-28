@@ -20,6 +20,13 @@
 .work-viz__data{padding:6px 20px;font-size:var(--text-md);max-height:170px;overflow:auto}.work-viz__data table{border-collapse:collapse;width:100%;text-align:left}
 .work-viz__data th,.work-viz__data td{padding:6px;border-bottom:1px solid #122039;overflow-wrap:anywhere}.work-viz__data tr[data-selected]{background:#122039}
 .work-viz__data:has(table){flex-shrink:0}
+@media (max-width: 32rem) {
+  .work-viz__data:has(table){padding-inline:6px}
+  .work-viz__data table{table-layout:fixed}
+  .work-viz__data th,.work-viz__data td{padding:4px 2px}
+  .work-viz__data th:nth-child(2){width:27%}
+  .work-viz__data table td:first-child button{max-width:100%}
+}
 .work-viz__data button{border:0;background:transparent;padding:2px}.work-viz__data summary{cursor:pointer;color:#bcc2cd}.work-viz__data ul{list-style:none;padding:0}
 .work-viz__data td:first-child button{max-width:28ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .work-viz__primitives{position:absolute;right:14px;top:12px;color:#98a1b5;font-size:var(--text-sm);pointer-events:none}
