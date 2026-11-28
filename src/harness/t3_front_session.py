@@ -21,12 +21,13 @@ IMAGE_GUIDE = "Choose one PNG, JPEG, WebP or GIF image, up to 5 MiB."
 
 
 def prompt_image(attachments, blocks):
-    media = [block for block in blocks if block.get("type") != "text"]
-    if not attachments and not media:
+    # T3 prepends missed images on recovery. Only the active message owns the final image.
+    if not attachments:
         return None
-    if len(attachments) != 1 or len(media) != 1:
+    if len(attachments) != 1:
         raise ValueError(IMAGE_GUIDE)
-    attachment, block = attachments[0], media[0]
+    attachment = attachments[0]
+    block = next((b for b in reversed(blocks) if b.get("type") != "text"), {})
     if (
         attachment.get("type") != "image"
         or block.get("type") != "image"

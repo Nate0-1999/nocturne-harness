@@ -321,7 +321,9 @@ def test_a_thread_born_in_t3_is_the_open_thread_only_once_the_journal_holds_it(t
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("kind", ["image", "file", "damaged", "multiple", "oversize"])
+@pytest.mark.parametrize(
+    "kind", ["image", "file", "damaged", "multiple", "oversize", "recover_text", "recover_image"]
+)
 async def test_paperclip_preserves_image_bytes_or_explains_the_refusal(tmp_path, kind):
     """P4 / FL-070: files from T3 must not disappear into a text-only paid turn."""
     import base64
@@ -338,6 +340,12 @@ async def test_paperclip_preserves_image_bytes_or_explains_the_refusal(tmp_path,
     elif kind == "multiple":
         files *= 2
         blocks.append(block)
+    elif kind.startswith("recover"):
+        # T3 prepends missed attachments when it replaces the failed provider session.
+        blocks.insert(1, {"type": "image", "mimeType": "image/gif", "data": "R0lGODlh"})
+        if kind == "recover_text":
+            files.clear()
+            blocks.pop()
     run = dict(status="running", providerInstanceId="nocturne", userMessageId="current")
     message = dict(role="user", id="current", text="Describe this", attachments=files)
     client = SimpleNamespace(
@@ -373,7 +381,9 @@ async def test_paperclip_preserves_image_bytes_or_explains_the_refusal(tmp_path,
     session.send, session.text = AsyncMock(), AsyncMock()
     await session.prompt(7, blocks)
     session.send.assert_awaited_once_with(id=7, result={"stopReason": "end_turn"})
-    if kind == "image":
+    if kind == "recover_text":
+        assert loop.submit.await_args.kwargs["image"] is None
+    elif kind in {"image", "recover_image"}:
         sent = loop.submit.await_args.kwargs
         assert sent["prompt"] == "Describe this"
         assert sent["image"].decoded_bytes() == data
