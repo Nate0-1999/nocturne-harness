@@ -419,6 +419,28 @@ def test_failed_archive_digest_prevents_installation(tmp_path, monkeypatch):
     assert not (tmp_path / "t3" / "install" / t3_install.VERSION).exists()
 
 
+def test_subscription_inventory_distinguishes_unchecked_from_absent():
+    """A-095: T3 sets installed false on a cold start even for a tool about to offer models."""
+    from harness.t3_sources import project_sources
+
+    provider = {
+        "instanceId": "codex",
+        "installed": False,
+        "status": "warning",
+        "message": "Codex provider status has not been checked in this session yet.",
+    }
+    assert project_sources([provider])[0]["availability"] == "checking"
+    provider.update(
+        installed=True,
+        status="ready",
+        auth={"status": "authenticated", "type": "chatgpt", "profileId": "fixture"},
+        message=None,
+    )
+    assert project_sources([provider])[0]["availability"] == "available"
+    provider.update(installed=False, status="error", auth={})
+    assert project_sources([provider])[0]["availability"] == "missing"
+
+
 def test_authenticated_claude_ultra_survives_failed_usage_probe():
     """A-095: a missing usage reading hid a real Max login; API billing must stay ineligible."""
     from harness.t3_sources import offers, project_sources

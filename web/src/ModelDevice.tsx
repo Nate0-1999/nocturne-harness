@@ -7,7 +7,7 @@ import { formatHumanCount } from './humanNumbers'
 import { failureMessage, serverMessage } from './requestFailure'
 import { attachModelPinHold } from './modelPinHold'
 import {
-  browseOrder, currentEffort, currentStrategy, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
+  browseOrder, currentEffort, currentStrategy, followSubscriptionCheck, formatPrice, modelLabel, modelMark, modelSummary, parseBrowser,
   policyInForce, policyName, shortName, strategyMeaning, strategyName, subscriptionGroups, subscriptionState, takesParameter, type Configuration, type ModelBrowser, type SortKey,
 } from './modelBrowser'
 
@@ -273,18 +273,23 @@ export function ModelDevice() {
   }, [events])
 
   const liveModel = live?.resolved_model ?? null
+  const browserRequest = useRef(0)
   const loadBrowser = useCallback(async () => {
+    const request = ++browserRequest.current
+    const active = () => request === browserRequest.current
     try {
-      setBrowser(parseBrowser(await events.dispatch({ type: 'models.load', thread_id: threadId, subscriptions: true })))
-      setBrowserError(null)
+      await followSubscriptionCheck(
+        () => events.dispatch({ type: 'models.load', thread_id: threadId, subscriptions: true }),
+        result => { setBrowser(result); setBrowserError(null) }, active,
+      )
     } catch (error) {
-      setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
+      if (active()) setBrowserError(failureMessage(error, 'The model list could not be loaded. Close this device and open it again.'))
     }
   }, [events, threadId])
 
   useEffect(() => {
     const timer = globalThis.setTimeout(() => { void loadBrowser() }, 0)
-    return () => globalThis.clearTimeout(timer)
+    return () => { globalThis.clearTimeout(timer); browserRequest.current++ }
   }, [loadBrowser, liveModel])
 
   useEffect(() => {
@@ -338,7 +343,7 @@ export function ModelDevice() {
   const inUse = browser?.models.find((item) => item.model === resolved)
   const subscription = resolved?.startsWith('subscription:') === true
   const StrategyRail = subscription ? 'details' : 'section'
-  const groups = subscriptionGroups(browser)
+  const groups = subscriptionGroups(browser, browserError !== null)
   // SD-079: only the parameters the model in use takes, per the source's catalog.
   const numeric = useMemo(
     () => descriptors.filter((item) => (item.type === 'number' || item.type === 'integer')

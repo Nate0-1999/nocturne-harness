@@ -74,7 +74,12 @@ def project_sources(providers: list[dict]) -> list[dict]:
             account = hashlib.sha256(f"{instance}\0{native_id}".encode()).hexdigest()
         windows = [w for w in limits.get("windows", []) if w.get("usedPercent", 0) >= 100]
         global_limits = [w for w in windows if not w.get("modelIds")]
-        if provider.get("installed") is False:
+        # Pinned T3's unchecked snapshot already has installed=false and a checkedAt timestamp.
+        if (provider.get("message") or "").endswith(
+            "provider status has not been checked in this session yet."
+        ):
+            status = "checking"
+        elif provider.get("installed") is False:
             status = "missing"
         elif auth.get("status") == "unauthenticated":
             status = "signed_out"

@@ -1697,7 +1697,7 @@ def create_dev_app(
                 except ModelCatalogUnavailable as exc:
                     browser["unavailable"] = str(exc)
             bans = configured.model_choices.bans()
-            if subscriptions and t3.binary.is_file() or t3.running:
+            if subscriptions or t3.running:
                 try:
                     native = await sources(t3)
                 except T3Error:
