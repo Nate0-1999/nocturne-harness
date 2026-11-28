@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "ffed42de7e0126af2608998f463fc48704409f50"
+      "head": "85eeb82f7a0ffb45d75eff1b6c836bc7379efb73"
     }
   ],
   "unmapped": {
@@ -24,6 +24,9 @@
     "harness/verification/m8rg/FL-074.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-075.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-083.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-086.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-087.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-089.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-102.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-104.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-105.png": "Packet walk evidence, ledger verdicts or hash inventory.",
@@ -49,6 +52,7 @@
     "harness/verification/m8rg/FL-152.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-153.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-154.png": "Packet walk evidence, ledger verdicts or hash inventory.",
+    "harness/verification/m8rg/FL-157.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-158.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-168.png": "Packet walk evidence, ledger verdicts or hash inventory.",
     "harness/verification/m8rg/FL-170.png": "Packet walk evidence, ledger verdicts or hash inventory.",
@@ -143,6 +147,24 @@
       "screenshot": "FL-083.png",
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-083 walk (The current token count of the context window comes from OpenRouter sending us that information.) was outside this packet. The screenshot identifies the scope walked."
+    },
+    "FL-086": {
+      "label": "Both modes supported: a hands-off default with loops, judges and parallel agents, and a traditional chat mode of agent turn then human turn.",
+      "walk": "Run one piece of work as a plain turn-by-turn chat and another as a symphony; both work.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-086.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-086 walk (Both modes supported: a hands-off default with loops, judges and parallel agents, and a traditional chat mode of agent turn then human turn.) was outside this packet. The screenshot identifies the scope walked."
+    },
+    "FL-087": {
+      "label": "Modes on a music-themed scale: pair mode is Duet and conductor mode is Symphony, with room for more in between.",
+      "walk": "Open the mode selector; Duet and Symphony are listed.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-087.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-087 walk (Modes on a music-themed scale: pair mode is Duet and conductor mode is Symphony, with room for more in between.) was outside this packet. The screenshot identifies the scope walked."
     },
     "FL-102": {
       "label": "The Deck: a flashcard stack of terminals, cards colored to match their agents, only one card on top at a time (that project's agent's last response) to interact with, the next card popping up once you respond, ordered purely by which finished first.",
@@ -324,6 +346,15 @@
       "flag": "",
       "observed": "Opened the four separate token-cost policies in App settings. The disposable home displayed Elbow for chat and an explicit pin for sub-agent, judge and curator."
     },
+    "FL-157": {
+      "label": "Constitution: spend walls, soft budgets per run or day that pause the work at the wall for the judge (symphony budget law).",
+      "walk": "Start a symphony with a small budget; when spend reaches the wall the run pauses and a boundary card appears on the Deck for the judge.",
+      "protected": true,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-157.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-157 walk (Constitution: spend walls, soft budgets per run or day that pause the work at the wall for the judge (symphony budget law).) was outside this packet. The screenshot identifies the scope walked."
+    },
     "FL-158": {
       "label": "Switch models on command through the same path automatic routing uses; an off-switch to run on a single token or credit.",
       "walk": "With routing switched off on a single key, type /model with a new model in a thread; the next reply's spend row names the new model on that one key.",
@@ -439,7 +470,7 @@
       "verdict": "PASS",
       "screenshot": "FL-202.png",
       "flag": "",
-      "observed": "Return 3: both direct sources showed US and followed the maker rule in the installed Stage at both widths. The same paid thread reached the allowed provider on separate turns across cache expiry. Return 2: the installed Stage first showed loading, then the list, then provider locations. With only France allowed, the Mistral Small 4 row and chat named the missing provider information and the specific checkbox. Both widths were walked. Return 1: independently changed maker and serving rules on both widths and compared all displayed counts to the installed listing. Timed the matching refusal and inspected the paid provider receipt. The earlier installed walk covered the ranked model browser with price and context, pin to top, switch, fresh-thread persistence and one-click return to Elbow. Low thinking persisted on the paid thread. The model ban changed the new pick and preserved the first thread. Banned pins returned 422. Lifting the ban restored the original pick. Desktop and phone country exclusions, choices and role-and-policy-controls.json are in Garden."
+      "observed": "Return 4: the installed Model Device showed an unknown maker for compatible addresses and US for the official hosts of both direct sources. Desktop and phone counts and row exclusions agreed with the settings. Return 3: both direct sources showed US and followed the maker rule in the installed Stage at both widths. The same paid thread reached the allowed provider on separate turns across cache expiry. Return 2: the installed Stage first showed loading, then the list, then provider locations. With only France allowed, the Mistral Small 4 row and chat named the missing provider information and the specific checkbox. Both widths were walked. Return 1: independently changed maker and serving rules on both widths and compared all displayed counts to the installed listing. Timed the matching refusal and inspected the paid provider receipt. The earlier installed walk covered the ranked model browser with price and context, pin to top, switch, fresh-thread persistence and one-click return to Elbow. Low thinking persisted on the paid thread. The model ban changed the new pick and preserved the first thread. Banned pins returned 422. Lifting the ban restored the original pick. Desktop and phone country exclusions, choices and role-and-policy-controls.json are in Garden."
     },
     "FL-205": {
       "label": "The thread list tells you where and how: each thread shows its project by name and the model and thinking level in force, and the list reads cleaner.",
@@ -467,6 +498,15 @@
       "screenshot": "FL-061.png",
       "flag": "F086",
       "observed": "The installed walk covered model country settings and provider selection. The full FL-061 walk (Compaction instructions tuned by back-test; memory size as a tunable beside the threshold and allotments.) was outside this packet. The screenshot identifies the scope walked."
+    },
+    "FL-089": {
+      "label": "A configuration per orchestration level.",
+      "walk": "Open the config for Duet and for Symphony; each level has its own config.",
+      "protected": false,
+      "verdict": "BLOCKED",
+      "screenshot": "FL-089.png",
+      "flag": "F086",
+      "observed": "The installed walk covered model country settings and provider selection. The full FL-089 walk (A configuration per orchestration level.) was outside this packet. The screenshot identifies the scope walked."
     },
     "FL-108": {
       "label": "Resizable modules and a plugin-contributor skill shipped with the repo.",
@@ -673,10 +713,7 @@
     "FL-082": "outside diff",
     "FL-084": "outside diff",
     "FL-085": "outside diff",
-    "FL-086": "outside diff",
-    "FL-087": "outside diff",
     "FL-088": "outside diff",
-    "FL-089": "outside diff",
     "FL-090": "outside diff",
     "FL-091": "outside diff",
     "FL-092": "outside diff",
@@ -719,7 +756,6 @@
     "FL-150": "unverified",
     "FL-155": "outside diff",
     "FL-156": "outside diff",
-    "FL-157": "outside diff",
     "FL-159": "outside diff",
     "FL-197": "outside diff",
     "FL-160": "outside diff",
