@@ -159,6 +159,8 @@ with sync_playwright() as p:
             reached = travel(deck, target)
             if reached:
                 target.click()
+                votes = last.locator("details[open] p strong")
+                reached = votes.count() == 3 and travel(deck, votes.last)
             shot(mode.lower() + "-deck-verdict")
             readings[mode + " Deck"] = {
                 "before": start,
@@ -179,6 +181,8 @@ with sync_playwright() as p:
             reached_worker = travel(deck, target)
             if reached_worker:
                 target.click()
+                commit = last.locator("details[open] dd").last
+                reached_worker = travel(deck, commit)
             readings[mode + " Deck"]["last worker evidence reachable"] = reached_worker
             shot(mode.lower() + "-deck-worker")
         fr = layout("farm")
