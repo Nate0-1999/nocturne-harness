@@ -53,7 +53,7 @@ export function WorkerContext({ symphonyId, attemptId }: { symphonyId: string; a
       <ContextBars workerSnapshot={worker.observation} />
       <h4>Injected memories</h4>
       {worker.stage === 'judge'
-        ? <p>Judges read the signed charge and the work without Palace memories.</p>
+        ? <p>Judges read the signed charge and the work without Palace memories. Put any memory you want them to weigh in the charge.</p>
         : worker.injection === null ? <p>No injection recorded yet.</p>
         : worker.injection.injected.length === 0 && <p>No memories were injected.</p>}
       {worker.injection?.injected.map((card) => <MemoryCard key={card.memory_id} memoryId={card.memory_id} label={card.label}

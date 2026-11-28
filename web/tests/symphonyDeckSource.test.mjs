@@ -31,7 +31,9 @@ test('the Deck projects the fact out of each queued lesson', async () => {
 /** ADR-012 §3 and B.6: the judge's inputs explain why its memory list is empty. */
 test('the Deck explains what judges read beside their memory observation', async () => {
   const context = await readFile(new URL('../src/WorkerContext.tsx', import.meta.url), 'utf8')
-  assert.match(context, /worker\.stage === 'judge'\s*\? <p>Judges read the signed charge and the work without Palace memories\.<\/p>/u)
+  const line = context.match(/worker\.stage === 'judge'\s*\? <p>([^<]+)<\/p>/u)?.[1] ?? ''
+  assert.match(line, /judges read the signed charge and the work without Palace memories/iu)
+  assert.match(line, /put any memory you want them to weigh in the charge/iu)
 })
 
 /** ADR-014 and G19-G20 require one current Deck surface for typed steering and exact lineage. */
