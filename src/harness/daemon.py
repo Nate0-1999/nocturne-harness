@@ -1240,6 +1240,7 @@ def create_dev_app(
             ),
             t3,
             journal,
+            context_windows=context_windows,
         ),
         owned_spine,
         context_factory,

@@ -243,3 +243,26 @@ async def subscription_window(server, tool, slug) -> int:
     except (OSError, subprocess.SubprocessError, ValueError, AttributeError, KeyError, TypeError):
         pass
     raise T3Error("The tool did not report a context size for this model. Choose another model.")
+
+
+def terminal_context(projection, run):
+    """T3's last provider request for this attempt, excluding previous runs and retries."""
+    attempt = run.get("activeAttemptId")
+    if not attempt:
+        return None
+    turns = (
+        turn
+        for turn in projection.get("providerTurns", [])
+        if turn.get("runAttemptId") == attempt
+        and turn.get("status") == "completed"
+        and turn.get("providerThreadId") == run.get("providerThreadId")
+        and type(turn.get("ordinal")) is int
+    )
+    last = max(turns, key=lambda turn: turn["ordinal"], default={})
+    usage = last.get("tokenUsage")
+    if not isinstance(usage, dict):
+        return None
+    counts = tuple(usage.get(field) for field in ("maxTokens", "inputTokens", "outputTokens"))
+    if all(type(n) is int and n >= 0 for n in counts) and counts[0] and counts[1]:
+        return counts
+    return None
