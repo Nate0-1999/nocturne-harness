@@ -1130,6 +1130,7 @@ export function createHostPluginApi(
         attunement,
         attuned,
         ownsAttunementSource,
+        manifest.id,
       ),
       subscribeState: subscribeRackState,
       subscribe(listener) {
@@ -1180,9 +1181,12 @@ function contextualRackSnapshot(
   attunement: AttunementTarget | null,
   attuned: boolean,
   ownsAttunementSource: boolean,
+  moduleId: RackModuleId,
 ): RackSnapshot {
   if (attunement?.kind !== 'thread') {
-    return attuned && !ownsAttunementSource
+    const selectedOnDeck = moduleId === 'context_bars' && attunement?.id === 'the-deck'
+      && snapshot.selectedThreadId !== null && attunement.thread_ids.includes(snapshot.selectedThreadId)
+    return attuned && !ownsAttunementSource && !selectedOnDeck
       ? { ...snapshot, selectedThreadId: null, currentProjectKey: null, attunement }
       : { ...snapshot, attunement }
   }

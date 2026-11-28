@@ -5,7 +5,7 @@ import type { JsonValue } from './protocol'
 import { useRackPlugin, useRackSnapshot } from './rack'
 import { latestDeckStacks } from './SymphonyDeck'
 
-interface Worker { worker_id: string; attempt_id: string; stage: string; observation: JsonValue }
+interface Worker { worker_id: string; attempt_id: string; stage: string; round_scope?: string; observation: JsonValue }
 
 export function SwarmContextBars() {
   const { selectedThreadId, threads } = useRackSnapshot()
@@ -49,7 +49,12 @@ function WorkerBars({ id, live }: { id: string; live: boolean }) {
     {worker ? <>
       <Select aria-label="Context source" title="Choose a worker or judge" value={worker.worker_id}
         onChange={event => setChosen(event.target.value)}>
-        {workers.map(item => <option key={item.worker_id} value={item.worker_id}>{item.attempt_id} · {item.stage}</option>)}
+        {workers.map(item => {
+          const round = item.round_scope?.match(/^step-(\d+)-round-(\d+)$/)
+          return <option key={item.worker_id} value={item.worker_id}>
+            {round && `Step ${round[1]} · Round ${round[2]} · `}{item.attempt_id} · {item.stage}
+          </option>
+        })}
       </Select>
       <ContextBars workerSnapshot={worker.observation ?? null} />
     </> : !failed && <p>Waiting for the first recorded worker request.</p>}
