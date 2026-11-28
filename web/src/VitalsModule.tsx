@@ -5,6 +5,7 @@ import { useRackPlugin, useRackSnapshot } from './rack'
 import { CacheHistory, InfrastructureInvoiceForm, SpendDaily, SpendLines, SpendReceipts, SpendReconciliation } from './SpendHistory'
 import { parseVitalsSnapshot, type ReconciliationSnapshot } from './vitals'
 import {
+  includedTurns,
   parseSpendTableSnapshot,
   partialSpendCopy,
   type SpendMetrics,
@@ -13,7 +14,7 @@ import {
 } from './spendTable'
 import './assets/honest-display.css'
 import { Button } from './kit'
-import { parseBrowser, spendModelLabel, type ModelBrowser } from './modelBrowser'
+import { modelLabel, parseBrowser, spendModelLabel, type ModelBrowser } from './modelBrowser'
 import { failureMessage } from './requestFailure'
 
 type LoadPhase = 'loading' | 'live' | 'refreshing' | 'failed'
@@ -173,7 +174,7 @@ export function VitalsModule() {
                   ...(expanded ? row.models.map((model, index) => (
                     <SpendRow
                       key={`${row.thread_id}:${model.model ?? 'unreported'}:${index}`}
-                      name={spendModelLabel(browser, threadEntries.get(row.thread_id), model.model)}
+                      name={model.covered_turns ? modelLabel(model.model) : spendModelLabel(browser, threadEntries.get(row.thread_id), model.model)}
                       metrics={model}
                       nested
                     />
@@ -212,13 +213,15 @@ function SpendRow({
   disclosure?: { expanded: boolean; count: number; toggle: () => void }
 }) {
   const partial = partialSpendCopy(metrics)
+  const coverage = metrics.covered_turns > 0 && <small className="spend-table__coverage">{includedTurns(metrics.covered_turns)}</small>
   return (
     <tr className={nested ? 'spend-table__model' : purpose ? 'spend-table__purpose' : undefined}>
       <th scope="row">
-        {disclosure === undefined ? <span>{name}</span> : (
+        {disclosure === undefined ? <><span>{name}</span>{coverage}</> : (
           <Button action={disclosure.expanded ? "collapse" : "expand"} variant="bare" type="button" data-tooltip-detail="Show or hide this conversation's models." aria-expanded={disclosure.expanded} onClick={disclosure.toggle}>
             <span className="spend-table__name" title={name}>{name}</span>
             <small>{disclosure.count} {disclosure.count === 1 ? 'model' : 'models'}</small>
+            {coverage}
           </Button>
         )}
         {purpose && <small>Other work</small>}
@@ -227,8 +230,8 @@ function SpendRow({
       <Metric value={metrics.kv_cache_tokens} />
       <Metric value={metrics.reasoning_tokens} />
       <Metric value={metrics.output_tokens} />
-      <td title={partial ?? undefined}>{money(metrics.total_usd, metrics.total_receipt_lines)}{metrics.total_usd !== null && metrics.total_unpriced_lines > 0 && ' + unpriced'}</td>
-      <td title={metrics.hourly_unpriced_lines > 0 ? 'The provider did not report a price. No later price is pending.' : undefined}>{money(metrics.spend_per_hour_usd, metrics.hourly_receipt_lines)}{metrics.spend_per_hour_usd !== null && metrics.hourly_unpriced_lines > 0 && ' + unpriced'}</td>
+      <td title={partial ?? undefined}>{metrics.covered_turns && !metrics.total_receipt_lines ? '—' : money(metrics.total_usd, metrics.total_receipt_lines)}{metrics.total_usd !== null && metrics.total_unpriced_lines > 0 && ' + unpriced'}</td>
+      <td title={metrics.hourly_unpriced_lines > 0 ? 'The provider did not report a price. No later price is pending.' : undefined}>{metrics.covered_turns && !metrics.hourly_receipt_lines ? '—' : money(metrics.spend_per_hour_usd, metrics.hourly_receipt_lines)}{metrics.spend_per_hour_usd !== null && metrics.hourly_unpriced_lines > 0 && ' + unpriced'}</td>
     </tr>
   )
 }

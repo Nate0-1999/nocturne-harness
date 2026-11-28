@@ -1251,6 +1251,7 @@ def create_dev_app(
         delete_memory=delete_memory_from_gate,
         mirror=local_copy,
         outbox=outbox,
+        receipt_queue=receipt_queue,
     )
 
     def journaled_crossings(thread_id: str) -> set[str]:

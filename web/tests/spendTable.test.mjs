@@ -1,7 +1,21 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { parseSpendTableSnapshot, partialSpendCopy, spendPolylines, spendSeries } from '../src/spendTable.ts'
+import { includedTurns, parseSpendTableSnapshot, partialSpendCopy, spendPolylines, spendSeries, windowActivity } from '../src/spendTable.ts'
+
+/** A-102 keeps a covered-only window free of prices, including at a time boundary. */
+test('counts only the covered turns inside the selected window', () => {
+  const as_of = '2026-08-31T16:55:00Z'
+  const first = Date.parse(as_of) - 60_000
+  const receipts = [
+    { ts: new Date(first - 1).toISOString(), covered_by: null },
+    { ts: new Date(first).toISOString(), covered_by: 'codex' },
+    { ts: as_of, covered_by: 'claudeAgent' },
+  ]
+  assert.deepEqual(windowActivity({ as_of, receipts }, first), { covered: 2, coveredOnly: true })
+  assert.equal(includedTurns(2), 'Included with your plan · 2 turns')
+  assert.deepEqual(windowActivity({ as_of, receipts }, first - 1), { covered: 2, coveredOnly: false })
+})
 
 const metrics = (overrides = {}) => ({
   input_tokens: '1200.5',
