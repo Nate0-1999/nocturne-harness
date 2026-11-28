@@ -118,6 +118,7 @@ async def test_window_cancel_preserves_work_only_for_its_own_steering_restart(
     session = FrontSession(front, "native-thread", None, None)
     session.thread, session.run = "thread", "journal-run"
     session.native_run, session.node = "native-run", "old-node"
+    session.turn_client = await front.client()
     session.events = asyncio.Queue()
     await session.window_cancel()
     if should_cancel:
@@ -128,7 +129,15 @@ async def test_window_cancel_preserves_work_only_for_its_own_steering_restart(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("text,expected", [("Earlier", "end_turn"), ("Changed", "error")])
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Earlier", "end_turn"),
+        ("Changed", "error"),
+        ("/compact", "refusal"),
+        ("/compact", "end_turn"),
+    ],
+)
 async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
     tmp_path, text, expected
 ):
@@ -139,7 +148,7 @@ async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
         {
             "role": "user",
             "message_id": "prompt",
-            "content": "Earlier",
+            "content": "/compact" if text == "/compact" else "Earlier",
             "state": "end_turn",
             "run_id": "run",
         },
@@ -157,6 +166,8 @@ async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
         parent_id="prompt",
     )
     message_id = "nocturne-journal-prompt"
+    if text == "/compact" and expected == "end_turn":
+        journal.append_compaction_record("thread", {"run_id": "run", "event_uid": "receipt"})
     client = SimpleNamespace(
         call=AsyncMock(
             return_value={
@@ -180,12 +191,18 @@ async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
     )
     session.session, session.cwd = "thread", tmp_path
     session.send, session.text = AsyncMock(), AsyncMock()
+    session.can_show_compaction = True
+    session.update = AsyncMock()
     await session.prompt(7, [{"type": "text", "text": text}])
     loop.submit.assert_not_awaited()
     loop.request_snapshot.assert_not_awaited()
-    if expected == "end_turn":
+    if expected != "error":
         session.text.assert_awaited_once_with("Settled")
-        session.send.assert_awaited_once_with(id=7, result={"stopReason": "end_turn"})
+        session.send.assert_awaited_once_with(id=7, result={"stopReason": expected})
+        if text == "/compact" and expected == "end_turn":
+            session.update.assert_awaited_once_with(
+                sessionUpdate="compaction_update", compactionId="receipt", status="completed"
+            )
     else:
         assert "error" in session.send.await_args.kwargs
         session.text.assert_not_awaited()

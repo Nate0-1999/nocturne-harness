@@ -35,8 +35,10 @@ class FrontSession:
         self.card_answered = False
         self.node = None
         self.native_run = None
+        self.turn_client = None
         self.events = None
         self.superseded = False
+        self.can_show_compaction = False
 
     async def send(self, **message):
         self.writer.write(json.dumps({"jsonrpc": "2.0", **message}).encode() + b"\n")
@@ -56,10 +58,14 @@ class FrontSession:
     async def window_cancel(self):
         # T3 commits the replacement attempt before it interrupts the old provider.
         if self.native_run and self.node:
-            client = await self.front.client()
-            projection = await client.call(
-                "orchestration.getThreadProjection", {"threadId": self.native}
-            )
+            try:
+                projection = await self.turn_client.call(
+                    "orchestration.getThreadProjection", {"threadId": self.native}
+                )
+            except (T3Error, TimeoutError, OSError):
+                # On shutdown the original client may already be gone. Never start a new server.
+                await self.cancel()
+                return
             run = next((r for r in projection["runs"] if r["id"] == self.native_run), None)
             attempts = [a for a in projection["attempts"] if a["runId"] == self.native_run]
             if (
@@ -93,6 +99,8 @@ class FrontSession:
                 params = request.get("params", {})
                 rid = request.get("id")
                 if method == "initialize":
+                    session_caps = params.get("clientCapabilities", {}).get("session", {})
+                    self.can_show_compaction = "compaction" in session_caps
                     result = {
                         "protocolVersion": 1,
                         "agentCapabilities": {
@@ -268,7 +276,25 @@ class FrontSession:
 
     async def refuse(self, rid, reason):
         await self.text(reason)
-        await self.send(id=rid, result={"stopReason": "end_turn"})
+        await self.send(id=rid, result={"stopReason": "refusal"})
+
+    async def finish(self, rid, state, run, text, show_compactions=False):
+        manual = text.strip() == "/compact"
+        if state == "end_turn" and (manual or (show_compactions and self.can_show_compaction)):
+            records = [
+                r for r in self.front.journal.compaction_records(self.thread) if r["run_id"] == run
+            ]
+            if manual and not records:
+                # A completed ACP prompt for /compact would tell T3 it discarded old context.
+                state = "refusal"
+            if self.can_show_compaction:
+                for record in records:
+                    await self.update(
+                        sessionUpdate="compaction_update",
+                        compactionId=record["event_uid"],
+                        status="completed",
+                    )
+        await self.send(id=rid, result={"stopReason": state})
 
     async def prompt(self, rid, blocks):
         loop = self.front.loop
@@ -302,6 +328,7 @@ class FrontSession:
             message_id = runs[0]["userMessageId"]
             self.node = runs[0].get("rootNodeId")
             self.native_run = runs[0].get("id")
+            self.turn_client = client
             message = next(m for m in projection["messages"] if m["id"] == message_id)
             if message["role"] != "user" or message.get("attachments"):
                 raise T3Error("This Nocturne conversation accepts text prompts.")
@@ -340,7 +367,7 @@ class FrontSession:
                 if answer and state in StopReason:
                     await self.text(answer.get("content", ""))
                     if state in {"end_turn", "cancelled"}:
-                        await self.send(id=rid, result={"stopReason": state})
+                        await self.finish(rid, state, prior["run_id"], message["text"], True)
                         return
                     raise T3Error(f"The Nocturne journal records this turn as {state}.")
                 raise T3Error("Nocturne already accepted this turn. Open its journal to review it.")
@@ -352,6 +379,7 @@ class FrontSession:
                 events.put_nowait(None)
             if self.stopping:
                 await self.cancel()
+            compacted = False
             while True:
                 envelope = await events.get()
                 if envelope is None:
@@ -366,6 +394,11 @@ class FrontSession:
                         await self.text(payload.text)
                     elif (
                         payload.kind == "event"
+                        and payload.event.get("event_kind") == "compaction_completed"
+                    ):
+                        compacted = True
+                    elif (
+                        payload.kind == "event"
                         and payload.event.get("event_kind") == "boundary_card"
                     ):
                         if payload.event.get("decision") == "owner_action":
@@ -378,10 +411,13 @@ class FrontSession:
                     await self.dismiss_card(client)
                 elif envelope.type == "run.done":
                     await self.dismiss_card(client)
-                    self.run = None
                     if payload.stop_reason not in {"cancelled", "end_turn"}:
+                        self.run = None
                         raise T3Error(payload.error_message or "Nocturne stopped the turn.")
-                    await self.send(id=rid, result={"stopReason": payload.stop_reason})
+                    await self.finish(
+                        rid, payload.stop_reason, self.run, message["text"], compacted
+                    )
+                    self.run = None
                     break
         except (ConnectionError, asyncio.CancelledError):
             await self.cancel()
@@ -399,7 +435,7 @@ class FrontSession:
             )
         finally:
             self.run = None
-            self.native_run = self.events = None
+            self.native_run = self.events = self.turn_client = None
             await loop.detach(sink)
 
     async def text(self, value):
