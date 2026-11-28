@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
 
 import { formatHumanPercent, formatHumanQuantity, formatHumanUsd } from './humanNumbers'
-import { SPEND_WINDOWS, spendPolylines, spendSeries, type SpendMetrics, type SpendTableSnapshot, type SpendWindow } from './spendTable'
+import { modelLabel } from './modelBrowser'
+import { includedTurns, SPEND_WINDOWS, spendPolylines, spendSeries, windowActivity, type SpendMetrics, type SpendTableSnapshot, type SpendWindow } from './spendTable'
 import { useRackPlugin } from './rack'
 import { dayDrift, formatDayUsd, type ReconciliationSnapshot } from './vitals'
 import './assets/spend-history.css'
@@ -43,6 +44,7 @@ export function InfrastructureInvoiceForm({ onSaved }: { onSaved: () => void }) 
 export function SpendLines({ snapshot, window, onWindowChange, lead }: { snapshot: SpendTableSnapshot; window: SpendWindow; onWindowChange: (window: SpendWindow) => void; lead?: ReactNode }) {
   const { minutes, series, peak } = spendSeries(snapshot, window)
   const first = minutes[0]
+  const activity = windowActivity(snapshot, first)
   const last = minutes.at(-1)!
   return <section className="spend-lines" aria-label="Spend per minute">
     <div className="spend-lines__controls">
@@ -50,9 +52,10 @@ export function SpendLines({ snapshot, window, onWindowChange, lead }: { snapsho
       <Select aria-label="Spend window" data-tooltip-detail="How far back the graphs reach; today starts at midnight." value={window} onChange={(event) => onWindowChange(event.target.value as SpendWindow)}>
         {Object.entries(SPEND_WINDOWS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
-      <small title="Every graph shares this scale.">Top {formatDayUsd(peak)} / min</small>
+      {activity.covered > 0 && <span>{includedTurns(activity.covered)}</span>}
+      {!activity.coveredOnly && <small title="Every graph shares this scale.">Top {formatDayUsd(peak)} / min</small>}
     </div>
-    <div className="spend-lines__graphs">
+    {!activity.coveredOnly && <div className="spend-lines__graphs">
       {series.map((entry) => <figure key={entry.dimension} data-series={entry.dimension}>
         <figcaption title={entry.lines.length > 1 ? entry.lines.map((item) => item.label).join('\n') : undefined}>
           <span>{entry.label}{entry.lines.length > 1 ? ` · ${entry.lines.length}` : ''}</span>
@@ -66,7 +69,7 @@ export function SpendLines({ snapshot, window, onWindowChange, lead }: { snapsho
           </g>)}
         </svg>
       </figure>)}
-    </div>
+    </div>}
   </section>
 }
 
@@ -74,6 +77,8 @@ export function SpendReconciliation({ value, snapshot }: { value: Reconciliation
   function total(rows: SpendMetrics[]) {
     const known = rows.filter((row) => row.total_usd !== null)
     const unpriced = rows.some((row) => row.total_unpriced_lines > 0)
+    const covered = rows.reduce((sum, row) => sum + row.covered_turns, 0)
+    if (covered && !known.length && !unpriced) return includedTurns(covered)
     const amount = known.reduce((sum, row) => sum + Number(row.total_usd), 0)
     return `${known.length === 0 && unpriced ? 'Price not reported' : formatHumanUsd(amount.toFixed(12))}${known.length > 0 && unpriced ? ' + unpriced receipts' : ''}`
   }
@@ -81,9 +86,11 @@ export function SpendReconciliation({ value, snapshot }: { value: Reconciliation
     <h3>Spend totals</h3>
     <dl className="spend-history__totals">
       <div><dt>Conversations in this view</dt><dd>{total(snapshot.threads)}</dd></div>
-      <div><dt>Other work in this view</dt><dd>{total(snapshot.purposes)}</dd></div>
+      {(!snapshot.threads.some(row => row.covered_turns) || snapshot.purposes.length > 0) && <div><dt>Other work in this view</dt><dd>{total(snapshot.purposes)}</dd></div>}
     </dl>
-    <DayReconciliation value={value} canCheck={snapshot.can_record_invoice === true} />
+    {snapshot.receipts.length > 0 && snapshot.receipts.every(receipt => receipt.covered_by)
+      ? <details><summary>Broker reconciliation</summary><DayReconciliation value={value} canCheck={snapshot.can_record_invoice === true} /></details>
+      : <DayReconciliation value={value} canCheck={snapshot.can_record_invoice === true} />}
   </section>
 }
 
@@ -125,23 +132,25 @@ export function SpendDaily({ snapshot }: { snapshot: SpendTableSnapshot }) {
   return <details className="spend-history">
     <summary>Daily spend · UTC</summary>
     {snapshot.days.length === 0 ? <p>Run a prompt to record daily spend.</p> : <table><thead><tr><th>Day</th><th>Models</th><th>Infrastructure</th><th>Total</th></tr></thead>
-      <tbody>{snapshot.days.map((day) => <tr key={day.day}><th>{day.day.slice(0, 10)}</th><td>{money(day.model_usd)}</td><td>{money(day.infrastructure_usd)}</td><td>{money(day.total_usd)}{day.unpriced_lines > 0 && ' + unpriced receipts'}</td></tr>)}</tbody>
+      <tbody>{snapshot.days.map((day) => <tr key={day.day}><th>{day.day.slice(0, 10)}{day.covered_turns > 0 && <small>{includedTurns(day.covered_turns)}</small>}</th><td>{money(day.model_usd)}</td><td>{money(day.infrastructure_usd)}</td><td>{day.covered_turns && day.total_usd === null && !day.unpriced_lines ? '—' : money(day.total_usd)}{day.unpriced_lines > 0 && ' + unpriced receipts'}</td></tr>)}</tbody>
     </table>}
     <small title="Infrastructure appears on its ledger date; a missing bill is not zero spend.">Check invoice dates when comparing totals.</small>
   </details>
 }
 
 export function SpendReceipts({ snapshot }: { snapshot: SpendTableSnapshot }) {
+  const covered = snapshot.receipts.filter(receipt => receipt.covered_by).length
+  const lines = snapshot.receipts.length - covered
   return <details className="spend-history">
-    <summary>Spend receipts · {snapshot.receipts.length} lines</summary>
-    <p>Oldest first. Each receipt keeps its original ID and amount.</p>
+    <summary>Spend receipts · {lines} {lines === 1 ? 'line' : 'lines'}{covered > 0 && ` · ${includedTurns(covered)}`}</summary>
+    <p>Sorted by receipt ID. Each timestamp shows when the event occurred.</p>
     {snapshot.receipts.length === 0 ? <p>Run a prompt to add spend receipts.</p> : <div className="spend-table__scroll"><table className="spend-receipts" aria-label="Spend receipts">
       <thead><tr><th>Receipt ID · ULID</th><th>Model / purpose</th><th>Quantity</th><th>USD · basis</th></tr></thead>
       <tbody>{snapshot.receipts.map((receipt) => <tr key={receipt.event_uid} data-receipt-id={receipt.event_uid}>
         <th>{receipt.event_uid}<small>{new Date(receipt.ts).toLocaleString()}</small></th>
-        <td title={receipt.ref}>{receipt.model ?? receipt.purpose}<div>{receipt.quantity_type.replaceAll('_', ' ')}</div></td>
-        <td>{formatHumanQuantity(receipt.quantity)} {receipt.unit_of_measure}</td>
-        <td>{receipt.cost_usd === null ? 'Price not reported' : receipt.cost_usd}<div>{receipt.basis}</div></td>
+        <td title={receipt.ref}>{receipt.covered_by ? modelLabel(receipt.model, receipt.covered_by) : receipt.model ?? receipt.purpose}<div>{receipt.quantity_type.replaceAll('_', ' ')}</div></td>
+        <td>{receipt.covered_by ? '1 turn' : `${formatHumanQuantity(receipt.quantity)} ${receipt.unit_of_measure}`}</td>
+        <td>{receipt.covered_by ? 'Included with your plan' : <>{receipt.cost_usd === null ? 'Price not reported' : receipt.cost_usd}<div>{receipt.basis}</div></>}</td>
       </tr>)}</tbody>
     </table></div>}
   </details>

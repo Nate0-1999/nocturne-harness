@@ -48,8 +48,11 @@ class HydratedTranscript:
     current_location: str | None = None
     compaction_histories: Mapping[str, list[Any]] = field(default_factory=dict)
     repository: str | None = None
+    imported_title: str | None = None
 
     def conversation_title(self, fallback: str | None = None) -> str:
+        if self.imported_title:
+            return self.imported_title
         placeholder = "Restored conversation" if self.messages else "New thread"
         for message in self.messages:
             if message.get("role") != "user":
@@ -638,11 +641,13 @@ class TranscriptJournal:
             if not self.path_for_thread(thread_id).exists():
                 return {}
             rows = map(json.loads, self._read_file_rows(self._filename_for_thread(thread_id)))
-            return {
-                r["native_message"]: r["prompt_id"]
-                for r in rows
-                if r.get("record_type") == "t3_front"
-            }
+            prompts = {}
+            for row in rows:
+                if row.get("record_type") == "t3_front":
+                    prompts[row["native_message"]] = row["prompt_id"]
+                elif row.get("record_type") == "t3_window":
+                    prompts.update(row.get("history_prompts", {}))
+            return prompts
 
     def front_thread(self, thread_id: str, environment: str) -> str | None:
         with self._lock:
@@ -656,7 +661,9 @@ class TranscriptJournal:
                     return row["native_thread"]
             return None
 
-    def bind_front_window(self, thread_id: str, environment: str) -> None:
+    def bind_front_window(
+        self, thread_id: str, environment: str, *, native=None, prompts=None
+    ) -> None:
         """An existing journal keeps its identity when its T3 window is created."""
         with self._lock:
             if self.front_thread(thread_id, environment) is None:
@@ -665,8 +672,9 @@ class TranscriptJournal:
                     {
                         "version": 1,
                         "record_type": "t3_window",
-                        "native_thread": thread_id,
+                        "native_thread": native or thread_id,
                         "environment": environment,
+                        **({"history_prompts": prompts} if prompts else {}),
                     },
                 )
 
@@ -693,6 +701,53 @@ class TranscriptJournal:
         """A-095: persist native identities before a prompt can be accepted remotely."""
         with self._lock:
             self._append(thread_id, {"version": 1, "record_type": "subscription", **binding})
+
+    def adopt_subscription(self, thread_id, binding, project, title, messages):
+        """Publish a complete journal once, including across concurrent imports and crashes."""
+        path = self.path_for_thread(thread_id)
+        if path.exists():
+            return False
+        records = [
+            dict(
+                record_type="thread_context",
+                project_key=project,
+                workspace_root=project,
+                current_location=binding["location"],
+                project_label=Path(project).name,
+            ),
+            dict(record_type="subscription", **binding, imported_title=title),
+        ]
+        parent = None
+        for message in messages:
+            records.append(
+                dict(
+                    record_type="message",
+                    message={**message, "parentId": parent},
+                    tail_message_id=message["message_id"],
+                )
+            )
+            parent = message["message_id"]
+        with self._lock:
+            directory = self._open_root_descriptor()
+            name = f".adopt-{uuid.uuid4().hex}"
+            try:
+                fd = os.open(name, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600, dir_fd=directory)
+                try:
+                    with os.fdopen(fd, "wb") as staging:
+                        for record in records:
+                            staging.write(self._encode_record(thread_id, {"version": 1, **record}))
+                        staging.flush()
+                        os.fsync(staging.fileno())
+                    try:
+                        os.link(name, path.name, src_dir_fd=directory, dst_dir_fd=directory)
+                    except FileExistsError:
+                        return False
+                    os.fsync(directory)
+                finally:
+                    os.unlink(name, dir_fd=directory)
+            finally:
+                os.close(directory)
+        return True
 
     def subscription_binding(self, thread_id: str) -> dict | None:
         with self._lock:
@@ -973,6 +1028,7 @@ class TranscriptJournal:
         saw_rewind = False
         saw_message_row = False
         resolved_model: str | None = None
+        imported_title = None
         project_key: str | None = None
         project_label: str | None = None
         workspace_root: str | None = None
@@ -1015,6 +1071,10 @@ class TranscriptJournal:
                         deepcopy(message.get("image")),
                     )
                 )
+                # Early project imports gave a historical reply two IDs. Keep its journal
+                # identity and parent chain while restoring the assistant snapshot contract.
+                if message.get("imported") and message.get("role") == "assistant":
+                    message["run_id"] = message_id
                 latest_messages[message_id] = deepcopy(message)
                 if "tail_message_id" in row:
                     candidate_tail = row["tail_message_id"]
@@ -1038,6 +1098,10 @@ class TranscriptJournal:
                         "starting Nocturne."
                     )
                 attachments[attachment.prompt_id] = attachment
+            elif row.get("record_type") == "subscription" and row.get("imported_title"):
+                if imported_title is None:
+                    imported_title = row["imported_title"]
+                    resolved_model = row["source"]
             elif row.get("record_type") == "event":
                 event = row.get("event")
                 if isinstance(event, dict):
@@ -1160,6 +1224,7 @@ class TranscriptJournal:
                     current_location,
                     compaction_histories,
                     repository,
+                    imported_title,
                 )
             # WALL files / D.2 082: reject an unsafe journal before appending.
             raise TranscriptJournalUnavailable(
@@ -1206,6 +1271,7 @@ class TranscriptJournal:
             current_location,
             compaction_histories,
             repository,
+            imported_title,
         )
 
     def _existing_attachments(self, thread_id: str) -> Mapping[str, ImageAttachment]:

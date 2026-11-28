@@ -152,7 +152,7 @@ class FrontServer(T3Server):
             return self.shown[1]
         environment = self._client.environment_id
         born_in_t3 = str(uuid5(NAMESPACE_URL, f"nocturne:t3:{environment}/{native}"))
-        for thread in (native, born_in_t3):
+        for thread in (native, born_in_t3, native.rsplit(":", 1)[-1]):
             if (
                 self.journal.path_for_thread(thread).exists()
                 and self.journal.front_thread(thread, environment) == native
@@ -184,6 +184,54 @@ class FrontServer(T3Server):
         if not history:
             return True
         native = self.journal.front_thread(row.thread_id, client.environment_id)
+        imported_title = getattr(history, "imported_title", None)
+        if imported_title and native is None:
+            project = await client.workspace_project(row.workspace_root, row.project_label)
+            # The front advertises ACP load only after its background capability probe finishes.
+            # Keep an explicit open pending so the first selection reaches the imported thread.
+            if opened:
+                async with asyncio.timeout(30):
+                    while True:
+                        settings = await client.call("server.getConfig", {})
+                        if any(
+                            p["instanceId"] == "nocturne"
+                            and (p.get("nativeSessions") or {}).get("canLoad")
+                            for p in settings["providers"]
+                        ):
+                            break
+                        await asyncio.sleep(0.5)
+            imported = await client.call(
+                "server.importAcpRegistrySession",
+                {
+                    "projectId": project,
+                    "instanceId": "nocturne",
+                    "sessionId": row.thread_id,
+                    "title": row.title,
+                },
+            )
+            native = imported["threadId"]
+            transcript = await client.orchestration_get(
+                f"threads/{quote(native, safe='')}/transcript"
+            )
+            visible = [
+                entry["item"]
+                for entry in transcript["items"]
+                if entry["item"]["runId"] is None
+                and entry["item"]["type"] in {"user_message", "assistant_message"}
+            ]
+            original = [m for m in history.messages if m["content"]]
+            if [(m["type"], m["text"]) for m in visible] != [
+                (m["role"] + "_message", m["content"]) for m in original
+            ]:
+                raise T3Error("T3 has not loaded this conversation's history.")
+            prompts = {
+                m["messageId"]: old["message_id"]
+                for m, old in zip(visible, original, strict=True)
+                if old["role"] == "user"
+            }
+            self.journal.bind_front_window(
+                row.thread_id, client.environment_id, native=native, prompts=prompts
+            )
         users = [m for m in history.messages if m["role"] == "user"]
         if not users and native is None and not opened:
             # An empty thread gets its T3 thread only when the owner opens it (SD-124).
@@ -253,6 +301,8 @@ class FrontServer(T3Server):
             )
         if len(visible) < len(users):
             prompt = users[len(visible)]
+            if imported_title and prompt.get("model_visible") is False:
+                return False
             if prompt.get("state") not in StopReason:
                 return False
             # ACP sees the original journal ID and replays the settled answer without a run.

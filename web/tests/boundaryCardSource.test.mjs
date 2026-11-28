@@ -9,7 +9,7 @@ const rack = readFileSync(new URL('../src/rack.tsx', import.meta.url), 'utf8')
 test('a waiting boundary card carries its three answers and posts them to its run', () => {
   for (const [id, decision, label] of [
     ['boundary-allow-once', 'allowed_once', 'Allow once'],
-    ['boundary-allow-thread', 'allowed_thread', 'Allow for this thread'],
+    ['boundary-allow-thread', 'allowed_thread', ".*Allow for this conversation.*Allow for this thread.*"],
     ['boundary-deny', 'denied', 'Deny'],
   ]) {
     assert.match(deck, new RegExp(`data-testid="${id}"[\\s\\S]*?decide\\(card, '${decision}'\\)\\}>${label}<`))

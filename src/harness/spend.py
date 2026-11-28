@@ -45,6 +45,37 @@ class SpendLineage:
     memory_id: UUID | None = None
 
 
+def covered_turn_receipt(
+    response: ModelResponse, principal: str, thread_id: UUID, run_id: str, prompt_id: str
+) -> SpendEventsRequest:
+    """A-102: the confirmed native response names the bound account and actual model."""
+    tool, account, model = response.model_name.removeprefix("subscription:").split("/", 2)
+    return SpendEventsRequest(
+        events=[
+            SpendEvent(
+                event_uid=run_id,
+                ts=response.timestamp,
+                ref=run_id,
+                product_type="subscription.turn",
+                quantity_type="turn",
+                unit_of_measure="turns",
+                quantity=Decimal(1),
+                cost_usd=None,
+                basis="measured",
+                behavior="fixed",
+                purpose="building",
+                principal_id=principal,
+                thread_id=thread_id,
+                run_id=run_id,
+                prompt_id=prompt_id,
+                provider=tool,
+                model=model,
+                meta={"account": account},
+            )
+        ]
+    )
+
+
 def model_response_receipts(
     responses: Sequence[ModelResponse],
     *,

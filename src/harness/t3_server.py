@@ -104,7 +104,10 @@ class T3Server:
         }
 
     def _home_environment(self) -> dict:
-        return {"HOME": str(Path.home())}
+        return {
+            "HOME": str(Path.home()),
+            **{k: os.environ[k] for k in ("CODEX_HOME", "CLAUDE_CONFIG_DIR") if k in os.environ},
+        }
 
     async def _start(self) -> T3Client:
         state = self.root / "state"
@@ -192,7 +195,11 @@ class T3Server:
         client = T3Client(
             port,
             codex_binary=settings["providerInstances"]["codex"]["config"]["binaryPath"],
-            native_env={k: env[k] for k in ("HOME", "USER", "PATH", "TMPDIR") if k in env},
+            native_env={
+                k: env[k]
+                for k in ("HOME", "USER", "PATH", "TMPDIR", "CODEX_HOME", "CLAUDE_CONFIG_DIR")
+                if k in env
+            },
         )
         await client.authenticate(code)
         return client

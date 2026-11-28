@@ -60,6 +60,7 @@ from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegis
 from harness.model_policy import (
     ModelCatalogUnavailable,
     ModelPolicyResolver,
+    NamedModelResolutionError,
     ThreadModelResolution,
     ThreadModelResolver,
     browse_models,
@@ -125,6 +126,7 @@ from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.t3_client import T3Error
 from harness.t3_front import FrontServer
+from harness.t3_import import bring_project, check_original, projects
 from harness.t3_server import T3Server
 from harness.t3_sources import offers, project_sources, sources
 from harness.t3_turn import SubscriptionTurns
@@ -205,6 +207,7 @@ class BoundaryDecisionRequest(BaseModel):
     """F198: the owner's answer to a waiting boundary card."""
 
     run_id: str
+    card_id: str | None = None
     decision: Literal["allowed_once", "allowed_thread", "denied"]
 
 
@@ -809,7 +812,7 @@ def create_app(
                             proposed_response=message.payload.proposed_response,
                             sink=send,
                         )
-                    except ModelCatalogUnavailable as exc:
+                    except (ModelCatalogUnavailable, T3Error) as exc:
                         await loop.send_direct(
                             send,
                             factory.create(
@@ -1059,6 +1062,7 @@ def create_dev_app(
         )
 
     journal = transcript_journal or TranscriptJournal(home / "transcripts")
+    completion_router.subscription_binding = journal.subscription_binding
     workflow_definitions = {}
     workspace_toolsets: dict[str, LazyStandardToolset] = {}
 
@@ -1168,22 +1172,31 @@ def create_dev_app(
         except SpineClientError:
             pass  # The card keeps its authoritative body when history is unavailable.
         try:
-            scores = await owned_spine.memory_scores(
-                InjectPrepareRequest(
-                    thread_id=UUID(thread_id),
-                    agent_id=agent_id,
-                    machine_id=machine_id,
-                    principal_id=principal_id,
-                    project_key=context.project_key,
-                    location_path=context.origin_path,
-                    current_location=(
-                        None if context.toolset is None else str(context.toolset.location().cwd)
+            if (journal.subscription_binding(thread_id) or {}).get("native_session"):
+                # SD-130: opening imported history must not buy an embedding of an old prompt.
+                saved = await owned_spine.restore_injection(UUID(thread_id), principal_id)
+                if saved is not None:
+                    scores = {
+                        str(card.memory_id): card.score
+                        for card in (*saved.prepared.injected, *saved.prepared.near_misses)
+                    }
+            else:
+                scores = await owned_spine.memory_scores(
+                    InjectPrepareRequest(
+                        thread_id=UUID(thread_id),
+                        agent_id=agent_id,
+                        machine_id=machine_id,
+                        principal_id=principal_id,
+                        project_key=context.project_key,
+                        location_path=context.origin_path,
+                        current_location=(
+                            None if context.toolset is None else str(context.toolset.location().cwd)
+                        ),
+                        prompt=loop.latest_prompt(thread_id) or context.project_key or "",
+                        model_context_tokens=await loop.model_context(thread_id),
                     ),
-                    prompt=loop.latest_prompt(thread_id) or context.project_key or "",
-                    model_context_tokens=await loop.model_context(thread_id),
-                ),
-                ids,
-            )
+                    ids,
+                )
         except (SpineClientError, ModelCatalogUnavailable):
             pass  # Display an unavailable score rather than inventing one.
         return [
@@ -1240,6 +1253,8 @@ def create_dev_app(
             ),
             t3,
             journal,
+            lambda thread_id: workspace_toolset_for(thread_id).location().cwd,
+            context_windows=context_windows,
         ),
         owned_spine,
         context_factory,
@@ -1249,6 +1264,7 @@ def create_dev_app(
         delete_memory=delete_memory_from_gate,
         mirror=local_copy,
         outbox=outbox,
+        receipt_queue=receipt_queue,
     )
 
     def journaled_crossings(thread_id: str) -> set[str]:
@@ -1395,6 +1411,7 @@ def create_dev_app(
         symphony_experience=owned_symphony_experience,
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
+        check_import=lambda binding, location: check_original(t3, binding, location),
     )
 
     async def palace_busy(state: str) -> None:
@@ -1481,6 +1498,27 @@ def create_dev_app(
 
     def configure_extraction_routes(app: FastAPI) -> None:
         job_scheduler.mount(app)
+
+        @app.post("/v1/t3/projects")
+        async def native_projects(request: Request):
+            if request.headers.get("origin") != f"http://127.0.0.1:{request.scope['server'][1]}":
+                raise HTTPException(403, "Open the project picker in Nocturne.")
+            try:
+                body = await request.json()
+                if body == {}:
+                    return {"projects": await projects(t3)}
+                if isinstance(body, dict) and isinstance(body.get("folder"), str):
+                    return await bring_project(
+                        t3, journal, body["folder"], register=loop.register_import
+                    )
+                raise HTTPException(422, "Choose a project from the list.")
+            except (T3Error, TimeoutError, OSError) as exc:
+                raise HTTPException(
+                    409,
+                    str(exc)
+                    if isinstance(exc, T3Error)
+                    else "T3 could not read the project. Refresh the project list.",
+                ) from None
 
         @app.post("/v1/t3/front/open")
         async def open_front_window(request: Request):
@@ -1670,6 +1708,8 @@ def create_dev_app(
                     }
                 except (ParameterWriteViolation, ModelCatalogUnavailable):
                     pass
+                except NamedModelResolutionError:
+                    current = loop.thread_models().get(thread_id)
             # A source with no list (e.g. a direct Anthropic key) is a state, not a failure.
             browser: dict[str, object] = {
                 "models": [],
@@ -1713,7 +1753,7 @@ def create_dev_app(
                 except ModelCatalogUnavailable as exc:
                     browser["unavailable"] = str(exc)
             bans = configured.model_choices.bans()
-            if subscriptions and t3.binary.is_file() or t3.running:
+            if subscriptions or t3.running:
                 try:
                     native = await sources(t3)
                 except T3Error:
@@ -1843,7 +1883,10 @@ def create_dev_app(
         async def decide_thread_boundary(thread_id: UUID, body: BoundaryDecisionRequest):
             try:
                 await loop.decide_boundary(
-                    thread_id=str(thread_id), run_id=body.run_id, decision=body.decision
+                    thread_id=str(thread_id),
+                    run_id=body.run_id,
+                    decision=body.decision,
+                    card_id=body.card_id,
                 )
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc

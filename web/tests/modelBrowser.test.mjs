@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
-import { browseOrder, chipParts, modelMark, policyInForce, spendModelLabel, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
+import { browseOrder, chipParts, followSubscriptionCheck, modelMark, policyInForce, spendModelLabel, subscriptionGroups, subscriptionState, takesParameter, threadModelMark } from '../src/modelBrowser.ts'
 
 const model = (id, score, prompt, context, reasoning = false) => ({
   model: `openrouter:${id}`, name: `Vendor: ${id}`, context_tokens: context,
@@ -23,6 +23,32 @@ test('model pins reveal on row hover, keyboard focus and a touch hold', async ()
   for (const row of [String.raw`\.model-row:hover`, String.raw`\.model-row:is\(:has\(:focus-visible\), \[data-show-pin\]\)`]) {
     assert.match(css, new RegExp(String.raw`${row} ${pin} \{\s*opacity: 1;\s*pointer-events: auto;`))
   }
+})
+
+/** A-095: an unchecked inventory must fill the open list without another user action. */
+test('opening a model list shows checking until each subscription answers', async t => {
+  const pending = subscriptionGroups(null)
+  assert.deepEqual(pending.map(subscriptionState), ['Checking…', 'Checking…'])
+  const browser = { models: [], pins: [], configurations: [], subscriptions: pending }
+  const results = [
+    browser,
+    { ...browser, subscriptions: pending.map((row, i) => ({ ...row, availability: i ? 'missing' : 'available' })) },
+  ]
+  const displayed = []
+  await followSubscriptionCheck(
+    async () => results.shift(),
+    b => displayed.push(subscriptionGroups(b).map(subscriptionState)),
+    () => true,
+  )
+  assert.deepEqual(displayed, [['Checking…', 'Checking…'], ['Available', 'Not installed']])
+  assert.match(subscriptionState(subscriptionGroups(null, true)[0]), /reopen/i)
+  let now = Date.now()
+  t.mock.method(Date, 'now', () => now)
+  await followSubscriptionCheck(
+    async () => { now += 90_000; return { ...browser } },
+    b => assert.ok(subscriptionGroups(b).every(s => subscriptionState(s).includes('Reopen'))),
+    () => true,
+  )
 })
 
 /** A-095: sorting or searching a broker catalog must preserve the owner's plan choices. */
