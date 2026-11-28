@@ -1,7 +1,16 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
-import { HAIR, buildChambers, buildRootTree, fillKnownTrees, longestWaiting, rootGap, rootWidth } from '../src/visualization.ts'
+import { HAIR, agentFolder, buildChambers, buildRootTree, fillKnownTrees, longestWaiting, rootGap, rootWidth } from '../src/visualization.ts'
+
+/** ADR-018 / FL-126: two agents at their respective worktree roots must be distinguishable. */
+test('Where keeps the actual worktree and the folder beneath it', () => {
+  const where = (root, location = root) => agentFolder({ root, location })
+  assert.equal(where('/work/attempt-1'), 'attempt-1')
+  assert.equal(where('/work/attempt-2'), 'attempt-2')
+  assert.equal(where('/work/attempt-1', '/work/attempt-1/src'), 'attempt-1/src')
+  assert.equal(where('/work', '/workbench/src'), '/workbench/src')
+})
 
 /** ADR-018 / FL-126: a frozen tree has repeatable geometry, including empty chambers. */
 test('directory layout preserves every chamber and cell and replays identically', () => {
