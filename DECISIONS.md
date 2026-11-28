@@ -4729,3 +4729,7 @@ opened, and T3's server does not know which thread a page shows. A thread born i
 the open thread once the journal holds it. A crossing asked for from T3 is the Deck's own
 card, drawn on the T3 module as well. The open thread is one value per home, so two windows
 on one home move each other. Report 347 records the look-first and the walk.
+
+## M8SL · Native requests at the conversation location (P3, P4.2)
+
+Use the ordinary toolset’s current directory. Rebind a legacy private-folder conversation or a changed location with its visible history. Key the Deck answer to the individual native request and keep an explicit conversation grant with its native binding. Each approval sent to T3 applies once. Native requests requiring a separate provider decision still reach the owner. A stopped request is never replayed after restart. See draft A-099.

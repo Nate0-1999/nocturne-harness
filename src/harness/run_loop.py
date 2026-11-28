@@ -120,6 +120,7 @@ class _ActiveRun:
     task: asyncio.Task[None] | None = None
     gate_decision: asyncio.Future[GateCommitPayload] | None = None
     boundary_decision: asyncio.Future[str] | None = None
+    native_request_id: str | None = None
     gate_committing: bool = False
     model_candidate: ThreadModelResolution | None = None
     model_error: str | None = None
@@ -204,11 +205,14 @@ class _Emitter(RunEmitter):
         """F198: publish a boundary card and wait for the owner's answer on the Deck."""
         decision: asyncio.Future[str] = asyncio.get_running_loop().create_future()
         self._active.boundary_decision = decision
+        if card.get("wall") == "subscription":
+            self._active.native_request_id = str(card["card_id"])
         try:
             await self._loop._emit_event(self._thread_id, self._active, card)
             return await decision
         finally:
             self._active.boundary_decision = None
+            self._active.native_request_id = None
 
     async def dismiss_gate(self) -> None:
         await self._loop._dismiss_gate(self._thread_id, self._active)
@@ -823,12 +827,17 @@ class RunLoop:
             raise
         return run_id
 
-    async def decide_boundary(self, *, thread_id: str, run_id: str, decision: str) -> None:
+    async def decide_boundary(
+        self, *, thread_id: str, run_id: str, decision: str, card_id: str | None = None
+    ) -> None:
         """F198: the owner's Allow once / Allow for this thread / Deny on a waiting card."""
         async with self._lock:
             state = self._threads.get(thread_id)
             active = None if state is None else state.active
             waiting = None if active is None else active.boundary_decision
+            # WALL workspace / A-099: an old click must not release a later native request.
+            if active is not None and active.native_request_id != card_id:
+                raise ValueError("This is no longer the waiting request.")
             if active is None or active.turn.run_id != run_id or waiting is None or waiting.done():
                 # F198: an answer belongs to the card its own run still waits on.
                 raise ValueError("No boundary card is waiting on this run.")
@@ -1511,10 +1520,7 @@ class RunLoop:
                 message = (
                     f"This conversation now uses {model} through {tool}. "
                     "The first message to this tool includes earlier user and assistant text "
-                    "from the conversation history. The tool starts in an empty private folder "
-                    "inside your Nocturne home. Your project files stay in their own folder. "
-                    "The tool can read other paths if its own permissions allow it. "
-                    "The tool controls its own actions outside Nocturne’s fence."
+                    "from the conversation history."
                 )
             elif previous.model == resolution.model:
                 message = (

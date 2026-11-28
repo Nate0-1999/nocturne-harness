@@ -5,6 +5,7 @@ import hashlib
 import logging
 import re
 from contextlib import aclosing
+from datetime import UTC, datetime
 
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
 
@@ -16,17 +17,12 @@ from harness.t3_sources import resolve_offer
 logger = logging.getLogger(__name__)
 
 
-def _native_names(title: str, project_id: str) -> tuple[str, str]:
-    title = title.strip()
-    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40].rstrip("-")
-    return title or "Nocturne conversation", f"nocturne-{slug or 'conversation'}-{project_id[:8]}"
-
-
 class SubscriptionTurns:
-    def __init__(self, ordinary, server, journal):
+    def __init__(self, ordinary, server, journal, location):
         self.ordinary = ordinary
         self.server = server
         self.journal = journal
+        self.location = location
 
     async def run(
         self, *, thread_id, prompt, message_history, emit, model_resolution=None, **options
@@ -57,37 +53,29 @@ class SubscriptionTurns:
                 }
             ]
         binding = self.journal.subscription_binding(thread_id)
-        fresh = binding is None or binding["source"] != key
-        if fresh:
-            binding = {
-                "source": key,
-                "environment": hashlib.sha256(client.environment_id.encode()).hexdigest(),
-                "native_project": new_id(),
-                "native_thread": new_id(),
-            }
-            title, folder = _native_names(
-                self.journal.conversation_title(thread_id), binding["native_project"]
+        workspace = str(self.location(thread_id).resolve(strict=True))
+        environment = hashlib.sha256(client.environment_id.encode()).hexdigest()
+        same_source = binding is not None and binding["source"] == key
+        if same_source:
+            if binding["environment"] != environment:
+                raise T3Error("The subscription server no longer matches this conversation.")
+            prior = await client.call(
+                "orchestration.getThreadProjection", {"threadId": binding["native_thread"]}
             )
-            workspace = self.server.root / "workspace" / folder
-            workspace.mkdir(mode=0o700)
-            await client.call(
-                "projects.mutate",
-                {
-                    "type": "project.create",
-                    "projectId": binding["native_project"],
-                    "commandId": new_id(),
-                    "title": title,
-                    "workspaceRoot": str(workspace),
-                },
-            )
-            self.journal.bind_subscription(thread_id, binding)
-        elif binding["environment"] != hashlib.sha256(client.environment_id.encode()).hexdigest():
-            raise T3Error("The subscription server no longer matches this conversation.")
-        thread = binding["native_thread"]
-        if not fresh:
-            prior = await client.call("orchestration.getThreadProjection", {"threadId": thread})
             if any(run["status"] not in TERMINAL for run in prior["runs"]):
                 raise T3Error("A previous subscription turn is still open.")
+        fresh = not same_source or binding.get("location") != workspace
+        if fresh:
+            title = self.journal.conversation_title(thread_id).strip() or "Nocturne conversation"
+            binding = {
+                "source": key,
+                "environment": environment,
+                "location": workspace,
+                "native_project": await client.workspace_project(workspace, title),
+                "native_thread": new_id(),
+            }
+            self.journal.bind_subscription(thread_id, binding)
+        thread = binding["native_thread"]
         message = new_id()
         context = options.get("dynamic_instructions")
         blocks = []
@@ -105,10 +93,18 @@ class SubscriptionTurns:
                 blocks.append(context.memory_block)
         blocks.append(prompt)
         text = "\n\n".join(blocks)
-        observer = NativeTurn(client, thread, message, emit)
+
+        def allow_conversation():
+            binding["permission"] = "allowed_thread"
+            self.journal.bind_subscription(thread_id, binding)
+
+        observer = NativeTurn(
+            client, thread, message, emit, source["name"], binding, allow_conversation
+        )
         if fresh:
             await emit.text(
-                f"{source['name']} controls its own actions outside Nocturne’s fence.\n\n"
+                f"{source['name']} works in {workspace}, reads its project instructions at startup "
+                "and asks before edits or commands. Its steps are outside Nocturne’s fence.\n\n"
             )
         send = asyncio.create_task(
             client.launch(binding["native_project"], thread, message, text, selection, title)
@@ -154,12 +150,15 @@ class SubscriptionTurns:
 
 
 class NativeTurn:
-    def __init__(self, client, thread, message, emit):
+    def __init__(self, client, thread, message, emit, tool, binding, allow_conversation):
         self.client, self.thread, self.message, self.emit = client, thread, message, emit
         self.run = None
         self.transitions = RunTransitions()
         self.written = {}
-        self.declined = set()
+        self.handled = set()
+        self.tool = tool
+        self.binding = binding
+        self.allow_conversation = allow_conversation
         self.answer = ""
 
     async def projection(self):
@@ -178,11 +177,61 @@ class NativeTurn:
             self.answer += delta
             self.written[msg["id"]] = text
 
-    async def request(self, item):
-        if item["status"] == "pending" and item["id"] not in self.declined:
-            await self.client.decline(self.thread, item["id"])
-            self.declined.add(item["id"])
-            await self.emit.text("\nNocturne declined the tool’s approval request.\n")
+    async def request(self, item, details):
+        request = item["id"]
+        if item["status"] != "pending" or request in self.handled:
+            return
+        detail = next(
+            (
+                d
+                for d in details
+                if d["type"] == "approval_request"
+                and d.get("requestId") == request
+                and d.get("runId") == self.run
+            ),
+            None,
+        )
+        if detail is None:
+            return  # The matching turn item may arrive after the request event.
+        description = (
+            "\n".join(
+                dict.fromkeys(value for key in ("prompt", "reason") if (value := detail.get(key)))
+            )
+            or item["kind"]
+        )
+        card = {
+            "event_kind": "boundary_card",
+            "wall": "subscription",
+            "judge": self.tool,
+            "policy": self.binding["location"],
+            "run_id": self.emit.run_id,
+            "card_id": request,
+            "reason": re.sub(
+                r"[\w.+%-]+@[\w.-]+",
+                "[private address]",
+                f"{item['kind'].replace('-', ' ').capitalize()}: {description}",
+            ),
+            "decision": "owner_action",
+            "created_at": datetime.now(UTC).isoformat(),
+        }
+        self.handled.add(request)
+        already_allowed = self.binding.get("permission") == "allowed_thread"
+        if already_allowed and not detail.get("fullAccessOverride"):
+            await self.emit.event({**card, "decision": "requested"})
+            decision = "allowed_thread"
+        else:
+            decision = await self.emit.boundary_decision(card)
+        await self.emit.event(
+            {**card, "decision": decision, "created_at": datetime.now(UTC).isoformat()}
+        )
+        if decision == "allowed_thread" and not already_allowed:
+            self.allow_conversation()
+            await self.emit.text(f"\nYou allowed {self.tool}’s requests for this conversation.\n")
+        await self.client.respond(
+            self.thread, request, allow=decision in {"allowed_once", "allowed_thread"}
+        )
+        if decision == "denied":
+            await self.emit.text(f"\nYou denied {self.tool}’s request.\n")
 
     async def sync(self):
         projection = await self.projection()
@@ -191,7 +240,7 @@ class NativeTurn:
             return None
         self.run = run["id"]
         for item in projection["runtimeRequests"]:
-            await self.request(item)
+            await self.request(item, projection.get("turnItems", ()))
         for msg in projection["messages"]:
             await self.update(msg)
         return self.transitions.terminal({"type": "run.updated", "payload": run})
@@ -213,8 +262,11 @@ class NativeTurn:
                                 return status
                     elif kind == "message.updated":
                         await self.update(payload)
-                    elif kind == "runtime-request.updated":
-                        await self.request(payload)
+                    elif kind == "runtime-request.updated" or (
+                        kind == "turn-item.updated" and payload.get("type") == "approval_request"
+                    ):
+                        if status := await self.sync():
+                            return status
                     elif frame.get("kind") in {"snapshot", "synchronized"}:
                         if status := await self.sync():
                             return status

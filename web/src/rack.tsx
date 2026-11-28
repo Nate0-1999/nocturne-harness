@@ -108,7 +108,7 @@ export type RackAction =
   | { type: 'models.ban'; target: string; banned: boolean }
   | { type: 'policies.save'; role: string; policy: string }
   | { type: 'prompt.interject'; run_id: string; prompt: string }
-  | { type: 'boundary.decide'; run_id: string; decision: 'allowed_once' | 'allowed_thread' | 'denied' }
+  | { type: 'boundary.decide'; run_id: string; card_id?: string; decision: 'allowed_once' | 'allowed_thread' | 'denied' }
   | { type: 'symphony.context'; symphony_id: string }
   | { type: 'symphony.memory'; symphony_id: string; worker_id: string; memory_id: string; added: boolean }
   | { type: 'spend.invoice'; amount_usd: string; invoice_date: string; invoice_id: string }
@@ -653,7 +653,7 @@ function dispatchRackAction<Action extends RackAction>(
         if (threadId === null) throw new Error('Select a thread first.')
         return fetchJson(`/v1/threads/${encodeURIComponent(threadId)}/boundary`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ run_id: action.run_id, decision: action.decision }),
+          body: JSON.stringify({ run_id: action.run_id, card_id: action.card_id, decision: action.decision }),
         }) as Promise<RackActionResult<Action>>
       }
       case 'policies.load':

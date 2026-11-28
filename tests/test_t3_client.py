@@ -81,7 +81,7 @@ def test_recorded_interrupt_closes_once_even_after_replay():
     ],
 )
 async def test_terminal_archives_only_the_bound_codex_thread(
-    tool, later_status, reason, monkeypatch, caplog
+    tool, later_status, reason, monkeypatch, caplog, tmp_path
 ):
     """A-095: preserve resume after an interrupt and preserve the outcome if archive fails."""
     import hashlib
@@ -100,16 +100,19 @@ async def test_terminal_archives_only_the_bound_codex_thread(
         "source": model,
         "environment": hashlib.sha256(b"environment").hexdigest(),
         "native_thread": "thread",
+        "location": str(tmp_path),
     }
     runner = t3_turn.SubscriptionTurns(
-        None, SimpleNamespace(client=AsyncMock(return_value=client)), journal
+        None, SimpleNamespace(client=AsyncMock(return_value=client)), journal, lambda _: tmp_path
     )
     option, level, wire_value = (
         ("reasoningEffort", "ultra", "ultra") if tool == "codex" else ("thinking", "off", False)
     )
     offer = {"id": "model", "thinking": {"id": option, "levels": [level]}}
     monkeypatch.setattr(
-        t3_turn, "resolve_offer", AsyncMock(return_value=(model, {"tool": tool}, offer))
+        t3_turn,
+        "resolve_offer",
+        AsyncMock(return_value=(model, {"tool": tool, "name": tool}, offer)),
     )
     commands = []
     runs = []
@@ -251,14 +254,15 @@ def test_inventory_keeps_private_auth_and_untrusted_labels_out_of_source_rows():
 
 
 @pytest.mark.asyncio
-async def test_native_stream_emits_partial_words_and_declines_once():
-    """A-095: emit each new character promptly and decline a repeated native request once."""
+async def test_native_stream_emits_partial_words_and_decides_once():
+    """A-099: a replayed native request must never run twice or expose account metadata."""
     from unittest.mock import AsyncMock
 
     from harness.t3_turn import NativeTurn
 
     client, emit = AsyncMock(), AsyncMock()
-    turn = NativeTurn(client, "thread", "prompt", emit)
+    binding = {"location": "/scratch"}
+    turn = NativeTurn(client, "thread", "prompt", emit, "Codex", binding, lambda: None)
     turn.run = "run"
     message = {"id": "msg", "role": "assistant", "runId": "run", "streaming": True}
     await turn.update({**message, "text": "@sta"})
@@ -267,10 +271,22 @@ async def test_native_stream_emits_partial_words_and_declines_once():
     await turn.update({**message, "text": "@staticmethod"})
     assert [args.args[0] for args in emit.text.await_args_list] == ["@sta", "ticmethod"]
     assert turn.answer == "@staticmethod"
-    await turn.request({"id": "request", "status": "pending"})
-    await turn.request({"id": "request", "status": "pending"})
-    client.decline.assert_awaited_once_with("thread", "request")
-    assert "declined" in emit.text.await_args.args[0]
+    request = {"id": "request", "status": "pending", "kind": "command"}
+    details = [
+        {
+            "type": "approval_request",
+            "runId": "run",
+            "requestId": "request",
+            "prompt": "Read file for private@example.test",
+        }
+    ]
+    emit.boundary_decision.return_value = "allowed_once"
+    await turn.request(request, details)
+    await turn.request(request, details)
+    emit.boundary_decision.assert_awaited_once()
+    assert "@" not in emit.boundary_decision.await_args.args[0]["reason"]
+    client.respond.assert_awaited_once_with("thread", "request", allow=True)
+    assert "permission" not in binding
 
 
 @pytest.mark.asyncio
@@ -301,6 +317,7 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
     server = T3Server(tmp_path)
     (server.root / "workspace").mkdir(parents=True)
     client = AsyncMock(environment_id="test-environment")
+    client.workspace_project.return_value = "shared-project"
     client.launch.return_value = {"sequence": 1}
 
     async def call(method, params):
@@ -331,7 +348,7 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
     )
     journal = TranscriptJournal(tmp_path / "transcripts")
     loop = RunLoop(
-        SubscriptionTurns(None, server, journal),
+        SubscriptionTurns(None, server, journal, lambda _: tmp_path),
         factory(Ids()),
         model_resolver=RecordingResolver({"thread-1": resolution}),
         transcript_journal=journal,
@@ -345,40 +362,16 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
     text = "".join(
         m.payload.text for m in sink.messages if getattr(m.payload, "kind", None) == "text"
     )
-    assert text == "Codex controls its own actions outside Nocturne’s fence.\n\n" + answer
+    assert str(tmp_path) in text and text.endswith(answer)
     assert journal.read_messages("thread-1")[-1]["content"] == text
     binding = journal.subscription_binding("thread-1")
     assert binding and binding["source"].endswith("/test-model")
-    project = next(
-        args.args[1] for args in client.call.await_args_list if args.args[0] == "projects.mutate"
-    )
     title = journal.catalog()[0].title
-    assert project["title"] == client.launch.await_args.args[-1] == title
-    workspace = Path(project["workspaceRoot"])
-    assert workspace.parent == server.root / "workspace"
-    assert workspace.name.endswith("-" + binding["native_project"][:8])
-    assert workspace.stat().st_mode & 0o777 == 0o700
+    client.workspace_project.assert_awaited_once_with(str(tmp_path), title)
+    assert client.launch.await_args.args[-1] == title and binding["location"] == str(tmp_path)
+    assert binding["native_project"] == "shared-project"
     assert all(
         value not in json.dumps(binding) for value in ("@", "account-one", "Private Account")
-    )
-
-
-@pytest.mark.parametrize(
-    ("title", "expected_title", "slug"),
-    [
-        ("", "Nocturne conversation", "conversation"),
-        ("../Tea & Cake/🍰?", "../Tea & Cake/🍰?", "tea-cake"),
-        ("🍰!", "🍰!", "conversation"),
-        ("A" * 60, "A" * 60, "a" * 40),
-    ],
-)
-def test_native_names_keep_title_and_use_safe_short_folder(title, expected_title, slug):
-    """A-095: native history needs a readable title without letting it choose a filesystem path."""
-    from harness.t3_turn import _native_names
-
-    assert _native_names(title, "8e4d2a1c-6a4a-41d1-ae92-b1de8cb863af") == (
-        expected_title,
-        f"nocturne-{slug}-8e4d2a1c",
     )
 
 
@@ -428,3 +421,61 @@ def test_authenticated_claude_ultra_survives_failed_usage_probe():
     for billing in ("apiKey", "console"):
         provider["auth"]["type"] = billing
         assert not list(offers(project_sources([provider])))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("found", [False, True])
+async def test_conversations_share_only_the_exact_existing_project(found):
+    """A-099: two conversations in one folder need separate native threads on one T3 project."""
+    from unittest.mock import AsyncMock
+
+    from harness.t3_client import T3Client
+
+    client = T3Client(23001)
+    client.call = AsyncMock(side_effect=T3Error("project creation failed"))
+
+    async def frames(method, args):
+        assert method == "orchestration.subscribeShell" and args == {}
+        projects = [{"id": "neighbor", "workspaceRoot": "/work/neighbor"}]
+        if found:
+            projects.append({"id": "same", "workspaceRoot": "/work"})
+        yield {"values": [{"kind": "snapshot", "snapshot": {"projects": projects}}]}
+
+    client._frames = frames
+    if found:
+        assert await client.workspace_project("/work", "Second conversation") == "same"
+    else:
+        with pytest.raises(T3Error, match="project creation failed"):
+            await client.workspace_project("/work", "Second conversation")
+
+
+@pytest.mark.asyncio
+async def test_conversation_grant_journals_future_requests_and_still_obeys_provider_override():
+    """A-099: a follow-up uses the grant but a provider override still needs the owner."""
+    from unittest.mock import AsyncMock
+
+    from harness.t3_turn import NativeTurn
+
+    client, emit = AsyncMock(), AsyncMock()
+    binding = {"location": "/work", "permission": "allowed_thread"}
+    turn = NativeTurn(client, "thread", "message", emit, "Claude Code", binding, lambda: None)
+    turn.run = "run"
+    emit.boundary_decision.return_value = "denied"
+    for request_id, override in (("read", False), ("override", True)):
+        await turn.request(
+            {"id": request_id, "status": "pending", "kind": "file-read"},
+            [
+                {
+                    "type": "approval_request",
+                    "runId": "run",
+                    "requestId": request_id,
+                    "prompt": "sibling/file",
+                    "fullAccessOverride": override,
+                }
+            ],
+        )
+    emit.boundary_decision.assert_awaited_once()
+    events = [call.args[0] for call in emit.event.await_args_list]
+    assert [e["decision"] for e in events] == ["requested", "allowed_thread", "denied"]
+    assert events[0]["reason"] == "File read: sibling/file"
+    assert [call.kwargs["allow"] for call in client.respond.await_args_list] == [True, False]
