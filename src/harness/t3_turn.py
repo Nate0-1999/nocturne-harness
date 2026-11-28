@@ -5,13 +5,15 @@ import hashlib
 import logging
 import re
 from contextlib import aclosing
+from dataclasses import replace
 
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, UserPromptPart
+from pydantic_ai.usage import RequestUsage
 
 from harness.envelope import StopReason
 from harness.run_protocol import TurnOutcome
 from harness.t3_client import TERMINAL, RunTransitions, T3Error, new_id
-from harness.t3_sources import resolve_offer
+from harness.t3_sources import resolve_offer, terminal_context
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +25,11 @@ def _native_names(title: str, project_id: str) -> tuple[str, str]:
 
 
 class SubscriptionTurns:
-    def __init__(self, ordinary, server, journal):
+    def __init__(self, ordinary, server, journal, context_windows=None):
         self.ordinary = ordinary
         self.server = server
         self.journal = journal
+        self.context_windows = context_windows
 
     async def run(
         self, *, thread_id, prompt, message_history, emit, model_resolution=None, **options
@@ -141,6 +144,18 @@ class SubscriptionTurns:
                 ModelRequest(parts=[UserPromptPart(prompt)]),
                 ModelResponse(parts=[TextPart(observer.answer)], model_name=key),
             )
+            if self.context_windows is not None and observer.context_usage is not None:
+                window, inputs, outputs = observer.context_usage
+                response = replace(
+                    history[-1], usage=RequestUsage(input_tokens=inputs, output_tokens=outputs)
+                )
+                self.context_windows.record(
+                    thread_id=thread_id,
+                    captured=[response],
+                    resolution=replace(model_resolution, context_tokens=window),
+                    memory_block=context.memory_block if context else None,
+                    memory_allocation=getattr(context, "memory_allocation", None),
+                )
         reason = {
             "completed": StopReason.END_TURN,
             "interrupted": StopReason.CANCELLED,
@@ -161,6 +176,7 @@ class NativeTurn:
         self.written = {}
         self.declined = set()
         self.answer = ""
+        self.context_usage = None
 
     async def projection(self):
         return await self.client.call(
@@ -194,6 +210,8 @@ class NativeTurn:
             await self.request(item)
         for msg in projection["messages"]:
             await self.update(msg)
+        if run["status"] == "completed":
+            self.context_usage = terminal_context(projection, run)
         return self.transitions.terminal({"type": "run.updated", "payload": run})
 
     async def observe(self, after):

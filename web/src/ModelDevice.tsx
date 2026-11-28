@@ -146,7 +146,7 @@ export function ModelSwitch({ browser, threadId, model, busy, onOpenDevice }: {
       setOpen(false)
       box.current?.focus()
     } catch (error) {
-      setStatus(failureMessage(error, 'The model was not switched. Wait for the answer to finish and try again.'))
+      setStatus(failureMessage(error, 'The model was not switched. Choose it again.'))
     }
   }
 
@@ -309,9 +309,7 @@ export function ModelDevice() {
       await load()
       return true
     } catch (error) {
-      // ADR-023: a running turn keeps its model; until run.done (receipts included) a switch waits.
-      const message = failureMessage(error, 'The model control was not saved. Wait for the answer to finish and try again.')
-      setStatus(message.includes('busy') ? 'Still finishing the last answer — try again in a moment.' : message)
+      setStatus(failureMessage(error, 'The model setting was not saved. Try the change again.'))
       return false
     }
   }

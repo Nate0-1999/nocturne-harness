@@ -264,6 +264,7 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
 
     from test_run_loop import Ids, RecordingResolver, Sink, _wait_for_done_count, factory, ulid
 
+    from harness.context_window import ContextWindowTracker
     from harness.model_policy import ThreadModelResolution
     from harness.run_loop import RunLoop
     from harness.t3_turn import SubscriptionTurns
@@ -299,7 +300,29 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
                     "id": "run",
                     "status": "completed",
                     "userMessageId": client.launch.await_args.args[2],
+                    "activeAttemptId": "final",
+                    "providerThreadId": "native",
                 }
+            ],
+            "providerTurns": [
+                {
+                    "runAttemptId": "final",
+                    "providerThreadId": "native",
+                    "status": "completed",
+                    "ordinal": 1,
+                    "tokenUsage": {
+                        "inputTokens": 23,
+                        "outputTokens": 2,
+                        "maxTokens": resolution.context_tokens,
+                    },
+                },
+                {
+                    "runAttemptId": "other",
+                    "providerThreadId": "native",
+                    "status": "completed",
+                    "ordinal": 2,
+                    "tokenUsage": {},
+                },
             ],
             "runtimeRequests": [],
             "messages": [{"id": "msg", "role": "assistant", "runId": "run", "text": answer}],
@@ -314,8 +337,9 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
         context_tokens=8192,
     )
     journal = TranscriptJournal(tmp_path / "transcripts")
+    windows = ContextWindowTracker()
     loop = RunLoop(
-        SubscriptionTurns(None, server, journal),
+        SubscriptionTurns(None, server, journal, context_windows=windows),
         factory(Ids()),
         model_resolver=RecordingResolver({"thread-1": resolution}),
         transcript_journal=journal,
@@ -326,6 +350,8 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
         await _wait_for_done_count(sink, 1)
     finally:
         await loop.close()
+    measured = windows.snapshot("thread-1").aggregate
+    assert (measured.used_tokens, measured.context_tokens) == (25, resolution.context_tokens)
     text = "".join(
         m.payload.text for m in sink.messages if getattr(m.payload, "kind", None) == "text"
     )
