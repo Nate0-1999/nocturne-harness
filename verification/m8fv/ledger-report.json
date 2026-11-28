@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "a16ea264659b64a3a7c004367f36e2dd9021195c",
-      "head": "f65bf887bdd162fc64671dbd7c6ad1084e0efbd5"
+      "head": "13e0ef6c1e5850563cd6527e8ff0e242a742dc2f"
     }
   ],
   "unmapped": {
@@ -18,13 +18,24 @@
     "harness/tests/test_symphony_experience.py": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
     "harness/tests/test_visualization.py": "Regression check for the changed worker and Deck displays.",
     "harness/verification/m8fv/FL-009.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-017.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-018.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-039.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-044.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-061.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-067.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-069.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-070.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-074.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-075.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-076.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-086.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-087.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-089.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-098.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-100.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-102.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-103.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-104.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-105.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-107.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
@@ -38,19 +49,25 @@
     "harness/verification/m8fv/FL-115.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-116.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-117.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-119.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-120.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-123.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-124.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-126.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-129.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-130.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-131.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-132.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-133.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-134.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-157.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-168.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-170.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-171.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-173.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-178.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-179.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/FL-183.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-184.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-186.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/FL-187.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
@@ -67,6 +84,7 @@
     "harness/verification/m8fv/FL-215.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/SHA256SUMS": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/ledger-report.json": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/verification/m8fv/return1_browser.py": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8pa/FL-009.png": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
     "harness/verification/m8pa/FL-017.png": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
     "harness/verification/m8pa/FL-018.png": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
@@ -129,35 +147,20 @@
     "harness/verification/m8pa/SHA256SUMS": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
     "harness/verification/m8pa/ledger-report.json": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
+    "harness/web/dist/assets/index-CKTMI2Yw.css": "Packaged web build generated from this packet’s source changes.",
+    "harness/web/dist/assets/index-DappVTLQ.js": "Packaged web build generated from this packet’s source changes.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
-    "harness/web/dist/assets/index-JTQeC7pi.css": "Packaged web build generated from this packet’s source changes.",
-    "harness/web/dist/assets/index-pfNQCPaA.js": "Packaged web build generated from this packet’s source changes.",
     "harness/web/dist/index.html": "Packaged web build generated from this packet’s source changes.",
     "harness/web/tests/profileRunList.test.mjs": "Inherited M8PA change included by the hosted main-to-draft comparison; M8FV did not author or change this path.",
     "harness/web/tests/symphonyDeckSource.test.mjs": "Regression check for the changed worker and Deck displays.",
     "harness/web/tests/symphonyExperienceSource.test.mjs": "Regression check for the changed worker and Deck displays.",
     "harness/web/tests/visualization.test.mjs": "Regression check for the changed worker and Deck displays.",
-    "harness/verification/m8fv/FL-179.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-178.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-157.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-018.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/web/dist/assets/index-C2_eq86B.js": "Packaged web build generated from this packet’s source changes.",
-    "harness/verification/m8fv/FL-039.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/verification/m8fv/impacted.json": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-103.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/web/dist/assets/index-t9rgyieJ.css": "Packaged web build generated from this packet’s source changes.",
-    "harness/verification/m8fv/FL-089.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
+    "harness/web/dist/assets/index-pfNQCPaA.js": "Packaged web build generated from this packet’s source changes.",
+    "harness/web/dist/assets/index-C2_eq86B.js": "Packaged web build generated from this packet’s source changes.",
+    "harness/web/dist/assets/index-JTQeC7pi.css": "Packaged web build generated from this packet’s source changes.",
     "harness/web/dist/assets/index-BQnLMiR3.css": "Packaged web build generated from this packet’s source changes.",
-    "harness/verification/m8fv/FL-074.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-044.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-076.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-017.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-067.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-131.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-183.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-087.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-119.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
-    "harness/verification/m8fv/FL-086.png": "Packet Stage screenshots, readings, or integrity metadata for the handoff.",
     "harness/web/dist/assets/index-D8JmMWoI.js": "Packaged web build generated from this packet’s source changes."
   },
   "unmapped_instruction": "add a row or declare no feature impact (give a reason for each path)",
@@ -205,7 +208,7 @@
       "verdict": "BLOCKED",
       "screenshot": "FL-067.png",
       "flag": "F086",
-      "observed": "Inherited from the unlanded M8PA branch. The hosted comparison includes its changes since main. M8FV did not change or repeat this broader walk. This is a packet context image only (F086)."
+      "observed": "The shared file maps to this broader row. M8FV did not walk this row in full. The capture shows the installed packet context only. The scoped observations and comparisons are in report 357."
     },
     "FL-069": {
       "label": "The core tools every modern harness has: files, terminal, Chrome, skills, changing models, compaction (our own take), and interactions with common apps, taken from the most modular standard source.",
@@ -232,7 +235,7 @@
       "verdict": "BLOCKED",
       "screenshot": "FL-074.png",
       "flag": "F086",
-      "observed": "Inherited from the unlanded M8PA branch. The hosted comparison includes its changes since main. M8FV did not change or repeat this broader walk. This is a packet context image only (F086)."
+      "observed": "The shared file maps to this broader row. M8FV did not walk this row in full. The capture shows the installed packet context only. The scoped observations and comparisons are in report 357."
     },
     "FL-075": {
       "label": "Queuing prompts and interjecting or steering a running agent, like the modern harnesses do.",
@@ -412,7 +415,7 @@
       "verdict": "BLOCKED",
       "screenshot": "FL-119.png",
       "flag": "F086",
-      "observed": "Inherited from the unlanded M8PA branch. The hosted comparison includes its changes since main. M8FV did not change or repeat this broader walk. This is a packet context image only (F086)."
+      "observed": "The shared file maps to this broader row. M8FV did not walk this row in full. The capture shows the installed packet context only. The scoped observations and comparisons are in report 357."
     },
     "FL-120": {
       "label": "One conversation module with stack and focused modes.",
@@ -502,7 +505,7 @@
       "verdict": "BLOCKED",
       "screenshot": "FL-178.png",
       "flag": "F086",
-      "observed": "Inherited from the unlanded M8PA branch. The hosted comparison includes its changes since main. M8FV did not change or repeat this broader walk. This is a packet context image only (F086)."
+      "observed": "The shared file maps to this broader row. M8FV did not walk this row in full. The capture shows the installed packet context only. The scoped observations and comparisons are in report 357."
     },
     "FL-179": {
       "label": "Constitution: a plain ownership refusal when one identity tries to decide another identity's approval queue item (gate verification-identity work).",
@@ -511,7 +514,7 @@
       "verdict": "BLOCKED",
       "screenshot": "FL-179.png",
       "flag": "F086",
-      "observed": "Inherited from the unlanded M8PA branch. The hosted comparison includes its changes since main. M8FV did not change or repeat this broader walk. This is a packet context image only (F086)."
+      "observed": "The shared file maps to this broader row. M8FV did not walk this row in full. The capture shows the installed packet context only. The scoped observations and comparisons are in report 357."
     },
     "FL-184": {
       "label": "A distinct module for scheduled jobs that makes them easy to monitor; the best visualization is still to be worked out.",
@@ -700,7 +703,7 @@
       "verdict": "BLOCKED",
       "screenshot": "FL-183.png",
       "flag": "F086",
-      "observed": "Inherited from the unlanded M8PA branch. The hosted comparison includes its changes since main. M8FV did not change or repeat this broader walk. This is a packet context image only (F086)."
+      "observed": "The shared file maps to this broader row. M8FV did not walk this row in full. The capture shows the installed packet context only. The scoped observations and comparisons are in report 357."
     },
     "FL-186": {
       "label": "Build on Pydantic AI in a way that lets us modify and extend without waiting on them, passing features back and forth with their library.",
