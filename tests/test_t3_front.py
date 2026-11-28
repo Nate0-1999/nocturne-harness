@@ -8,6 +8,56 @@ from harness.transcript import TranscriptJournal
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("change", ["rewind", "archive", "fork", "clear"])
+async def test_a_stale_window_cannot_start_work_or_reopen_the_journal(tmp_path, change):
+    """FL-076 / FL-124 / SD-128: a restart cannot turn a stale window into an accepted prompt."""
+    journal = TranscriptJournal(tmp_path)
+    earlier = journal.bind_front_prompt("thread", "env", "native", "m1")
+    journal.append_message(
+        "thread", dict(role="user", message_id=earlier, content="old"), parent_id=None
+    )
+    if change == "archive":
+        journal.append_archive("thread")
+    if change == "rewind":
+        journal.rewind("thread", None)
+    items = [{"item": {"type": "user_message", "messageId": key}} for key in ("m1", "m2")]
+    run = dict(
+        id="paid",
+        status="running",
+        providerInstanceId="nocturne",
+        userMessageId="m2",
+        freshContext=change == "clear",
+    )
+    projection = dict(
+        thread={"forkedFrom": {"type": "run"} if change == "fork" else None},
+        runs=[run],
+        messages=[{"role": "user", "id": "m2", "text": "next"}],
+    )
+    client = SimpleNamespace(
+        environment_id="env",
+        call=AsyncMock(return_value=projection),
+        orchestration_get=AsyncMock(return_value={"items": items}),
+    )
+    loop = AsyncMock()
+    loop.request_snapshot.side_effect = AssertionError("stale thread selected")
+    session = FrontSession(
+        SimpleNamespace(journal=journal, loop=loop, client=AsyncMock(return_value=client)),
+        "native",
+        None,
+        None,
+    )
+    session.session, session.cwd = "thread", tmp_path
+    session.send, session.text = AsyncMock(), AsyncMock()
+    before = journal.path_for_thread("thread").read_bytes()
+    await session.prompt(7, [{"type": "text", "text": "next"}])
+    loop.request_snapshot.assert_not_awaited()
+    loop.submit.assert_not_awaited()
+    session.text.assert_awaited_once()
+    assert "Nocturne" in session.text.await_args.args[0]
+    assert journal.path_for_thread("thread").read_bytes() == before
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("reason,should_cancel", [("steering_restart", False), ("retry", True)])
 async def test_window_cancel_preserves_work_only_for_its_own_steering_restart(
     reason, should_cancel

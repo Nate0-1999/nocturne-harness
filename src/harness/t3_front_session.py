@@ -3,11 +3,12 @@
 import asyncio
 import json
 from pathlib import Path
+from urllib.parse import quote
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from harness.envelope import StopReason
 from harness.project_path import repository_root
-from harness.t3_client import TERMINAL, T3Error
+from harness.t3_client import T3Error
 
 MODELS = {
     "models": {
@@ -15,6 +16,7 @@ MODELS = {
         "availableModels": [{"modelId": "default", "name": "Nocturne home strategy"}],
     }
 }
+CLEARED = "T3 cleared its own context. Start a new thread in Nocturne for a fresh conversation."
 
 
 class FrontSession:
@@ -218,6 +220,46 @@ class FrontSession:
                     await self.window_cancel()
                 await asyncio.gather(self.turn, return_exceptions=True)
 
+    async def admission_reason(self, client, projection, message_id):
+        if projection["thread"].get("forkedFrom"):
+            return "This fork has T3-only history. Open the original conversation in Nocturne."
+        transcript = await client.orchestration_get(
+            f"threads/{quote(self.native, safe='')}/transcript"
+        )
+        native_ids = []
+        for row in transcript["items"]:
+            item = row["item"]
+            if item["type"] != "user_message":
+                continue
+            if item.get("freshContext"):
+                return CLEARED
+            if item["messageId"] == message_id:
+                break
+            native_ids.append(item["messageId"])
+        else:
+            return "This message has not appeared in T3’s transcript. Open the thread in Nocturne."
+        journal = self.front.journal
+        bindings = journal.front_prompts(self.thread)
+        previous = [
+            key.removeprefix("nocturne-journal-")
+            if key.startswith("nocturne-journal-")
+            else bindings.get(key)
+            for key in native_ids
+        ]
+        history = journal.current_thread(self.thread)
+        active = (
+            [m["message_id"] for m in history.messages if m["role"] == "user"] if history else []
+        )
+        if bindings.get(message_id) in active:
+            active = active[: active.index(bindings[message_id])]
+        if previous != active:
+            return "The thread history changed. Open the thread in Nocturne to continue."
+        return None
+
+    async def refuse(self, rid, reason):
+        await self.text(reason)
+        await self.send(id=rid, result={"stopReason": "end_turn"})
+
     async def prompt(self, rid, blocks):
         loop = self.front.loop
         events = asyncio.Queue()
@@ -234,16 +276,25 @@ class FrontSession:
             projection = await client.call(
                 "orchestration.getThreadProjection", {"threadId": self.native}
             )
-            runs = [run for run in projection["runs"] if run["status"] not in TERMINAL]
+            self.thread = self.thread or self.session
+            if any(r.thread_id == self.thread and r.archived for r in self.front.journal.catalog()):
+                return await self.refuse(
+                    rid, "Nocturne archived this thread. Start a new thread to send a message."
+                )
+            runs = [
+                r for r in projection["runs"] if r["status"] in {"starting", "running", "waiting"}
+            ]
             if len(runs) != 1 or runs[0]["providerInstanceId"] != "nocturne":
-                raise T3Error("T3 could not identify one active Nocturne turn.")
+                return await self.refuse(
+                    rid,
+                    "T3 could not match this turn. Open the thread in Nocturne to continue.",
+                )
             message_id = runs[0]["userMessageId"]
             self.node = runs[0].get("rootNodeId")
             self.native_run = runs[0].get("id")
             message = next(m for m in projection["messages"] if m["id"] == message_id)
             if message["role"] != "user" or message.get("attachments"):
                 raise T3Error("This Nocturne conversation accepts text prompts.")
-            self.thread = self.thread or self.session
             replay = message_id.startswith("nocturne-journal-")
             if replay:
                 # Display an existing answer without selecting a thread or creating a model run.
@@ -251,6 +302,11 @@ class FrontSession:
                 messages = history.messages if history else ()
                 prompt_id = message_id.removeprefix("nocturne-journal-")
             else:
+                if runs[0].get("freshContext"):
+                    return await self.refuse(rid, CLEARED)
+                reason = await self.admission_reason(client, projection, message_id)
+                if reason:
+                    return await self.refuse(rid, reason)
                 await loop.request_snapshot(self.thread, sink, workspace_root=self.workspace_root)
                 messages = (await events.get()).payload.messages
                 prompt_id = self.front.journal.bind_front_prompt(
