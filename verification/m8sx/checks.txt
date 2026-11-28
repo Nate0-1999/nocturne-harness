@@ -17,3 +17,12 @@ Ruff: both passed. Product rules and test motivations: both passed.
 Harness guard citations passed. Garden check_rules passed.
 Stock resolver test before change: both tool cases raised ValueError: context_tokens must be a positive integer.
 Stock resolver test after change: both passed. Model router and T3 client tests: 25 passed.
+
+Return 1 code heads
+Harness bde0527496a14d5c718431d133e50beb6d336a91
+Memory b7044113dd153a1be3894d5b4afb11e336a9304c
+Harness 2,047 passed, four skipped, four contract tests deselected, one known Git 2.54 shell-fence failure as above.
+Memory 358 passed, two skipped. Garden 38 passed. Web 213 passed, lint and build passed.
+Both product Ruff, rules and test motivations passed. Harness guard citations and Garden rules passed.
+Six stock/cache/source-order cases failed on the previous code and passed on the return code.
+Both product repository origins checked again. The installed pair used a fresh, local verification database.
