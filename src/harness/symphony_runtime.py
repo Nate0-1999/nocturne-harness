@@ -38,6 +38,7 @@ from harness.spine_client import (
     MemoryKind,
     MemoryStatus,
     PatchMemoryRequest,
+    SpineProblemError,
     SpineResponseError,
     SpineTransportError,
 )
@@ -66,6 +67,10 @@ def _publish_result(root: Path, symphony_id: str, checkpoint: str) -> str:
 
 def _lesson_save_error(exc: Exception, *, resolving: bool) -> str:
     if isinstance(exc, SpineResponseError) and exc.status_code >= 400:
+        if isinstance(exc, SpineProblemError) and exc.problem.detail:
+            return f"Lessons were not queued. {exc.problem.detail} (HTTP {exc.status_code})."
+        if exc.status_code == 503:
+            return "Lessons were not queued. The Palace was unavailable (HTTP 503)."
         return f"Lessons were not queued. The Palace refused the request (HTTP {exc.status_code})."
     detail = (
         "The Palace did not answer."

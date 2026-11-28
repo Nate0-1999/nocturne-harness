@@ -13,7 +13,13 @@ import pytest
 
 from harness.config import HarnessSettings
 from harness.envelope import generate_ulid
-from harness.spine_client import SpineBusyError, SpineResponseError, SpineTransportError
+from harness.spine_client import (
+    ProblemDetail,
+    SpineBusyError,
+    SpineProblemError,
+    SpineResponseError,
+    SpineTransportError,
+)
 from harness.supervisor import WorkerSupervisor
 from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, _carry_environment, _graft, _publish_result
@@ -190,7 +196,9 @@ async def test_palace_failure_keeps_the_judged_result(tmp_path, monkeypatch, fau
 
     async def stage(request):
         if request.label == "Two" and fault == "stage 422":
-            raise SpineResponseError(httpx.Response(422), "Lesson refused")
+            raise SpineProblemError(
+                httpx.Response(422), ProblemDetail(detail="The lesson is too long.")
+            )
         staged.add(request.memory_id)
         if request.label == "Two" and fault == "stage transport":
             raise SpineTransportError()  # The Palace stored it but its reply was lost.
@@ -257,6 +265,8 @@ async def test_palace_failure_keeps_the_judged_result(tmp_path, monkeypatch, fau
     else:
         assert "not queued" in reason.lower()
         assert ("did not answer" if fault == "stage transport" else fault.split()[1]) in reason
+        if fault == "stage 422":
+            assert "The lesson is too long." in reason
     assert palace.resolve_symphony_run.await_count == int(fault.startswith("resolve"))
     for call in palace.patch_memory.await_args_list:
         patch = call.args[1]
