@@ -38,21 +38,43 @@ export interface ModelBrowser {
 
 export type SortKey = 'rank' | 'price' | 'context'
 
-export function subscriptionGroups(browser: ModelBrowser | null) {
-  if (!browser) return []
-  return (browser.subscriptions ?? []).map(source => ({
+export function subscriptionGroups(browser: ModelBrowser | null, failed = false) {
+  const sources = browser ? browser.subscriptions ?? [] : [
+    { tool: 'codex', name: 'Codex', availability: 'checking', limited_until: null },
+    { tool: 'claudeAgent', name: 'Claude Code', availability: 'checking', limited_until: null },
+  ]
+  return sources.map(source => ({
     ...source,
-    models: browser.models.filter(item => item.model.startsWith(`subscription:${source.tool}/`)),
+    availability: failed && source.availability === 'checking' ? 'unknown' : source.availability,
+    models: browser?.models.filter(item => item.model.startsWith(`subscription:${source.tool}/`)) ?? [],
   }))
 }
 
 export function subscriptionState(source: NonNullable<ModelBrowser['subscriptions']>[number]): string {
   switch (source.availability) {
+    case 'checking': return 'Checking…'
     case 'available': return 'Available'
     case 'signed_out': return `Signed out · ${source.tool === 'codex' ? 'codex login' : 'claude auth login'}`
     case 'limited': return source.limited_until ? `Limited until ${new Date(source.limited_until).toLocaleString()}` : 'Limited · reset time unknown'
     case 'missing': return 'Not installed'
-    default: return 'Unknown'
+    default: return 'Couldn’t check. Reopen the model list to retry.'
+  }
+}
+
+export async function followSubscriptionCheck(read: () => Promise<unknown>, show: (browser: ModelBrowser) => void, active: () => boolean) {
+  const deadline = Date.now() + 60_000 // The private T3 server's provider probe timeout.
+  while (active()) {
+    const browser = parseBrowser(await read())
+    if (!active()) return
+    const pending = browser.subscriptions?.some(s => s.availability === 'checking')
+    if (pending && Date.now() >= deadline) {
+      browser.subscriptions = browser.subscriptions?.map(s => s.availability === 'checking' ? { ...s, availability: 'unknown' } : s)
+      show(browser)
+      return
+    }
+    show(browser)
+    if (!pending) return
+    await new Promise(resolve => setTimeout(resolve, 1000))
   }
 }
 

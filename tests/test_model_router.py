@@ -252,3 +252,183 @@ async def test_single_key_mode_lists_its_sources_own_models_and_switches_among_t
     with pytest.raises(NamedModelResolutionError):
         await resolver.resolve_named("thread", "openai:not-listed")
     assert len(seen) == 2  # the miss refetched once
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("tool,plan", [("codex", "chatgpt"), ("claudeAgent", "pro")])
+async def test_stock_subscription_choice_uses_the_offered_models_window(
+    tmp_path, monkeypatch, tool, plan
+):
+    """A-095: a stock verification home must resolve a listed native model before its first turn."""
+    import asyncio
+    import json
+    import secrets
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, Mock
+    from uuid import uuid4
+
+    from harness import onboarding
+
+    monkeypatch.delenv("MODEL_CONTEXT_TOKENS", raising=False)
+    monkeypatch.setattr(onboarding, "_discover_cloud_palace", lambda *_: None)
+    monkeypatch.setattr(onboarding, "_ensure_tool_runtimes", lambda *_args, **_kwargs: None)
+    onboarding.init_nocturne(
+        home=tmp_path,
+        verification=True,
+        environ={"OPENROUTER_API_KEY": "fixture"},
+        prompt=lambda _: "n",
+    )
+    environment = onboarding.load_config(home=tmp_path).process_environment({})
+    assert "MODEL_CONTEXT_TOKENS" not in environment
+    for name, value in environment.items():
+        monkeypatch.setenv(name, value)
+    router = CompletionRouter(HarnessSettings(_env_file=None))
+    slug = uuid4().hex
+    window = secrets.randbits(20) + 1
+    provider = {
+        "instanceId": tool,
+        "status": "ready",
+        "models": [{"slug": slug}],
+        "auth": {"status": "authenticated", "type": plan, "profileId": "fixture"},
+    }
+    client = SimpleNamespace(
+        call=AsyncMock(return_value={"providers": [provider]}), native_env={"TMPDIR": str(tmp_path)}
+    )
+    server = Mock()
+    server.client = AsyncMock(return_value=client)
+    server._settings.return_value = {"providerInstances": {tool: {"config": {"binaryPath": tool}}}}
+    router.subscription_server = server
+
+    def native(args, **kwargs):
+        if tool == "codex":
+            assert args[1:] == ["debug", "models"]
+            output = {
+                "models": [
+                    {
+                        "slug": slug,
+                        "context_window": window * 2,
+                        "effective_context_window_percent": 50,
+                    }
+                ]
+            }
+        else:
+            assert args[args.index("--model") + 1] == slug
+            request = json.loads(kwargs["input"])
+            assert request["request"] == {"subtype": "get_context_usage"}
+            output = {
+                "type": "control_response",
+                "response": {
+                    "request_id": request["request_id"],
+                    "subtype": "success",
+                    "response": {"model": slug, "maxTokens": window},
+                },
+            }
+        return SimpleNamespace(stdout=json.dumps(output))
+
+    query = Mock(side_effect=native)
+    monkeypatch.setattr("subprocess.run", query)
+    resolver = ModelPolicyResolver(
+        policy=router.settings.effective_model_policy_chat,
+        static_model=router.settings.chat_model,
+        static_context_tokens=router.settings.model_context_tokens,
+        catalog=router.catalog,
+    )
+    requested = f"subscription:{tool}/{slug}"
+    selected, repeated = await asyncio.gather(
+        resolver.resolve_named("thread", requested), resolver.resolve_named("thread", requested)
+    )
+    assert repeated.context_tokens == window
+    assert selected.context_tokens == window
+    assert selected.model.endswith(f"/{slug}")
+    query.assert_called_once()
+    provider["models"].clear()
+    with pytest.raises(NamedModelResolutionError, match="unavailable"):
+        await resolver.resolve_named("thread", requested)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "native,measured,configured",
+    [(True, True, True), (False, True, True), (False, False, True), (False, False, False)],
+)
+async def test_subscription_window_survives_native_catalog_changes(
+    native, measured, configured, monkeypatch, tmp_path
+):
+    """A-112: a catalog format change must not strand a previously measured conversation."""
+    import asyncio
+    import hashlib
+    import json
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock, Mock
+    from uuid import uuid4
+
+    from harness.transcript import TranscriptJournal
+
+    slug = uuid4().hex
+    sizes = range(len(slug), len(slug) + 3)
+    key = f"subscription:codex/account/{slug}"
+    router = CompletionRouter(settings(model_context_tokens=sizes[2] if configured else None))
+    journal = TranscriptJournal(tmp_path)
+    router.subscription_binding = journal.subscription_binding
+    journal.bind_subscription(
+        "thread",
+        {
+            "source": key,
+            "environment": hashlib.sha256(b"local").hexdigest(),
+            "native_thread": "bound",
+        },
+    )
+    client = SimpleNamespace(environment_id="local", native_env={"TMPDIR": str(tmp_path)})
+    server = Mock()
+    server.client = AsyncMock(return_value=client)
+    server._settings.return_value = {
+        "providerInstances": {"codex": {"config": {"binaryPath": "codex"}}}
+    }
+    router.subscription_server = server
+    monkeypatch.setattr(
+        "harness.model_router.resolve_offer",
+        AsyncMock(return_value=(key, {"tool": "codex"}, {"id": slug})),
+    )
+    run = {"ordinal": 1, "activeAttemptId": "a", "providerThreadId": "p", "status": "completed"}
+    turn = {
+        "ordinal": 1,
+        "runAttemptId": "a",
+        "providerThreadId": "p",
+        "status": "completed",
+        "tokenUsage": {"maxTokens": sizes[1]},
+    }
+    client.call = AsyncMock(
+        return_value={"runs": [run], "providerTurns": [turn] if measured else []}
+    )
+    catalog = {
+        "models": [
+            {"slug": slug, "context_window": sizes[0], "effective_context_window_percent": 100}
+        ]
+    }
+    query = Mock(return_value=SimpleNamespace(stdout=json.dumps(catalog if native else {})))
+    monkeypatch.setattr("subprocess.run", query)
+    resolver = ModelPolicyResolver(
+        policy="elbow",
+        static_model=None,
+        static_context_tokens=router.settings.model_context_tokens,
+        catalog=router,
+    )
+    if native or measured or configured:
+        expected = sizes[0] if native else sizes[1] if measured else sizes[2]
+        assert (await resolver.resolve_hydrated("thread", key)).context_tokens == expected
+        if measured and not native:
+            assert (await resolver.resolve_named("other", key)).context_tokens == sizes[2]
+    else:
+
+        async def first_choice():
+            with pytest.raises(
+                NamedModelResolutionError, match="The tool did not report a context size"
+            ):
+                await resolver.resolve_hydrated("thread", key)
+
+        await asyncio.gather(first_choice(), first_choice())
+        query.assert_called_once()
+        query.return_value = SimpleNamespace(stdout=json.dumps(catalog))
+        for _ in range(3):
+            assert (await resolver.resolve_hydrated("thread", key)).context_tokens == sizes[0]
+        assert query.call_count == 2

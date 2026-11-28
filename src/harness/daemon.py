@@ -1060,6 +1060,7 @@ def create_dev_app(
         )
 
     journal = transcript_journal or TranscriptJournal(home / "transcripts")
+    completion_router.subscription_binding = journal.subscription_binding
     workflow_definitions = {}
     workspace_toolsets: dict[str, LazyStandardToolset] = {}
 
@@ -1242,6 +1243,7 @@ def create_dev_app(
             t3,
             journal,
             lambda thread_id: workspace_toolset_for(thread_id).location().cwd,
+            context_windows=context_windows,
         ),
         owned_spine,
         context_factory,
@@ -1716,7 +1718,7 @@ def create_dev_app(
                 except ModelCatalogUnavailable as exc:
                     browser["unavailable"] = str(exc)
             bans = configured.model_choices.bans()
-            if subscriptions and t3.binary.is_file() or t3.running:
+            if subscriptions or t3.running:
                 try:
                     native = await sources(t3)
                 except T3Error:

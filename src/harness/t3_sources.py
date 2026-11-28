@@ -1,7 +1,10 @@
 """Project T3's private provider inventory into the conversation source contract (A-095)."""
 
+import asyncio
 import hashlib
+import json
 import re
+import subprocess
 from datetime import UTC, datetime
 
 from harness.t3_client import T3Error
@@ -71,7 +74,12 @@ def project_sources(providers: list[dict]) -> list[dict]:
             account = hashlib.sha256(f"{instance}\0{native_id}".encode()).hexdigest()
         windows = [w for w in limits.get("windows", []) if w.get("usedPercent", 0) >= 100]
         global_limits = [w for w in windows if not w.get("modelIds")]
-        if provider.get("installed") is False:
+        # Pinned T3's unchecked snapshot already has installed=false and a checkedAt timestamp.
+        if (provider.get("message") or "").endswith(
+            "provider status has not been checked in this session yet."
+        ):
+            status = "checking"
+        elif provider.get("installed") is False:
             status = "missing"
         elif auth.get("status") == "unauthenticated":
             status = "signed_out"
@@ -156,3 +164,136 @@ async def resolve_offer(server, requested):
         if requested in (key, f"subscription:{source['tool']}/{model['id']}"):
             return key, source, model
     raise T3Error("This tool, account and model are unavailable on the signed-in subscription.")
+
+
+async def subscription_window(server, tool, slug) -> int | None:
+    """Ask only for metadata, after the private server confirms the signed-in offer."""
+    client = await server.client()
+    binary = server._settings()["providerInstances"][tool]["config"]["binaryPath"]
+    args = [binary]
+    request = ""
+    if tool == "codex":
+        args += ["debug", "models"]
+    else:
+        args += [
+            "-p",
+            "--no-session-persistence",
+            "--model",
+            slug,
+            "--tools",
+            "",
+            "--strict-mcp-config",
+            "--mcp-config",
+            '{"mcpServers":{}}',
+            "--setting-sources",
+            "",
+            "--input-format",
+            "stream-json",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+        ]
+        request = (
+            json.dumps(
+                {
+                    "type": "control_request",
+                    "request_id": "window",
+                    "request": {"subtype": "get_context_usage"},
+                }
+            )
+            + "\n"
+        )
+    try:
+        result = await asyncio.to_thread(
+            subprocess.run,
+            args,
+            input=request,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            check=True,
+            timeout=20,
+            cwd=client.native_env["TMPDIR"],
+            env={
+                **client.native_env,
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+                "DISABLE_AUTOUPDATER": "1",
+                "DISABLE_TELEMETRY": "1",
+            },
+        )
+        window = None
+        if tool == "codex":
+            for model in json.loads(result.stdout)["models"]:
+                if model.get("slug") == slug:
+                    nominal = model.get("context_window")
+                    percent = model.get("effective_context_window_percent")
+                    if type(nominal) is int and type(percent) is int and 0 < percent <= 100:
+                        window = nominal * percent // 100
+                    break
+        else:
+            for line in result.stdout.splitlines():
+                frame = json.loads(line)
+                response = frame.get("response") or {}
+                if (
+                    frame.get("type") == "control_response"
+                    and response.get("request_id") == "window"
+                    and response.get("subtype") == "success"
+                ):
+                    usage = response["response"]
+                    if usage.get("model") == slug:
+                        window = usage.get("maxTokens")
+                    break
+        if type(window) is int and window > 0:
+            return window
+    except (OSError, subprocess.SubprocessError, ValueError, AttributeError, KeyError, TypeError):
+        pass
+    return None
+
+
+def _terminal_usage(projection, run):
+    """T3's last provider request for this attempt, excluding previous runs and retries."""
+    attempt = run.get("activeAttemptId")
+    if not attempt:
+        return None
+    turns = (
+        turn
+        for turn in projection.get("providerTurns", [])
+        if turn.get("runAttemptId") == attempt
+        and turn.get("status") == "completed"
+        and turn.get("providerThreadId") == run.get("providerThreadId")
+        and type(turn.get("ordinal")) is int
+    )
+    last = max(turns, key=lambda turn: turn["ordinal"], default={})
+    return last.get("tokenUsage")
+
+
+async def measured_window(server, binding, key):
+    """Read the last measured window from this journal's bound native conversation."""
+    if not binding or binding["source"] != key:
+        return None
+    client = await server.client()
+    if binding["environment"] != hashlib.sha256(client.environment_id.encode()).hexdigest():
+        return None
+    try:
+        projection = await client.call(
+            "orchestration.getThreadProjection", {"threadId": binding["native_thread"]}
+        )
+    except (OSError, TimeoutError, T3Error):
+        return None
+    for run in sorted(projection["runs"], key=lambda run: run["ordinal"], reverse=True):
+        if run["status"] == "completed":
+            usage = _terminal_usage(projection, run)
+            window = usage.get("maxTokens") if isinstance(usage, dict) else None
+            if type(window) is int and window > 0:
+                return window
+    return None
+
+
+def terminal_context(projection, run):
+    usage = _terminal_usage(projection, run)
+    if not isinstance(usage, dict):
+        return None
+    counts = tuple(usage.get(field) for field in ("maxTokens", "inputTokens", "outputTokens"))
+    if all(type(n) is int and n >= 0 for n in counts) and counts[0] and counts[1]:
+        return counts
+    return None

@@ -296,6 +296,7 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
 
     from test_run_loop import Ids, RecordingResolver, Sink, _wait_for_done_count, factory, ulid
 
+    from harness.context_window import ContextWindowTracker
     from harness.model_policy import ThreadModelResolution
     from harness.run_loop import RunLoop
     from harness.t3_turn import SubscriptionTurns
@@ -332,7 +333,29 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
                     "id": "run",
                     "status": "completed",
                     "userMessageId": client.launch.await_args.args[2],
+                    "activeAttemptId": "final",
+                    "providerThreadId": "native",
                 }
+            ],
+            "providerTurns": [
+                {
+                    "runAttemptId": "final",
+                    "providerThreadId": "native",
+                    "status": "completed",
+                    "ordinal": 1,
+                    "tokenUsage": {
+                        "inputTokens": 23,
+                        "outputTokens": 2,
+                        "maxTokens": resolution.context_tokens,
+                    },
+                },
+                {
+                    "runAttemptId": "other",
+                    "providerThreadId": "native",
+                    "status": "completed",
+                    "ordinal": 2,
+                    "tokenUsage": {},
+                },
             ],
             "runtimeRequests": [],
             "messages": [{"id": "msg", "role": "assistant", "runId": "run", "text": answer}],
@@ -347,8 +370,9 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
         context_tokens=8192,
     )
     journal = TranscriptJournal(tmp_path / "transcripts")
+    windows = ContextWindowTracker()
     loop = RunLoop(
-        SubscriptionTurns(None, server, journal, lambda _: tmp_path),
+        SubscriptionTurns(None, server, journal, lambda _: tmp_path, context_windows=windows),
         factory(Ids()),
         model_resolver=RecordingResolver({"thread-1": resolution}),
         transcript_journal=journal,
@@ -359,6 +383,8 @@ async def test_subscription_answer_preserves_owner_text_in_stream_and_journal(tm
         await _wait_for_done_count(sink, 1)
     finally:
         await loop.close()
+    measured = windows.snapshot("thread-1").aggregate
+    assert (measured.used_tokens, measured.context_tokens) == (25, resolution.context_tokens)
     text = "".join(
         m.payload.text for m in sink.messages if getattr(m.payload, "kind", None) == "text"
     )
@@ -400,6 +426,28 @@ def test_failed_archive_digest_prevents_installation(tmp_path, monkeypatch):
     with client, pytest.raises(t3_install.InstallError, match="integrity check"):
         t3_install.install(tmp_path)
     assert not (tmp_path / "t3" / "install" / t3_install.VERSION).exists()
+
+
+def test_subscription_inventory_distinguishes_unchecked_from_absent():
+    """A-095: T3 sets installed false on a cold start even for a tool about to offer models."""
+    from harness.t3_sources import project_sources
+
+    provider = {
+        "instanceId": "codex",
+        "installed": False,
+        "status": "warning",
+        "message": "Codex provider status has not been checked in this session yet.",
+    }
+    assert project_sources([provider])[0]["availability"] == "checking"
+    provider.update(
+        installed=True,
+        status="ready",
+        auth={"status": "authenticated", "type": "chatgpt", "profileId": "fixture"},
+        message=None,
+    )
+    assert project_sources([provider])[0]["availability"] == "available"
+    provider.update(installed=False, status="error", auth={})
+    assert project_sources([provider])[0]["availability"] == "missing"
 
 
 def test_authenticated_claude_ultra_survives_failed_usage_probe():
