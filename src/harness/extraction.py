@@ -113,6 +113,10 @@ class ExtractionService:
         if not messages or tail is None:
             return ThreadEndResult(thread_id, "", "", [], [], 0, False)
         final_post = _final_assistant_post(messages)
+        # SD-130: the archive and idle paths may display imported posts, but never extract them.
+        messages = [message for message in messages if not message.get("imported")]
+        if not messages:
+            return ThreadEndResult(thread_id, final_post, "", [], [], 0, False)
         if self._journal.extracted_tail(text_id) == tail:
             pending = await self._spine.approval_queue(
                 self._principal_id,

@@ -2,6 +2,7 @@
 
 import asyncio
 import hashlib
+import os
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
@@ -124,6 +125,34 @@ async def bring_project(server, journal, folder, *, register=None):
     return {"threads": adopted, "skipped": result["skippedCount"]}
 
 
+def _history_home(instance, tool, environment, cwd):
+    """Use the pinned scanner's shared home, including provider-instance overrides."""
+    codex = tool == "codex"
+    variable = "CODEX_HOME" if codex else "CLAUDE_CONFIG_DIR"
+    config = instance.get("config", {})
+    path = config.get("homePath", "")
+    if not path.strip() and not (codex and config.get("shadowHomePath", "").strip()):
+        override = next(
+            (
+                v.get("value")
+                for v in reversed(instance.get("environment", []))
+                if v["name"] == variable
+            ),
+            None,
+        )
+        path = override if isinstance(override, str) else environment.get(variable, "")
+    home = Path(environment["HOME"])
+    if not path.strip():
+        return home / (".codex" if codex else ".claude")
+    if not codex:
+        path = path.strip()
+    if path == "~":
+        return home
+    if path.startswith(("~/", "~\\")):
+        return home / path[2:]
+    return Path(os.path.abspath(cwd / path))
+
+
 async def check_original(server, binding, location):
     """A vanished native transcript must never fall through to a fresh provider session."""
     if location != binding["location"] or not Path(location).is_dir():
@@ -132,9 +161,12 @@ async def check_original(server, binding, location):
     if hashlib.sha256(client.environment_id.encode()).hexdigest() != binding["environment"]:
         raise T3Error("The original subscription server is unavailable.")
     session = str(UUID(binding["native_session"]))
-    home = Path(client.native_env["HOME"])
+    settings = await client.call("server.getSettings", {})
+    tool = binding["tool"]
+    instance = settings["providerInstances"].get(tool, {})
+    home = _history_home(instance, tool, client.native_env, server.root / "workspace")
     if binding["tool"] == "codex":
-        root = home / ".codex/sessions"
+        root = home / "sessions"
         patterns = (
             f"*/*/*/rollout-*-{session}.jsonl",
             f"*/*/*/rollout-*-{session}.jsonl.zst",
@@ -142,7 +174,7 @@ async def check_original(server, binding, location):
             f"*/*/*/rollout-*-{session}_*.jsonl.zst",
         )
     else:
-        root = home / ".claude/projects"
+        root = home / "projects"
         patterns = (f"*/{session}.jsonl",)
     if not await asyncio.to_thread(
         lambda: any(p.is_file() for pat in patterns for p in root.glob(pat))
