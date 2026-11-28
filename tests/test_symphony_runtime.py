@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -138,6 +139,7 @@ def test_passing_alternatives_graft_with_the_most_chosen_lines(tmp_path: Path) -
 
 def test_only_the_reviewed_checkout_can_receive_the_judged_commit(tmp_path):
     """FL-085 / F154: only human consent to the reviewed fast-forward can change project files."""
+    from functools import partial
     from types import SimpleNamespace
 
     from harness.symphony_result import ResultReview, project_result
@@ -150,6 +152,11 @@ def test_only_the_reviewed_checkout_can_receive_the_judged_commit(tmp_path):
     def git(*args):
         return subprocess.check_output(["git", "-C", root, *args], text=True).strip()
 
+    git("branch", "-m", "main")
+    git("branch", "release")
+    c0 = git("rev-parse", "release")
+    (root / "main.txt").write_text("main only")
+    start = _commit(root, "Main advanced before the Symphony started")
     git("worktree", "add", "--detach", str(attempt))
     (attempt / "result.txt").write_text("judged")
     subprocess.run(["git", "-C", attempt, "add", "-f", "result.txt"], check=True)
@@ -162,37 +169,58 @@ def test_only_the_reviewed_checkout_can_receive_the_judged_commit(tmp_path):
         result=f" Result commit: {commit}",
         attempts=[SimpleNamespace(partial_evidence=[str(attempt)])],
     )
+    journal = tmp_path / "symphonies" / run / "events.jsonl"
+    journal.parent.mkdir(parents=True)
+    claim = {
+        "event": "claim_accepted",
+        "packet_id": run,
+        "bead_id": "step-1-round-1",
+        "accepted_commit": start,
+    }
+    journal.write_text(json.dumps(claim) + "\n")
+    review = partial(project_result, stack, tmp_path)
     before = git("rev-parse", "HEAD")
-    preview = project_result(stack)
+    preview = review()
     assert "result.txt" in preview["files"] and not preview["message"]
     assert git("rev-parse", "HEAD") == before
     approved = ResultReview(**preview["review"])
 
+    git("switch", "release")
+    release = review()
+    approval = review(ResultReview(**release["review"]))
+    for response in (release, approval, review(approved)):
+        assert "changed since" in response["message"] and branch in response["message"]
+    assert git("rev-parse", "HEAD") == git("rev-parse", "release") == c0
+    assert not (root / "main.txt").exists() and git("rev-parse", branch) == commit
+    assert "main.txt" not in release["files"] and "result.txt" in release["files"]
+    git("switch", "main")
+    assert git("rev-parse", "HEAD") == start
+
     (root / "draft").write_text("owner")
-    assert "commit" in project_result(stack, approved)["message"].lower()
+    assert "commit" in review(approved)["message"].lower()
     assert (root / "draft").read_text() == "owner"
     (root / "draft").unlink()
     (root / "result.txt").write_text("ignored owner work")
-    assert "local files" in project_result(stack, approved)["message"]
+    assert "local files" in review(approved)["message"]
     assert (root / "result.txt").read_text() == "ignored owner work"
     (root / "result.txt").unlink()
 
     git("switch", "--detach", before)
-    detached = project_result(stack)
+    detached = review()
     assert not detached["review"]["branch"] and "choose" in detached["message"].lower()
     git("switch", approved.branch)
     git("bisect", "start")
-    assert "finish" in project_result(stack, approved)["message"].lower()
+    assert "finish" in review(approved)["message"].lower()
     git("bisect", "reset")
     git("switch", "-c", "other")
-    assert "changed" in project_result(stack, approved)["message"]
+    assert "changed" in review(approved)["message"]
     (root / "different").write_text("new owner commit")
     other = _commit(root, "Owner advanced")
-    message = project_result(stack)["message"]
+    message = review()["message"]
     assert "changed" in message and branch in message and "review" in message.lower()
     assert git("rev-parse", "HEAD") == other
     git("switch", approved.branch)
-    assert "Brought" in project_result(stack, approved)["message"]
+    assert "Brought" in review(approved)["message"]
     assert git("rev-parse", "HEAD") == git("rev-parse", branch) == commit
     assert (root / "result.txt").read_text() == "judged"
-    assert "already" in project_result(stack)["message"]
+    assert "already" in review()["message"]

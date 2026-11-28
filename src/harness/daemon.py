@@ -1785,7 +1785,7 @@ def create_dev_app(
         async def reviewed_result(symphony_id: str, approved: ResultReview | None):
             stack = await read_symphony(symphony_id)
             try:
-                return project_result(stack, approved)
+                return project_result(stack, home, approved)
             except ValueError as exc:
                 raise HTTPException(409, str(exc)) from exc
 

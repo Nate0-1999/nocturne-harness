@@ -1,5 +1,6 @@
 """Review a published Symphony result in the project where its attempts ran."""
 
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -25,7 +26,27 @@ def worktree_project(location: str, symphony_id: str) -> Path | None:
     return None
 
 
-def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = None) -> dict:
+def _starting_commit(home: Path, symphony_id: str) -> str:
+    # The first step's conductor claim records HEAD before any worker or graft advances it.
+    with (home / "symphonies" / symphony_id / "events.jsonl").open() as events:
+        for line in events:
+            event = json.loads(line)
+            if (
+                isinstance(event, dict)
+                and event.get("event") == "claim_accepted"
+                and event.get("packet_id") == symphony_id
+                and event.get("bead_id") == "step-1-round-1"
+            ):
+                commit = event.get("accepted_commit")
+                if isinstance(commit, str) and re.fullmatch(r"[a-f0-9]{40}|[a-f0-9]{64}", commit):
+                    return commit
+                break
+    raise ValueError("Missing launch claim")
+
+
+def project_result(
+    stack: SymphonyStackRecord, home: Path, approved: ResultReview | None = None
+) -> dict:
     # F154 / ADR-012: completion publishes the judged commit. Only its owner can apply it.
     if stack.state != "completed":
         raise ValueError("Wait for the judges to finish this Symphony.")
@@ -53,20 +74,24 @@ def project_result(stack: SymphonyStackRecord, approved: ResultReview | None = N
     head = git("rev-parse", "--verify", "HEAD").stdout.strip()
     branch = git("symbolic-ref", "-q", "--short", "HEAD").stdout.strip()
     review = ResultReview(project=str(root), branch=branch, head=head, commit=commit)
-    base = git("merge-base", head, commit).stdout.strip()
-    diff = git("diff", "--no-ext-diff", "--stat", base, commit, "--")
+    try:
+        start = _starting_commit(home, stack.symphony_id)
+    except (OSError, ValueError) as exc:
+        raise ValueError(f"Could not verify the starting commit. Review {result_branch}.") from exc
+    diff = git("diff", "--no-ext-diff", "--stat", start, commit, "--")
     message = ""
-    if approved and approved != review:
+    if head != start:
+        included = " (already in the project)" if head == commit else ""
+        message = (
+            f"The project changed since this Symphony started. Review the saved result on "
+            f"{result_branch}{included}."
+        )
+    elif approved and approved != review:
         message = "The project changed after your review. Review the result again."
-    elif base == commit:
+    elif head == commit:
         message = "This result is already in the project."
     elif not branch:
         message = "No project branch is selected. Choose the branch you want to update."
-    elif base != head:
-        message = (
-            f"The project changed since this Symphony started. Review the saved result on "
-            f"{result_branch}."
-        )
     else:
         status = git("status", "--porcelain", "--untracked-files=all", "--ignore-submodules=none")
         git_dir = Path(git("rev-parse", "--absolute-git-dir").stdout.strip())
