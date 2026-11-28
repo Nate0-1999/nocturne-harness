@@ -4,6 +4,7 @@ export type DetailTier = 'full' | 'efficient'
 export type Point3 = [number, number, number]
 export interface WorkAgent {
   id: string; thread_id: string; parent_id: string | null; label: string
+  run_id?: string | null; outcome?: string | null
   root: string; location: string; state: string; started_at: string; updated_at: string
   waiting_since: string | null; cost_usd: number | string | null
   touched_files?: { path: string; ts: string }[]; turns?: string[]; tool_calls?: string[]
@@ -52,6 +53,12 @@ export function longestWaiting(agents: WorkAgent[]): WorkAgent | undefined {
 }
 export function parentPath(path: string): string {
   return path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '.'
+}
+
+export function agentFolder(agent: WorkAgent): string {
+  const rootName = agent.root.split('/').filter(Boolean).at(-1) ?? '/'
+  if (agent.location === agent.root) return rootName
+  return agent.location.startsWith(agent.root + '/') ? rootName + agent.location.slice(agent.root.length) : agent.location
 }
 export interface Chamber {
   path: string; position: Point3; radius: number; parent: string | null; files: DirectoryEntry[]; beneath: number
