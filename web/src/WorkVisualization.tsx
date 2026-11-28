@@ -201,11 +201,11 @@ export function WorkVisualization({ initialView }: { initialView: 'farm' | 'root
     <details className="work-viz__data" open><summary>Agents and measured work</summary>
       <table><thead><tr><th>Agent</th><th>Where</th><th>Run</th><th>State</th><th>Spend</th></tr></thead><tbody>
         {agents.map((agent) => <tr key={agent.id} data-selected={agent.id === selectedId || undefined}>
-          <td><Button variant="bare" onClick={() => pick(agent)} title={agent.label} style={{ color: agentColor(agent.id) }}>{agent.label}</Button></td>
-          <td title={agent.location}>{agentFolder(agent)}</td>
-          <td title={agent.run_id ?? undefined}>{agent.run_id?.slice(-8) ?? '—'}</td>
-          <td>{agent.outcome ?? agent.state}</td>
-          <td>{agent.cost_usd === null ? 'Not yet priced' : `$${Number(agent.cost_usd).toFixed(5)}`}</td>
+          <td data-label="Agent"><Button variant="bare" onClick={() => pick(agent)} title={agent.label} style={{ color: agentColor(agent.id) }}>{agent.label}</Button></td>
+          <td data-label="Where" title={agent.location}>{agentFolder(agent)}</td>
+          <td data-label="Run" title={agent.run_id ?? undefined}>{agent.run_id && agent.parent_id === null && 'Turn '}{agent.run_id?.slice(-8) ?? '—'}</td>
+          <td data-label="State">{agent.outcome ?? agent.state}</td>
+          <td data-label="Spend">{agent.cost_usd === null ? 'Not yet priced' : `$${Number(agent.cost_usd).toFixed(5)}`}</td>
         </tr>)}
       </tbody></table>
     </details>
