@@ -8,6 +8,40 @@ from harness.transcript import TranscriptJournal
 
 
 @pytest.mark.asyncio
+async def test_restored_window_can_send_the_existing_compact_command(tmp_path):
+    """FL-044: T3 rejects /compact before contacting an agent unless the session advertises it."""
+    import asyncio
+    import json
+    from unittest.mock import Mock
+
+    journal = TranscriptJournal(tmp_path)
+    journal.append_message(
+        "thread", dict(role="user", message_id="m", content="Keep this"), parent_id=None
+    )
+    reader = asyncio.StreamReader()
+    writer = Mock(drain=AsyncMock())
+    session = FrontSession(SimpleNamespace(journal=journal), None, reader, writer)
+    for rid, method in enumerate(("session/new", "session/load")):
+        reader.feed_data(
+            json.dumps(
+                dict(id=rid, method=method, params={"cwd": str(tmp_path), "sessionId": "thread"})
+            ).encode()
+            + b"\n"
+        )
+    reader.feed_eof()
+    await session.serve()
+    frames = [json.loads(call.args[0]) for call in writer.write.call_args_list]
+    new_id = next(f["result"]["sessionId"] for f in frames if f.get("id") == 0)
+    offered = {
+        f["params"]["sessionId"]
+        for f in frames
+        if f.get("method") == "session/update"
+        and any(c["name"] == "compact" for c in f["params"]["update"].get("availableCommands", []))
+    }
+    assert offered == {new_id, "thread"}
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("change", ["rewind", "archive", "fork", "clear"])
 async def test_a_stale_window_cannot_start_work_or_reopen_the_journal(tmp_path, change):
     """FL-076 / FL-124 / SD-128: a restart cannot turn a stale window into an accepted prompt."""

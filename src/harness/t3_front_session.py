@@ -214,6 +214,16 @@ class FrontSession:
                         )
                     continue
                 await self.send(id=rid, result=result)
+                if method in {"session/new", "session/load"}:
+                    await self.update(
+                        sessionUpdate="available_commands_update",
+                        availableCommands=[
+                            {
+                                "name": "compact",
+                                "description": "Compact this conversation in Nocturne",
+                            }
+                        ],
+                    )
         finally:
             if self.turn is not None:
                 if not self.turn.done():
