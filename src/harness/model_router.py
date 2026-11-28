@@ -205,12 +205,13 @@ class DirectCompletionAdapter:
     def _provider(self, name: str) -> Provider[Any]:
         if name == "anthropic":
             return AnthropicProvider(
-                api_key=_required_secret(self._settings.anthropic_api_key, "ANTHROPIC_API_KEY")
+                api_key=_required_secret(self._settings.anthropic_api_key, "ANTHROPIC_API_KEY"),
+                base_url=self._settings.direct_base_url("anthropic"),
             )
         if name in {"openai", "openai-chat", "openai-responses"}:
             return OpenAIProvider(
                 api_key=_required_secret(self._settings.openai_api_key, "OPENAI_API_KEY"),
-                base_url=self._settings.openai_base_url,
+                base_url=self._settings.direct_base_url("openai"),
             )
         return infer_provider(name)
 
@@ -223,7 +224,12 @@ class DirectCompletionAdapter:
         try:
             if self._source == "anthropic":
                 key = _required_secret(self._settings.anthropic_api_key, "ANTHROPIC_API_KEY")
-                async with AsyncAnthropic(api_key=key, timeout=10.0, max_retries=0) as source:
+                async with AsyncAnthropic(
+                    api_key=key,
+                    base_url=self._settings.direct_base_url("anthropic"),
+                    timeout=10.0,
+                    max_retries=0,
+                ) as source:
                     payload = {
                         "data": [
                             {
@@ -237,9 +243,7 @@ class DirectCompletionAdapter:
                     }
             else:
                 api_key = _required_secret(self._settings.openai_api_key, "OPENAI_API_KEY")
-                base_url = (self._settings.openai_base_url or "https://api.openai.com/v1").rstrip(
-                    "/"
-                )
+                base_url = self._settings.direct_base_url("openai").rstrip("/")
                 async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
                     response = await client.get(
                         f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}

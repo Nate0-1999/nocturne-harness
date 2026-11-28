@@ -4,6 +4,7 @@ from functools import cached_property
 from pathlib import Path
 from typing import Literal
 
+import httpx
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from spine.model_policy import HomeModelChoices, parse_model_policy
@@ -25,6 +26,7 @@ class HarnessSettings(BaseSettings):
     machine_id: str = Field(default="local-machine", min_length=1)
     agent_id: str = Field(default="harness-agent", min_length=1)
     anthropic_api_key: SecretStr | None = None
+    anthropic_base_url: str | None = None
     openai_api_key: SecretStr | None = None
     openai_base_url: str | None = None
     openrouter_api_key: SecretStr | None = None
@@ -79,11 +81,26 @@ class HarnessSettings(BaseSettings):
             f"pinned:{self.chat_model}" if self.chat_model else "elbow"
         )
 
+    def direct_base_url(self, source: str) -> str:
+        if source == "anthropic":
+            return self.anthropic_base_url or "https://api.anthropic.com"
+        return self.openai_base_url or "https://api.openai.com/v1"
+
     @cached_property
     def model_choices(self) -> HomeModelChoices:
         from harness.onboarding import nocturne_home
 
-        return HomeModelChoices(self.nocturne_home or nocturne_home())
+        first_party = set()
+        for source in ("openai", "anthropic"):
+            try:
+                url = httpx.URL(self.direct_base_url(source))
+            except httpx.InvalidURL:
+                continue
+            if url.scheme in ("http", "https") and url.host == f"api.{source}.com":
+                first_party.add(source)
+        return HomeModelChoices(
+            self.nocturne_home or nocturne_home(), direct_makers=frozenset(first_party)
+        )
 
     @property
     def model_policy_optimization_enabled(self) -> bool:

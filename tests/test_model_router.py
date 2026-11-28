@@ -296,3 +296,41 @@ async def test_anthropic_only_home_can_act_on_unscored_source_guidance(tmp_path,
         await resolver.resolve("new")
     picked = await resolver.resolve_named("new", "anthropic:example")
     assert (picked.model, picked.context_tokens) == ("anthropic:example", 4096)
+
+
+@pytest.mark.parametrize("prefix", ["openai", "openai-chat", "openai-responses", "anthropic"])
+@pytest.mark.parametrize("address", ["default", "official", "compatible"])
+def test_direct_maker_follows_the_configured_server(tmp_path, monkeypatch, prefix, address):
+    """SPEC C.5 / SD-100: a compatible server can list another maker's models under the same adapter name."""
+    from spine.model_countries import CountryFilters
+
+    from harness.model_router import CountryExcluded
+
+    source = "anthropic" if prefix == "anthropic" else "openai"
+    variable = f"{source.upper()}_BASE_URL"
+    host = f"api.{source}.com"
+    monkeypatch.delenv(variable, raising=False)
+    if address != "default":
+        host = host if address == "official" else f"{host}.example"
+        monkeypatch.setenv(variable, f"https://{host}/v1")
+    configured = settings(nocturne_home=tmp_path, **{f"{source}_api_key": SecretStr("example")})
+    router = CompletionRouter(configured)
+    model = f"{prefix}:example"
+    known = address != "compatible"
+    countries = configured.model_choices.countries
+    for code, keep, reason in (
+        ("CN", False, None if known else "Maker country is unknown."),
+        ("CN", True, None),
+        ("US", True, "Maker country US is excluded." if known else None),
+    ):
+        countries.save(
+            CountryFilters.model_validate({"maker": {"countries": [code], "keep_unknown": keep}})
+        )
+        row = countries.catalog().describe(model)
+        assert row["maker_country"] == ("US" if known else None)
+        assert row["country_exclusion"] == reason
+        if reason:
+            with pytest.raises(CountryExcluded, match=reason):
+                router.model_for(model)
+        else:
+            assert httpx.URL(router.model_for(model).provider.base_url).host == host
