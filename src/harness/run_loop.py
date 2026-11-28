@@ -142,6 +142,7 @@ class _ThreadState:
     workspace_root: str | None = None
     current_location: str | None = None
     repository: str | None = None
+    imported: bool = False
 
 
 class ThreadWorkspaceMoved(ValueError):
@@ -245,6 +246,7 @@ class RunLoop:
         symphony_experience: SymphonyExperience | None = None,
         spend_walls: SpendWalls | None = None,
         checkpoints: WorkspaceCheckpoints | None = None,
+        check_import=None,
     ) -> None:
         self._runner = runner
         self._factory = factory
@@ -258,6 +260,7 @@ class RunLoop:
         self._symphony_experience = symphony_experience
         self._spend_walls = spend_walls
         self._checkpoints = checkpoints
+        self._check_import = check_import
         self._lock = asyncio.Lock()
         self._submission_locks: dict[str, asyncio.Lock] = {}
         self._pending_captured: dict[str, deque[_Turn]] = {}
@@ -694,6 +697,12 @@ class RunLoop:
         sink: EnvelopeSink | None = None,
     ) -> str:
         """Accept a prompt, starting it now or reserving one FIFO run ID."""
+
+        state = self._threads.get(thread_id)
+        if state and state.imported and self._check_import and self._transcript_journal:
+            binding = self._transcript_journal.subscription_binding(thread_id)
+            if binding and binding.get("native_session"):
+                await self._check_import(binding, state.current_location)
 
         if image is not None and self._transcript_journal is None:
             # WALL owner files / D.2 082: capture accepted input before running it.
@@ -2336,25 +2345,35 @@ class RunLoop:
         if journal is None:
             return {}
         return {
-            transcript.thread_id: _ThreadState(
-                messages=[deepcopy(message) for message in transcript.messages],
-                message_history=self._rehydrate_model_history(transcript),
-                resolved_model=transcript.resolved_model or self._initial_resolved_model,
-                project_key=transcript.project_key,
-                project_label=transcript.project_label,
-                workspace_root=transcript.workspace_root,
-                current_location=transcript.current_location,
-                repository=transcript.repository,
-            )
+            transcript.thread_id: self._restored_state(transcript)
             for transcript in journal.hydrate_threads()
         }
+
+    def register_import(self, thread_id: str) -> None:
+        if thread_id not in self._threads and self._transcript_journal:
+            transcript = self._transcript_journal.current_thread(thread_id)
+            if transcript:
+                self._threads[thread_id] = self._restored_state(transcript)
+
+    def _restored_state(self, transcript: HydratedTranscript) -> _ThreadState:
+        return _ThreadState(
+            messages=[deepcopy(message) for message in transcript.messages],
+            message_history=self._rehydrate_model_history(transcript),
+            resolved_model=transcript.resolved_model or self._initial_resolved_model,
+            project_key=transcript.project_key,
+            project_label=transcript.project_label,
+            workspace_root=transcript.workspace_root,
+            current_location=transcript.current_location,
+            repository=transcript.repository,
+            imported=transcript.imported_title is not None,
+        )
 
     @staticmethod
     def _rehydrate_model_history(transcript: HydratedTranscript) -> tuple[object, ...]:
         from pydantic_ai.messages import ModelMessagesTypeAdapter
 
         history: list[object] = []
-        messages = transcript.messages
+        messages = [message for message in transcript.messages if not message.get("imported")]
         for index in range(0, len(messages) - 1, 2):
             user = messages[index]
             assistant = messages[index + 1]

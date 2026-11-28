@@ -745,6 +745,25 @@ button.rack-module__resize-handle--nw {
   font-size: var(--text-md);
 }
 
+.t3-project-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.t3-project-window > .t3-module__frame { flex: 1 1 0; min-height: 0; }
+.t3-project-import {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-deep);
+  font-size: var(--text-sm);
+}
+.t3-project-import label, .t3-project-import select { max-width: 100%; min-width: 0; }
+.t3-project-import label { display: flex; align-items: center; gap: var(--space-2); }
+
 /* M8TS: a crossing asked for from T3, over the top of T3's screen while it waits. */
 .t3-module__crossing {
   position: absolute;

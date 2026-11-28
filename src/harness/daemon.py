@@ -60,6 +60,7 @@ from harness.memory_panel import MemoryPanelController, ThreadMemoryContextRegis
 from harness.model_policy import (
     ModelCatalogUnavailable,
     ModelPolicyResolver,
+    NamedModelResolutionError,
     ThreadModelResolution,
     ThreadModelResolver,
     browse_models,
@@ -125,6 +126,7 @@ from harness.symphony_experience import SymphonyExperience
 from harness.symphony_runtime import SymphonyExecution, remove_kept_worktrees
 from harness.t3_client import T3Error
 from harness.t3_front import FrontServer
+from harness.t3_import import bring_project, check_original, projects
 from harness.t3_server import T3Server
 from harness.t3_sources import offers, project_sources, sources
 from harness.t3_turn import SubscriptionTurns
@@ -810,7 +812,7 @@ def create_app(
                             proposed_response=message.payload.proposed_response,
                             sink=send,
                         )
-                    except ModelCatalogUnavailable as exc:
+                    except (ModelCatalogUnavailable, T3Error) as exc:
                         await loop.send_direct(
                             send,
                             factory.create(
@@ -1400,6 +1402,7 @@ def create_dev_app(
         symphony_experience=owned_symphony_experience,
         spend_walls=spend_walls,
         checkpoints=WorkspaceCheckpoints(home / "checkpoints"),
+        check_import=lambda binding, location: check_original(t3, binding, location),
     )
 
     async def palace_busy(state: str) -> None:
@@ -1486,6 +1489,27 @@ def create_dev_app(
 
     def configure_extraction_routes(app: FastAPI) -> None:
         job_scheduler.mount(app)
+
+        @app.post("/v1/t3/projects")
+        async def native_projects(request: Request):
+            if request.headers.get("origin") != f"http://127.0.0.1:{request.scope['server'][1]}":
+                raise HTTPException(403, "Open the project picker in Nocturne.")
+            try:
+                body = await request.json()
+                if body == {}:
+                    return {"projects": await projects(t3)}
+                if isinstance(body, dict) and isinstance(body.get("folder"), str):
+                    return await bring_project(
+                        t3, journal, body["folder"], register=loop.register_import
+                    )
+                raise HTTPException(422, "Choose a project from the list.")
+            except (T3Error, TimeoutError, OSError) as exc:
+                raise HTTPException(
+                    409,
+                    str(exc)
+                    if isinstance(exc, T3Error)
+                    else "T3 could not read the project. Refresh the project list.",
+                ) from None
 
         @app.post("/v1/t3/front/open")
         async def open_front_window(request: Request):
@@ -1675,6 +1699,8 @@ def create_dev_app(
                     }
                 except (ParameterWriteViolation, ModelCatalogUnavailable):
                     pass
+                except NamedModelResolutionError:
+                    current = loop.thread_models().get(thread_id)
             # A source with no list (e.g. a direct Anthropic key) is a state, not a failure.
             browser: dict[str, object] = {
                 "models": [],

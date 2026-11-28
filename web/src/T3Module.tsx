@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from './kit'
 import { createHostPluginApi, getRackSnapshot, RACK_MANIFESTS, RackApiProvider, useRackHostSnapshot } from './rack'
 import { BoundaryCards } from './SymphonyDeck'
+import { T3ProjectImport } from './T3ProjectImport'
 
 // `load` counts the addresses sent to the frame: the same address again is still a fresh load.
 type Screen = { url: string, load: number } | { line: string } | null
@@ -87,7 +88,8 @@ export function T3Module() {
   }
   // T3 keeps what its own window has, except leaving this frame: it cannot move Nocturne's page.
   return (
-    <>
+    <div className="t3-project-window">
+      <T3ProjectImport onOpen={id => void api.events.dispatch({ type: 'thread.select', thread_id: id })} />
       {/* A crossing asked for from T3 waits on the Deck; the same card is answered here too. */}
       <div className="t3-module__crossing" data-testid="t3-module-crossing">
         <RackApiProvider api={api}>
@@ -104,6 +106,6 @@ export function T3Module() {
         sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
         allow="clipboard-read; clipboard-write; microphone"
       />
-    </>
+    </div>
   )
 }

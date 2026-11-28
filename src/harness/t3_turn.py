@@ -58,6 +58,14 @@ class SubscriptionTurns:
         binding = self.journal.subscription_binding(thread_id)
         workspace = str(self.location(thread_id).resolve(strict=True))
         environment = hashlib.sha256(client.environment_id.encode()).hexdigest()
+        if (
+            binding
+            and binding.get("native_session")
+            and binding["source"] == f"subscription:{source['tool']}/{model['id']}"
+        ):
+            # Offline history had no account to pin. Bind the verified offer before the first send.
+            binding = {**binding, "source": key}
+            self.journal.bind_subscription(thread_id, binding)
         same_source = binding is not None and binding["source"] == key
         if same_source:
             if binding["environment"] != environment:
@@ -67,6 +75,12 @@ class SubscriptionTurns:
             )
             if any(run["status"] not in TERMINAL for run in prior["runs"]):
                 raise T3Error("A previous subscription turn is still open.")
+        if (
+            binding
+            and binding.get("native_session")
+            and (not same_source or binding["location"] != workspace)
+        ):
+            raise T3Error("The original tool session or conversation folder has changed.")
         fresh = not same_source or binding.get("location") != workspace
         if fresh:
             title = self.journal.conversation_title(thread_id).strip() or "Nocturne conversation"
@@ -125,7 +139,11 @@ class SubscriptionTurns:
             await observer.stop()
             raise
         finally:
-            if observer.transitions.finished and source["tool"] == "codex":
+            if (
+                observer.transitions.finished
+                and source["tool"] == "codex"
+                and not binding.get("native_session")
+            ):
                 try:
                     await client.archive_codex(thread, message)
                 except Exception as exc:

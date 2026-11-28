@@ -8,9 +8,12 @@ import asyncio
 import contextlib
 import re
 from pathlib import Path
+from urllib.parse import unquote
 
 _LIMIT = 64 * 1024
-_THREAD = re.compile(rb"[0-9A-Za-z-]{1,64}")
+_THREAD = re.compile(
+    r"(?:[0-9A-Za-z-]{1,64}|thread:provider:[A-Za-z0-9_-]+:provider-instance:nocturne:native-thread:[a-f0-9-]{36})"
+)
 
 
 def hosting_answer(headers: list[tuple[bytes, bytes]], page: str) -> list[tuple[bytes, bytes]]:
@@ -43,8 +46,10 @@ def shown_thread(headers: list[tuple[bytes, bytes]], origin: str, environment: s
     """
     prefix = f"{origin}/{environment}/".encode()
     for value in _values(headers, b"referer"):
-        if environment and value.startswith(prefix) and _THREAD.fullmatch(value[len(prefix) :]):
-            return value[len(prefix) :].decode()
+        if environment and value.startswith(prefix):
+            thread = unquote(value[len(prefix) :].decode("ascii", errors="replace"))
+            if _THREAD.fullmatch(thread):
+                return thread
     return None
 
 
