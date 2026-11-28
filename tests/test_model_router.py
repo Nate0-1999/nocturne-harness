@@ -301,7 +301,7 @@ async def test_anthropic_only_home_can_act_on_unscored_source_guidance(tmp_path,
 @pytest.mark.parametrize("prefix", ["openai", "openai-chat", "openai-responses", "anthropic"])
 @pytest.mark.parametrize("address", ["default", "official", "compatible"])
 def test_direct_maker_follows_the_configured_server(tmp_path, monkeypatch, prefix, address):
-    """SPEC C.5 / SD-100: a compatible server can list another maker's models under the same adapter name."""
+    """SPEC C.5: a compatible server can list another maker's models under the same adapter name."""
     from spine.model_countries import CountryFilters
 
     from harness.model_router import CountryExcluded
