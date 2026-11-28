@@ -223,4 +223,7 @@ def test_only_the_reviewed_checkout_can_receive_the_judged_commit(tmp_path):
     assert "Brought" in review(approved)["message"]
     assert git("rev-parse", "HEAD") == git("rev-parse", branch) == commit
     assert (root / "result.txt").read_text() == "judged"
-    assert "already" in review()["message"]
+    assert review()["message"] == "This result is already in the project."
+    (root / "later.txt").write_text("owner work after the result")
+    _commit(root, "Owner continued after bringing in the result")
+    assert review()["message"] == "This result is already in the project."

@@ -80,16 +80,15 @@ def project_result(
         raise ValueError(f"Could not verify the starting commit. Review {result_branch}.") from exc
     diff = git("diff", "--no-ext-diff", "--stat", start, commit, "--")
     message = ""
-    if head != start:
-        included = " (already in the project)" if head == commit else ""
+    if git("merge-base", "--is-ancestor", commit, head).returncode == 0:
+        message = "This result is already in the project."
+    elif head != start:
         message = (
             f"The project changed since this Symphony started. Review the saved result on "
-            f"{result_branch}{included}."
+            f"{result_branch}."
         )
     elif approved and approved != review:
         message = "The project changed after your review. Review the result again."
-    elif head == commit:
-        message = "This result is already in the project."
     elif not branch:
         message = "No project branch is selected. Choose the branch you want to update."
     else:
