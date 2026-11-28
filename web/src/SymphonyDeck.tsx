@@ -19,6 +19,7 @@ import { ReplyReader } from './ReplyReader'
 import { Button, ConfirmButton, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
+import { deckCount, deckEvidence, record } from './deckCards'
 import { agentColor } from './visualization'
 import { SymphonyFeedback } from './SymphonyCards'
 import { distinctThreadTitles, visibleThreadTitle } from './threadTitles'
@@ -59,12 +60,6 @@ export interface ProposedResponseCard {
   alternatives: string[]
   created_at: string
   assistant_text: string
-}
-
-function record(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null
 }
 
 function stringList(value: unknown): string[] | null {
@@ -495,35 +490,6 @@ function ProposedResponseCardView({
       </footer>
     </article>
   )
-}
-
-export function deckCount(stacks: Pick<DeckStack, 'state'>[], waiting: number, lessonIds: Set<string>, pending: string[] | null) {
-  const count = stacks.length + waiting
-  const parts = [`${count} ${count === 1 ? 'card' : 'cards'}`]
-  if (waiting) parts.push(`${waiting} waiting`)
-  for (const state of ['running', 'blocked', 'completed'] as const) {
-    const amount = stacks.filter(stack => stack.state === state).length
-    if (amount) parts.push(`${amount} ${state === 'running' ? 'live' : state}`)
-  }
-  if (lessonIds.size && pending === null) parts.push('Lesson count unavailable')
-  const lessons = pending?.filter(id => lessonIds.has(id)).length
-  if (lessons) parts.push(`${lessons} ${lessons === 1 ? 'lesson' : 'lessons'} waiting`)
-  return parts.join(' · ')
-}
-
-export function deckEvidence(entries: DeckStack['evidence']): DeckStack['evidence'] {
-  const seen = new Set<string>()
-  return entries.flatMap(entry => {
-    if (!Array.isArray(entry.verdicts)) return [entry]
-    const verdicts = entry.verdicts.filter(value => {
-      const id = record(value)?.judge_session_id
-      if (typeof id !== 'string') return true
-      if (seen.has(id)) return false
-      seen.add(id)
-      return true
-    })
-    return verdicts.length ? [{ ...entry, verdicts }] : []
-  })
 }
 
 function DeckStackCard({ stack }: { stack: DeckStack }) {

@@ -1,23 +1,19 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import test from 'node:test'
-import { createServer } from 'vite'
+import { deckCount, deckEvidence } from '../src/deckCards.ts'
 
-/** M8FV: a completed stack can own three pending lessons and receive the panel's final record twice. */
-test('the Deck counts visible stacks and open lessons, and prints each independent verdict once', async () => {
-  const vite = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
-  try {
-    const { deckCount, deckEvidence } = await vite.ssrLoadModule('/src/SymphonyDeck.tsx')
-    const lessons = new Set(['one', 'two', 'three', 'already-reviewed'])
-    assert.equal(deckCount([{ state: 'completed' }], 0, lessons, ['one', 'two', 'three', 'another-run']),
-      '1 card · 1 completed · 3 lessons waiting')
-    assert.equal(deckCount([{ state: 'blocked' }, { state: 'running' }], 2, new Set(), []),
-      '4 cards · 2 waiting · 1 live · 1 blocked')
-    const votes = ['motivation', 'implementation', 'performance'].map(seat => ({ seat, judge_session_id: seat }))
-    const nextRound = { ...votes[0], judge_session_id: 'another-independent-session' }
-    const evidence = deckEvidence([{ worker_id: 'one' }, { verdicts: votes }, { verdicts: [...votes, nextRound] }])
-    assert.deepEqual(evidence, [{ worker_id: 'one' }, { verdicts: votes }, { verdicts: [nextRound] }])
-  } finally { await vite.close() }
+/** ADR-014 / M8FV: a completed stack can own pending lessons and receive the same final panel record twice. */
+test('the Deck counts visible stacks and open lessons, and prints each independent verdict once', () => {
+  const lessons = new Set(['one', 'two', 'three', 'already-reviewed'])
+  assert.equal(deckCount([{ state: 'completed' }], 0, lessons, ['one', 'two', 'three', 'another-run']),
+    '1 card · 1 completed · 3 lessons waiting')
+  assert.equal(deckCount([{ state: 'blocked' }, { state: 'running' }], 2, new Set(), []),
+    '4 cards · 2 waiting · 1 live · 1 blocked')
+  const votes = ['motivation', 'implementation', 'performance'].map(seat => ({ seat, judge_session_id: seat }))
+  const nextRound = { ...votes[0], judge_session_id: 'another-independent-session' }
+  const evidence = deckEvidence([{ worker_id: 'one' }, { verdicts: votes }, { verdicts: [...votes, nextRound] }])
+  assert.deepEqual(evidence, [{ worker_id: 'one' }, { verdicts: votes }, { verdicts: [nextRound] }])
 })
 
 /** ADR-014 and G19-G20 require one current Deck surface for typed steering and exact lineage. */
