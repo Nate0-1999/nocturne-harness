@@ -8,6 +8,42 @@ from harness.transcript import TranscriptJournal
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("reason,should_cancel", [("steering_restart", False), ("retry", True)])
+async def test_window_cancel_preserves_work_only_for_its_own_steering_restart(
+    reason, should_cancel
+):
+    """FL-075: a second message keeps the original task; an explicit Stop still stops it."""
+    import asyncio
+
+    projection = {
+        "runs": [{"id": "native-run", "activeAttemptId": "next", "rootNodeId": "next-node"}],
+        "attempts": [
+            {
+                "id": "first",
+                "runId": "native-run",
+                "rootNodeId": "old-node",
+                "status": "superseded",
+            },
+            {"id": "next", "runId": "native-run", "reason": reason},
+        ],
+    }
+    front = SimpleNamespace(
+        loop=AsyncMock(),
+        client=AsyncMock(return_value=SimpleNamespace(call=AsyncMock(return_value=projection))),
+    )
+    session = FrontSession(front, "native-thread", None, None)
+    session.thread, session.run = "thread", "journal-run"
+    session.native_run, session.node = "native-run", "old-node"
+    session.events = asyncio.Queue()
+    await session.window_cancel()
+    if should_cancel:
+        front.loop.cancel.assert_awaited_once_with(thread_id="thread", run_id="journal-run")
+    else:
+        front.loop.cancel.assert_not_awaited()
+        assert session.events.get_nowait() is None
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("text,expected", [("Earlier", "end_turn"), ("Changed", "error")])
 async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
     tmp_path, text, expected

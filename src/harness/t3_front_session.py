@@ -32,6 +32,9 @@ class FrontSession:
         self.card = None
         self.card_answered = False
         self.node = None
+        self.native_run = None
+        self.events = None
+        self.superseded = False
 
     async def send(self, **message):
         self.writer.write(json.dumps({"jsonrpc": "2.0", **message}).encode() + b"\n")
@@ -44,9 +47,36 @@ class FrontSession:
 
     async def cancel(self):
         self.stopping = True
-        if self.run and not self.cancel_sent:
+        if self.run and not self.cancel_sent and not self.superseded:
             self.cancel_sent = True
             await self.front.loop.cancel(thread_id=self.thread, run_id=self.run)
+
+    async def window_cancel(self):
+        # T3 commits the replacement attempt before it interrupts the old provider.
+        if self.native_run and self.node:
+            client = await self.front.client()
+            projection = await client.call(
+                "orchestration.getThreadProjection", {"threadId": self.native}
+            )
+            run = next((r for r in projection["runs"] if r["id"] == self.native_run), None)
+            attempts = [a for a in projection["attempts"] if a["runId"] == self.native_run]
+            if (
+                run
+                and any(
+                    a.get("rootNodeId") == self.node and a["status"] == "superseded"
+                    for a in attempts
+                )
+                and any(
+                    a["id"] == run["activeAttemptId"] and a["reason"] == "steering_restart"
+                    for a in attempts
+                )
+            ):
+                # Release this T3 prompt. Its replacement enters the ordinary FIFO via submit().
+                self.superseded = True
+                if self.events is not None:
+                    self.events.put_nowait(None)
+                return
+        await self.cancel()
 
     async def serve(self):
         try:
@@ -162,7 +192,7 @@ class FrontSession:
                         )
                     continue
                 elif method == "session/cancel":
-                    await self.cancel()
+                    await self.window_cancel()
                     continue
                 elif method == "session/prompt":
                     if self.turn is not None and not self.turn.done():
@@ -170,7 +200,7 @@ class FrontSession:
                             id=rid, error={"code": -32600, "message": "A turn is already running."}
                         )
                     else:
-                        self.stopping = self.cancel_sent = False
+                        self.stopping = self.cancel_sent = self.superseded = False
                         self.turn = asyncio.create_task(self.prompt(rid, params.get("prompt", [])))
                     continue
                 elif method == "session/set_model" and params.get("modelId") == "default":
@@ -185,7 +215,7 @@ class FrontSession:
         finally:
             if self.turn is not None:
                 if not self.turn.done():
-                    await self.cancel()
+                    await self.window_cancel()
                 await asyncio.gather(self.turn, return_exceptions=True)
 
     async def prompt(self, rid, blocks):
@@ -209,6 +239,7 @@ class FrontSession:
                 raise T3Error("T3 could not identify one active Nocturne turn.")
             message_id = runs[0]["userMessageId"]
             self.node = runs[0].get("rootNodeId")
+            self.native_run = runs[0].get("id")
             message = next(m for m in projection["messages"] if m["id"] == message_id)
             if message["role"] != "user" or message.get("attachments"):
                 raise T3Error("This Nocturne conversation accepts text prompts.")
@@ -250,10 +281,17 @@ class FrontSession:
             self.run = await loop.submit(
                 thread_id=self.thread, prompt_id=prompt_id, prompt=message["text"], sink=sink
             )
+            self.events = events
+            if self.superseded:
+                events.put_nowait(None)
             if self.stopping:
                 await self.cancel()
             while True:
                 envelope = await events.get()
+                if envelope is None:
+                    self.run = None
+                    await self.send(id=rid, result={"stopReason": "cancelled"})
+                    return
                 payload = envelope.payload
                 if getattr(payload, "run_id", None) != self.run:
                     continue
@@ -295,6 +333,7 @@ class FrontSession:
             )
         finally:
             self.run = None
+            self.native_run = self.events = None
             await loop.detach(sink)
 
     async def text(self, value):
