@@ -7,7 +7,7 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "448754b24ee2469d7b8f2e8938f4696167f9aa84"
+      "head": "45df9f2b1e8f1efc0311360d93ed8a21041089ba"
     }
   ],
   "unmapped": {
@@ -92,13 +92,14 @@
     "harness/verification/m8sb/FL-215.png": "M8SB verification evidence or its checksum.",
     "harness/verification/m8sb/SHA256SUMS": "M8SB verification evidence or its checksum.",
     "harness/verification/m8sb/ledger-report.json": "M8SB verification evidence or its checksum.",
-    "harness/web/dist/assets/index-BJsTX1jW.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-Ba3n3wOi.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-CnuQGOMs.css": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-Dl5jRwi1.css": "Generated assets of the installed Harness web build.",
+    "harness/web/dist/assets/index-ZnYSO_TC.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/index.html": "Generated assets of the installed Harness web build.",
     "harness/web/tests/symphonyDeckSource.test.mjs": "Inherited from the M8SY base of this stacked draft.",
     "harness/web/dist/assets/index-4vpLQGv_.css": "Generated assets of the installed Harness web build.",
+    "harness/web/dist/assets/index-BJsTX1jW.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-CrM4Z2Vc.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-DNy4rzWj.js": "Generated assets of the installed Harness web build.",
     "harness/web/dist/assets/index-DMtAxV-0.js": "Generated assets of the installed Harness web build.",
