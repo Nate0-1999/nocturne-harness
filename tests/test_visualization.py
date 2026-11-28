@@ -317,6 +317,12 @@ def test_root_branches_project_turn_and_tool_call_times_without_content(tmp_path
     agents = {agent["id"]: agent for agent in observed}
     assert agents["thread"]["turns"] == ["t1"] and agents["thread"]["tool_calls"] == ["t2"]
     assert agents["run/root.1"]["tool_calls"] == [first.isoformat()]
+    assert agents["run/root.1"]["run_id"] == "run"
+    assert agents["run/root.1"].get("outcome") is None
+    observe_worker(output, assignment, location, "stopped", (), messages)
+    (output / "result.json").write_text('{"status": "completed"}')
+    terminal = work_observation(journal, tmp_path, tmp_path)["agents"][-1]
+    assert terminal["outcome"] == "completed" and terminal["state"] == "stopped"
     feed = json.dumps(agents)
     assert "PRIVATE" not in feed and "SECRET" not in feed
 

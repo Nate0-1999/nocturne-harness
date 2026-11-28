@@ -32,10 +32,9 @@ test('Symphony deliberation is human-fixed, signed, separately identified, and r
  * re-renders what was signed and cannot be signed again until its run is blocked.
  */
 test('Symphony cards show the signed charter and the live state, never a stale running', async () => {
-  const [cards, app, deck, shell, runtime] = await Promise.all([
+  const [cards, app, shell, runtime] = await Promise.all([
     readFile(new URL('../src/SymphonyCards.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/SymphonyDeck.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/assets/shell.css', import.meta.url), 'utf8'),
     readFile(new URL('../../src/harness/symphony_experience.py', import.meta.url), 'utf8'),
   ])
@@ -48,7 +47,6 @@ test('Symphony cards show the signed charter and the live state, never a stale r
   assert.match(cards, /counted\(authority\.children_per_attempt, 'child', 'children'\)/u)
   assert.match(cards, /<h3>\{blocked \? 'Blocked' : 'Running'\}<\/h3>/u)
   assert.match(app, /<SymphonyStatusCard stack=\{symphonyStack\} \/>/u)
-  assert.match(deck, /` · \$\{blockedCount\} blocked`/u)
   assert.match(shell, /\.chat-header > details\[open\] \{\s*grid-column: 1 \/ -1;/u)
   assert.doesNotMatch(runtime, /is running in its own worktrees/u)
 })

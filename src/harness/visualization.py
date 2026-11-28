@@ -206,19 +206,28 @@ def work_observation(
             row = json.loads(line)
             fold["cwd"] = row.get("current_location") or fold["cwd"]
             event = row.get("event", {})
-            stream = event.get("payload", {}).get("event", {})
+            payload = event.get("payload", {})
+            stream = payload.get("event", {})
             _journal_file_touch(stream, fold["cwd"], row["captured_at"], pending, files)
             if stream.get("event_kind") == "function_tool_call":
                 tool_calls.append(row["captured_at"])
             if event.get("type") == "run.started":
                 turns.append(row["captured_at"])
                 fold["state"], fold["waiting_since"] = "running", None
+                fold["run_id"] = payload.get("run_id")
+                fold["outcome"] = None
             elif event.get("type") == "gate.open":
                 fold["state"], fold["waiting_since"] = "waiting", row["captured_at"]
             elif event.get("type") == "gate.dismiss":
                 fold["state"], fold["waiting_since"] = "running", None
             elif event.get("type") == "run.done":
                 fold["state"], fold["waiting_since"] = "stopped", None
+                fold["outcome"] = {
+                    "end_turn": "completed",
+                    "error": "failed",
+                    "cancelled": "cancelled",
+                    "budget_exceeded": "budget exceeded",
+                }.get(payload.get("stop_reason"))
         state, waiting_since = fold["state"], fold["waiting_since"]
         if entry.proposed_response is not None:
             state, waiting_since = "waiting", entry.updated_at
@@ -228,6 +237,8 @@ def work_observation(
                 "thread_id": entry.thread_id,
                 "parent_id": None,
                 "label": entry.title,
+                "run_id": fold.get("run_id"),
+                "outcome": fold.get("outcome") if state == "stopped" else None,
                 "root": entry.workspace_root,
                 "location": entry.current_location or entry.workspace_root,
                 "state": state,
@@ -244,6 +255,20 @@ def work_observation(
     for path in sorted((home / "symphonies").glob("**/visualization.json")):
         try:
             value = json.loads(path.read_text())
+            value["run_id"] = path.relative_to(home / "symphonies").parts[0]
+            if value["state"] == "stopped":
+                result = path.with_name("result.json")
+                if path.with_name("failure.json").is_file():
+                    value["outcome"] = "failed"
+                elif result.is_file():
+                    report = json.loads(result.read_text())
+                    status = report.get("status")
+                    if status in {"completed", "pass"} or report.get("outcome") in {"pass", "fail"}:
+                        value["outcome"] = "completed"
+                    elif status == "fail":
+                        value["outcome"] = "failed"
+                    elif status in {"failed", "blocked", "cancelled"}:
+                        value["outcome"] = status
             value.pop("calls", None)  # the profiler's; the farm's feed and its history stay small
             meter_path = path.parent / "meter.json"
             meter = json.loads(meter_path.read_text()) if meter_path.exists() else {}

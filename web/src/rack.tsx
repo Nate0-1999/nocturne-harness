@@ -393,7 +393,7 @@ export const RACK_MANIFESTS: Record<RackModuleId, RackModuleManifest> = {
   },
   context_bars: {
     id: 'context_bars', name: 'Context Bars', version: '1.0.0', class: 'visualizer',
-    slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set'],
+    slot: 'strip', streams: ['run.done'], actions: ['rack.scope.get', 'rack.scope.set', 'symphony.context'],
     bounds: stageGridBounds(STRIP_RACK_BOUNDS.context_bars.preferred),
     movable: true, law_bound: false, default_scope: 'ATTUNED',
   },
@@ -1130,6 +1130,7 @@ export function createHostPluginApi(
         attunement,
         attuned,
         ownsAttunementSource,
+        manifest.id,
       ),
       subscribeState: subscribeRackState,
       subscribe(listener) {
@@ -1180,9 +1181,12 @@ function contextualRackSnapshot(
   attunement: AttunementTarget | null,
   attuned: boolean,
   ownsAttunementSource: boolean,
+  moduleId: RackModuleId,
 ): RackSnapshot {
   if (attunement?.kind !== 'thread') {
-    return attuned && !ownsAttunementSource
+    const selectedOnDeck = moduleId === 'context_bars' && attunement?.id === 'the-deck'
+      && snapshot.selectedThreadId !== null && attunement.thread_ids.includes(snapshot.selectedThreadId)
+    return attuned && !ownsAttunementSource && !selectedOnDeck
       ? { ...snapshot, selectedThreadId: null, currentProjectKey: null, attunement }
       : { ...snapshot, attunement }
   }

@@ -1764,6 +1764,7 @@ def create_dev_app(
                 "workers": [
                     {
                         **json.loads(path.read_text()),
+                        "round_scope": path.relative_to(home / "symphonies" / symphony_id).parts[0],
                         "state": json.loads(path.with_name("visualization.json").read_text())[
                             "state"
                         ],

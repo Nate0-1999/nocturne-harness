@@ -1,4 +1,4 @@
-.symphony-deck { min-height: 100%; padding: 1.1rem; color: var(--ink); background: var(--surface-deep); overflow: auto; }
+.symphony-deck { height: 100dvh; overscroll-behavior: contain; padding: 1.1rem; color: var(--ink); background: var(--surface-deep); overflow: auto; }
 .symphony-deck__header, .deck-stack > header, .deck-attempt > div { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .symphony-deck__header p, .symphony-deck__header h1, .deck-stack h2, .deck-stack p { margin: 0; }
 .symphony-deck__header p, .deck-stack header span, .deck-lineage dt { color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-size: var(--text-md); }

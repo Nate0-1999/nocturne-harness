@@ -19,6 +19,7 @@ import { ReplyReader } from './ReplyReader'
 import { Button, ConfirmButton, Select, TextArea, TextField, Toggle } from './kit'
 import { formatHumanUsd } from './humanNumbers'
 import { useSeenProposals } from './deckSeen'
+import { attemptOutcome, deckCount, deckEvidence, record } from './deckCards'
 import { agentColor } from './visualization'
 import { SymphonyFeedback } from './SymphonyCards'
 import { distinctThreadTitles, visibleThreadTitle } from './threadTitles'
@@ -59,12 +60,6 @@ export interface ProposedResponseCard {
   alternatives: string[]
   created_at: string
   assistant_text: string
-}
-
-function record(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null
 }
 
 function stringList(value: unknown): string[] | null {
@@ -226,7 +221,6 @@ export function SymphonyDeck() {
     )}`
   }
   const cards = useMemo(() => proposedResponseCards(snapshot).filter((card) => !seen.has(card.proposal_run_id)), [snapshot, seen])
-  const blockedCount = stacks.filter((stack) => stack.state === 'blocked').length
   const waiting = selected?.activeRun?.state === 'waiting_gate' ? selected.activeRun.run_id : null
   const boundaries = (selected?.messages ?? []).flatMap((message) => (
     message.role === 'assistant' ? message.events.filter((event, index, all) => (
@@ -253,6 +247,28 @@ export function SymphonyDeck() {
   const [opening, setOpening] = useState(false)
   const timer = useRef<number | null>(null)
   const visibleCards = cards.filter((card) => !locallyFired.has(card.proposal_run_id))
+  const lessonIds = useMemo(() => new Set(stacks.flatMap(stack => stack.evidence.flatMap(entry =>
+    Array.isArray(entry.queue_cards) ? entry.queue_cards.map(card => record(card)?.item_uid) : [],
+  )).filter((id): id is string => typeof id === 'string')), [stacks])
+  const [pendingLessons, setPendingLessons] = useState<string[] | null>(null)
+  useEffect(() => {
+    if (!lessonIds.size) return
+    let active = true
+    let timer: ReturnType<typeof setTimeout>
+    async function refresh() {
+      try {
+        const result = await events.dispatch({ type: 'queue.load', birthplace: 'symphony' })
+        const queue = record(result)?.cards
+        if (active && Array.isArray(queue)) setPendingLessons(queue.map(card => record(card)?.item_uid)
+          .filter((id): id is string => typeof id === 'string'))
+      } catch { if (active) setPendingLessons(null) }
+      if (active) timer = setTimeout(refresh, 5000)
+    }
+    void refresh()
+    return () => { active = false; clearTimeout(timer) }
+  }, [events, lessonIds])
+  const waitingCards = visibleCards.length + boundaries.length
+  const totalCards = waitingCards + stacks.length
 
   useEffect(() => () => {
     if (timer.current !== null) globalThis.clearTimeout(timer.current)
@@ -332,7 +348,7 @@ export function SymphonyDeck() {
     <section className="symphony-deck" data-testid="symphony-deck">
       <header className="symphony-deck__header">
         <div><p>Conductor channel</p><h1>The Deck</h1></div>
-        <span>{visibleCards.length} waiting · {stacks.filter((stack) => stack.state === 'running').length} live{blockedCount > 0 && ` · ${blockedCount} blocked`}</span>
+        <span>{deckCount(stacks, waitingCards, lessonIds, pendingLessons)}</span>
       </header>
       <p className="symphony-deck__rule" title="The longest-waiting reply stays first. Browse freely; steer the conductor here. Workers are never directly addressable.">Reply to steer the conductor.</p>
       {boundaries.map((card) => (
@@ -361,7 +377,7 @@ export function SymphonyDeck() {
         </article>
       ))}
       {visibleCards.length === 0 ? (
-        <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
+        totalCards === 0 && <p className="symphony-deck__empty" data-testid="deck-empty">Run a Symphony to receive replies for review.</p>
       ) : (
         <div className="deck-proposal-queue" data-testid="deck-proposal-queue">
           {visibleCards.map((card, index) => (
@@ -554,11 +570,12 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
         </aside>
       )}
       <div className="deck-attempts">
-        {stack.attempts.map((attempt) => (
-          <div className="deck-attempt" key={attempt.attempt_id} data-state={attempt.state}>
+        {stack.attempts.map((attempt) => {
+          const outcome = attemptOutcome(attempt, stack.evidence)
+          return <div className="deck-attempt" key={attempt.attempt_id} data-state={outcome}>
             <div><Button type="button" onClick={() => setContextAttempt(
               contextAttempt === attempt.attempt_id ? null : attempt.attempt_id
-            )}>{attempt.attempt_id}</Button><span>{attempt.state}</span></div>
+            )}>{attempt.attempt_id}</Button><span>{outcome}</span></div>
             <small>{attempt.partial_evidence.length} evidence mark(s) · {attempt.memories_admitted ? 'memories queued for review' : 'memories not admitted'}</small>
             {attempt.follow_ups.map((followUp, index) => <p key={index}>Follow-up: {followUp}</p>)}
             {stack.state === 'running' && attempt.state === 'running' && (
@@ -570,16 +587,27 @@ function DeckStackCard({ stack }: { stack: DeckStack }) {
                 }, `${attempt.attempt_id} cancelled after draining.`)}>Stop attempt</ConfirmButton>
             )}
           </div>
-        ))}
+        })}
       </div>
       {contextAttempt !== null && <WorkerContext
         symphonyId={stack.symphony_id} attemptId={contextAttempt} />}
       <p>Measured spend: {formatHumanUsd(stack.spend_usd)} / {formatHumanUsd(String(stack.launch.authority.spend_wall_usd))}</p>
       <SymphonyFeedback stack={stack} />
-      {stack.evidence.map((entry, index) => (
-        <details key={index}>
-          <summary>{Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Worker evidence'}</summary>
-          {Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
+      {deckEvidence(stack.evidence).map((entry, index) => (
+        typeof entry.worker_id === 'string' && typeof entry.location === 'string' ? <details key={index}>
+          <summary>Worker evidence · {entry.location.split('/').at(-1)}</summary>
+          <dl className="deck-lineage">
+            <div><dt>Folder</dt><dd>{entry.location}</dd></div>
+            <div><dt>Model policy</dt><dd>{String(entry.model_policy)}</dd></div>
+            <div><dt>Process</dt><dd>{String(entry.pid)}</dd></div>
+            <div><dt>Accepted commit</dt><dd>{String(entry.accepted_commit)}</dd></div>
+          </dl>
+        </details> : <details key={index}>
+          <summary>{Array.isArray(entry.queue_cards) ? 'Lessons queued for review' : Array.isArray(entry.verdicts) ? 'Judge verdicts' : 'Run evidence'}</summary>
+          {Array.isArray(entry.queue_cards) ? entry.queue_cards.map((value, lessonIndex) => {
+            const candidate = record(record(value)?.candidate)
+            return typeof candidate?.body === 'string' && <p key={lessonIndex}>{candidate.body}</p>
+          }) : Array.isArray(entry.verdicts) ? entry.verdicts.map((value, seatIndex) => {
             const verdict = record(value)
             return verdict === null ? null : <p key={seatIndex}>
               <strong>{String(verdict.seat)} · {String(verdict.outcome)}</strong><br />
