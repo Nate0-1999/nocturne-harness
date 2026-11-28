@@ -3,11 +3,12 @@
 import asyncio
 import json
 from pathlib import Path
+from urllib.parse import quote
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from harness.envelope import StopReason
 from harness.project_path import repository_root
-from harness.t3_client import TERMINAL, T3Error
+from harness.t3_client import T3Error
 
 MODELS = {
     "models": {
@@ -15,6 +16,7 @@ MODELS = {
         "availableModels": [{"modelId": "default", "name": "Nocturne home strategy"}],
     }
 }
+CLEARED = "T3 cleared its own context. Start a new thread in Nocturne for a fresh conversation."
 
 
 class FrontSession:
@@ -32,6 +34,11 @@ class FrontSession:
         self.card = None
         self.card_answered = False
         self.node = None
+        self.native_run = None
+        self.turn_client = None
+        self.events = None
+        self.superseded = False
+        self.can_show_compaction = False
 
     async def send(self, **message):
         self.writer.write(json.dumps({"jsonrpc": "2.0", **message}).encode() + b"\n")
@@ -44,9 +51,40 @@ class FrontSession:
 
     async def cancel(self):
         self.stopping = True
-        if self.run and not self.cancel_sent:
+        if self.run and not self.cancel_sent and not self.superseded:
             self.cancel_sent = True
             await self.front.loop.cancel(thread_id=self.thread, run_id=self.run)
+
+    async def window_cancel(self):
+        # T3 commits the replacement attempt before it interrupts the old provider.
+        if self.native_run and self.node:
+            try:
+                projection = await self.turn_client.call(
+                    "orchestration.getThreadProjection", {"threadId": self.native}
+                )
+            except (T3Error, TimeoutError, OSError):
+                # On shutdown the original client may already be gone. Never start a new server.
+                await self.cancel()
+                return
+            run = next((r for r in projection["runs"] if r["id"] == self.native_run), None)
+            attempts = [a for a in projection["attempts"] if a["runId"] == self.native_run]
+            if (
+                run
+                and any(
+                    a.get("rootNodeId") == self.node and a["status"] == "superseded"
+                    for a in attempts
+                )
+                and any(
+                    a["id"] == run["activeAttemptId"] and a["reason"] == "steering_restart"
+                    for a in attempts
+                )
+            ):
+                # Release this T3 prompt. Its replacement enters the ordinary FIFO via submit().
+                self.superseded = True
+                if self.events is not None:
+                    self.events.put_nowait(None)
+                return
+        await self.cancel()
 
     async def serve(self):
         try:
@@ -61,6 +99,8 @@ class FrontSession:
                 params = request.get("params", {})
                 rid = request.get("id")
                 if method == "initialize":
+                    session_caps = params.get("clientCapabilities", {}).get("session", {})
+                    self.can_show_compaction = "compaction" in session_caps
                     result = {
                         "protocolVersion": 1,
                         "agentCapabilities": {
@@ -162,7 +202,7 @@ class FrontSession:
                         )
                     continue
                 elif method == "session/cancel":
-                    await self.cancel()
+                    await self.window_cancel()
                     continue
                 elif method == "session/prompt":
                     if self.turn is not None and not self.turn.done():
@@ -170,7 +210,7 @@ class FrontSession:
                             id=rid, error={"code": -32600, "message": "A turn is already running."}
                         )
                     else:
-                        self.stopping = self.cancel_sent = False
+                        self.stopping = self.cancel_sent = self.superseded = False
                         self.turn = asyncio.create_task(self.prompt(rid, params.get("prompt", [])))
                     continue
                 elif method == "session/set_model" and params.get("modelId") == "default":
@@ -182,11 +222,79 @@ class FrontSession:
                         )
                     continue
                 await self.send(id=rid, result=result)
+                if method in {"session/new", "session/load"}:
+                    await self.update(
+                        sessionUpdate="available_commands_update",
+                        availableCommands=[
+                            {
+                                "name": "compact",
+                                "description": "Compact this conversation in Nocturne",
+                            }
+                        ],
+                    )
         finally:
             if self.turn is not None:
                 if not self.turn.done():
-                    await self.cancel()
+                    await self.window_cancel()
                 await asyncio.gather(self.turn, return_exceptions=True)
+
+    async def admission_reason(self, client, projection, message_id):
+        if projection["thread"].get("forkedFrom"):
+            return "This fork has T3-only history. Open the original conversation in Nocturne."
+        transcript = await client.orchestration_get(
+            f"threads/{quote(self.native, safe='')}/transcript"
+        )
+        native_ids = []
+        for row in transcript["items"]:
+            item = row["item"]
+            if item["type"] != "user_message":
+                continue
+            if item.get("freshContext"):
+                return CLEARED
+            if item["messageId"] == message_id:
+                break
+            native_ids.append(item["messageId"])
+        else:
+            return "This message has not appeared in T3’s transcript. Open the thread in Nocturne."
+        journal = self.front.journal
+        bindings = journal.front_prompts(self.thread)
+        previous = [
+            key.removeprefix("nocturne-journal-")
+            if key.startswith("nocturne-journal-")
+            else bindings.get(key)
+            for key in native_ids
+        ]
+        history = journal.current_thread(self.thread)
+        active = (
+            [m["message_id"] for m in history.messages if m["role"] == "user"] if history else []
+        )
+        if bindings.get(message_id) in active:
+            active = active[: active.index(bindings[message_id])]
+        if previous != active:
+            return "The thread history changed. Open the thread in Nocturne to continue."
+        return None
+
+    async def refuse(self, rid, reason):
+        await self.text(reason)
+        await self.send(id=rid, result={"stopReason": "refusal"})
+
+    async def finish(self, rid, state, run, text, show_compactions=False):
+        manual = text.strip() == "/compact"
+        if state == "end_turn" and (manual or (show_compactions and self.can_show_compaction)):
+            records = [
+                r for r in self.front.journal.compaction_records(self.thread) if r["run_id"] == run
+            ]
+            if manual and not records:
+                # A completed ACP prompt for /compact would tell T3 it discarded old context.
+                state = "refusal"
+            if self.can_show_compaction:
+                for record in records:
+                    await self.update(
+                        sessionUpdate="compaction_update",
+                        compactionId=record["event_uid"],
+                        status="completed",
+                    )
+        await self.send(id=rid, result={"stopReason": state})
 
     async def prompt(self, rid, blocks):
         loop = self.front.loop
@@ -204,15 +312,26 @@ class FrontSession:
             projection = await client.call(
                 "orchestration.getThreadProjection", {"threadId": self.native}
             )
-            runs = [run for run in projection["runs"] if run["status"] not in TERMINAL]
+            self.thread = self.thread or self.session
+            if any(r.thread_id == self.thread and r.archived for r in self.front.journal.catalog()):
+                return await self.refuse(
+                    rid, "Nocturne archived this thread. Start a new thread to send a message."
+                )
+            runs = [
+                r for r in projection["runs"] if r["status"] in {"starting", "running", "waiting"}
+            ]
             if len(runs) != 1 or runs[0]["providerInstanceId"] != "nocturne":
-                raise T3Error("T3 could not identify one active Nocturne turn.")
+                return await self.refuse(
+                    rid,
+                    "T3 could not match this turn. Open the thread in Nocturne to continue.",
+                )
             message_id = runs[0]["userMessageId"]
             self.node = runs[0].get("rootNodeId")
+            self.native_run = runs[0].get("id")
+            self.turn_client = client
             message = next(m for m in projection["messages"] if m["id"] == message_id)
             if message["role"] != "user" or message.get("attachments"):
                 raise T3Error("This Nocturne conversation accepts text prompts.")
-            self.thread = self.thread or self.session
             replay = message_id.startswith("nocturne-journal-")
             if replay:
                 # Display an existing answer without selecting a thread or creating a model run.
@@ -220,6 +339,11 @@ class FrontSession:
                 messages = history.messages if history else ()
                 prompt_id = message_id.removeprefix("nocturne-journal-")
             else:
+                if runs[0].get("freshContext"):
+                    return await self.refuse(rid, CLEARED)
+                reason = await self.admission_reason(client, projection, message_id)
+                if reason:
+                    return await self.refuse(rid, reason)
                 await loop.request_snapshot(self.thread, sink, workspace_root=self.workspace_root)
                 messages = (await events.get()).payload.messages
                 prompt_id = self.front.journal.bind_front_prompt(
@@ -243,23 +367,36 @@ class FrontSession:
                 if answer and state in StopReason:
                     await self.text(answer.get("content", ""))
                     if state in {"end_turn", "cancelled"}:
-                        await self.send(id=rid, result={"stopReason": state})
+                        await self.finish(rid, state, prior["run_id"], message["text"], True)
                         return
                     raise T3Error(f"The Nocturne journal records this turn as {state}.")
                 raise T3Error("Nocturne already accepted this turn. Open its journal to review it.")
             self.run = await loop.submit(
                 thread_id=self.thread, prompt_id=prompt_id, prompt=message["text"], sink=sink
             )
+            self.events = events
+            if self.superseded:
+                events.put_nowait(None)
             if self.stopping:
                 await self.cancel()
+            compacted = False
             while True:
                 envelope = await events.get()
+                if envelope is None:
+                    self.run = None
+                    await self.send(id=rid, result={"stopReason": "cancelled"})
+                    return
                 payload = envelope.payload
                 if getattr(payload, "run_id", None) != self.run:
                     continue
                 if envelope.type == "run.delta":
                     if payload.kind == "text":
                         await self.text(payload.text)
+                    elif (
+                        payload.kind == "event"
+                        and payload.event.get("event_kind") == "compaction_completed"
+                    ):
+                        compacted = True
                     elif (
                         payload.kind == "event"
                         and payload.event.get("event_kind") == "boundary_card"
@@ -274,10 +411,13 @@ class FrontSession:
                     await self.dismiss_card(client)
                 elif envelope.type == "run.done":
                     await self.dismiss_card(client)
-                    self.run = None
                     if payload.stop_reason not in {"cancelled", "end_turn"}:
+                        self.run = None
                         raise T3Error(payload.error_message or "Nocturne stopped the turn.")
-                    await self.send(id=rid, result={"stopReason": payload.stop_reason})
+                    await self.finish(
+                        rid, payload.stop_reason, self.run, message["text"], compacted
+                    )
+                    self.run = None
                     break
         except (ConnectionError, asyncio.CancelledError):
             await self.cancel()
@@ -295,6 +435,7 @@ class FrontSession:
             )
         finally:
             self.run = None
+            self.native_run = self.events = self.turn_client = None
             await loop.detach(sink)
 
     async def text(self, value):

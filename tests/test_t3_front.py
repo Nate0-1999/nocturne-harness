@@ -8,7 +8,136 @@ from harness.transcript import TranscriptJournal
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("text,expected", [("Earlier", "end_turn"), ("Changed", "error")])
+async def test_restored_window_can_send_the_existing_compact_command(tmp_path):
+    """P4 / FL-044: T3 rejects /compact unless the session advertises journaled compaction."""
+    import asyncio
+    import json
+    from unittest.mock import Mock
+
+    journal = TranscriptJournal(tmp_path)
+    journal.append_message(
+        "thread", dict(role="user", message_id="m", content="Keep this"), parent_id=None
+    )
+    reader = asyncio.StreamReader()
+    writer = Mock(drain=AsyncMock())
+    session = FrontSession(SimpleNamespace(journal=journal), None, reader, writer)
+    for rid, method in enumerate(("session/new", "session/load")):
+        reader.feed_data(
+            json.dumps(
+                dict(id=rid, method=method, params={"cwd": str(tmp_path), "sessionId": "thread"})
+            ).encode()
+            + b"\n"
+        )
+    reader.feed_eof()
+    await session.serve()
+    frames = [json.loads(call.args[0]) for call in writer.write.call_args_list]
+    new_id = next(f["result"]["sessionId"] for f in frames if f.get("id") == 0)
+    offered = {
+        f["params"]["sessionId"]
+        for f in frames
+        if f.get("method") == "session/update"
+        and any(c["name"] == "compact" for c in f["params"]["update"].get("availableCommands", []))
+    }
+    assert offered == {new_id, "thread"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("change", ["rewind", "archive", "fork", "clear"])
+async def test_a_stale_window_cannot_start_work_or_reopen_the_journal(tmp_path, change):
+    """P4 / FL-076 / FL-124: a restart cannot turn a stale window into an accepted prompt."""
+    journal = TranscriptJournal(tmp_path)
+    earlier = journal.bind_front_prompt("thread", "env", "native", "m1")
+    journal.append_message(
+        "thread", dict(role="user", message_id=earlier, content="old"), parent_id=None
+    )
+    if change == "archive":
+        journal.append_archive("thread")
+    if change == "rewind":
+        journal.rewind("thread", None)
+    items = [{"item": {"type": "user_message", "messageId": key}} for key in ("m1", "m2")]
+    run = dict(
+        id="paid",
+        status="running",
+        providerInstanceId="nocturne",
+        userMessageId="m2",
+        freshContext=change == "clear",
+    )
+    projection = dict(
+        thread={"forkedFrom": {"type": "run"} if change == "fork" else None},
+        runs=[run],
+        messages=[{"role": "user", "id": "m2", "text": "next"}],
+    )
+    client = SimpleNamespace(
+        environment_id="env",
+        call=AsyncMock(return_value=projection),
+        orchestration_get=AsyncMock(return_value={"items": items}),
+    )
+    loop = AsyncMock()
+    loop.request_snapshot.side_effect = AssertionError("stale thread selected")
+    session = FrontSession(
+        SimpleNamespace(journal=journal, loop=loop, client=AsyncMock(return_value=client)),
+        "native",
+        None,
+        None,
+    )
+    session.session, session.cwd = "thread", tmp_path
+    session.send, session.text = AsyncMock(), AsyncMock()
+    before = journal.path_for_thread("thread").read_bytes()
+    await session.prompt(7, [{"type": "text", "text": "next"}])
+    loop.request_snapshot.assert_not_awaited()
+    loop.submit.assert_not_awaited()
+    session.text.assert_awaited_once()
+    assert "Nocturne" in session.text.await_args.args[0]
+    assert journal.path_for_thread("thread").read_bytes() == before
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reason,should_cancel", [("steering_restart", False), ("retry", True)])
+async def test_window_cancel_preserves_work_only_for_its_own_steering_restart(
+    reason, should_cancel
+):
+    """P4 / FL-075: a second message keeps the original task; an explicit Stop still stops it."""
+    import asyncio
+
+    projection = {
+        "runs": [{"id": "native-run", "activeAttemptId": "next", "rootNodeId": "next-node"}],
+        "attempts": [
+            {
+                "id": "first",
+                "runId": "native-run",
+                "rootNodeId": "old-node",
+                "status": "superseded",
+            },
+            {"id": "next", "runId": "native-run", "reason": reason},
+        ],
+    }
+    front = SimpleNamespace(
+        loop=AsyncMock(),
+        client=AsyncMock(return_value=SimpleNamespace(call=AsyncMock(return_value=projection))),
+    )
+    session = FrontSession(front, "native-thread", None, None)
+    session.thread, session.run = "thread", "journal-run"
+    session.native_run, session.node = "native-run", "old-node"
+    session.turn_client = await front.client()
+    session.events = asyncio.Queue()
+    await session.window_cancel()
+    if should_cancel:
+        front.loop.cancel.assert_awaited_once_with(thread_id="thread", run_id="journal-run")
+    else:
+        front.loop.cancel.assert_not_awaited()
+        assert session.events.get_nowait() is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Earlier", "end_turn"),
+        ("Changed", "error"),
+        ("/compact", "refusal"),
+        ("/compact", "end_turn"),
+    ],
+)
 async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
     tmp_path, text, expected
 ):
@@ -19,7 +148,7 @@ async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
         {
             "role": "user",
             "message_id": "prompt",
-            "content": "Earlier",
+            "content": "/compact" if text == "/compact" else "Earlier",
             "state": "end_turn",
             "run_id": "run",
         },
@@ -37,6 +166,8 @@ async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
         parent_id="prompt",
     )
     message_id = "nocturne-journal-prompt"
+    if text == "/compact" and expected == "end_turn":
+        journal.append_compaction_record("thread", {"run_id": "run", "event_uid": "receipt"})
     client = SimpleNamespace(
         call=AsyncMock(
             return_value={
@@ -60,12 +191,18 @@ async def test_retry_of_mirrored_message_never_runs_or_bills_the_prompt_again(
     )
     session.session, session.cwd = "thread", tmp_path
     session.send, session.text = AsyncMock(), AsyncMock()
+    session.can_show_compaction = True
+    session.update = AsyncMock()
     await session.prompt(7, [{"type": "text", "text": text}])
     loop.submit.assert_not_awaited()
     loop.request_snapshot.assert_not_awaited()
-    if expected == "end_turn":
+    if expected != "error":
         session.text.assert_awaited_once_with("Settled")
-        session.send.assert_awaited_once_with(id=7, result={"stopReason": "end_turn"})
+        session.send.assert_awaited_once_with(id=7, result={"stopReason": expected})
+        if text == "/compact" and expected == "end_turn":
+            session.update.assert_awaited_once_with(
+                sessionUpdate="compaction_update", compactionId="receipt", status="completed"
+            )
     else:
         assert "error" in session.send.await_args.kwargs
         session.text.assert_not_awaited()
