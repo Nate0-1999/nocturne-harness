@@ -1059,6 +1059,7 @@ def create_dev_app(
         )
 
     journal = transcript_journal or TranscriptJournal(home / "transcripts")
+    completion_router.subscription_binding = journal.subscription_binding
     workflow_definitions = {}
     workspace_toolsets: dict[str, LazyStandardToolset] = {}
 

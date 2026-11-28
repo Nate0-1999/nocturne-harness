@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import UTC, datetime
@@ -36,7 +37,7 @@ from harness.openrouter_runtime import PreservingOpenRouterModel
 from harness.spend_walls import SpendWallModel
 from harness.t3_client import T3Error
 from harness.t3_server import T3Server
-from harness.t3_sources import resolve_offer, subscription_window
+from harness.t3_sources import measured_window, resolve_offer, subscription_window
 
 
 class ModelConfigurationError(ValueError):
@@ -354,6 +355,8 @@ class CompletionRouter:
     def __init__(self, settings: HarnessSettings) -> None:
         self.settings = settings
         self.subscription_server: T3Server | None = None
+        self.subscription_binding: Callable[[str], dict | None] | None = None
+        self._windows: dict[tuple[str, str | None], asyncio.Task[int | None]] = {}
         openrouter_key = (
             settings.openrouter_api_key.get_secret_value()
             if settings.openrouter_api_key is not None
@@ -407,17 +410,33 @@ class CompletionRouter:
             raise NamedModelResolutionError("No remote model source is configured.")
         return remote.parse_named_model(model)
 
-    async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
-        if model.startswith("subscription:") and self.subscription_server is not None:
-            try:
-                key, source, offered = await resolve_offer(self.subscription_server, model)
-                window = await subscription_window(
-                    self.subscription_server, source["tool"], offered["id"]
+    async def load_subscription_route(self, model: str, thread_id: str | None = None):
+        server = self.subscription_server
+        if server is None:
+            raise NamedModelResolutionError("The local T3 server is unavailable.")
+        try:
+            key, source, offered = await resolve_offer(server, model)
+            cache_key = key, source.get("version")
+            if cache_key not in self._windows:
+                self._windows[cache_key] = asyncio.create_task(
+                    subscription_window(server, source["tool"], offered["id"])
                 )
-            except T3Error as exc:
-                raise NamedModelResolutionError(str(exc)) from None
-            levels = (offered.get("thinking") or {}).get("levels", [])
-            return ModelRoute(key, window, effort_levels=tuple(levels)), datetime.now(UTC)
+            window = await asyncio.shield(self._windows[cache_key])
+            if window is None and thread_id and self.subscription_binding:
+                window = await measured_window(server, self.subscription_binding(thread_id), key)
+        except T3Error as exc:
+            raise NamedModelResolutionError(str(exc)) from None
+        window = window or self.settings.model_context_tokens
+        if not window:
+            raise NamedModelResolutionError(
+                "The tool did not report a context size for this model. Choose another model."
+            )
+        levels = (offered.get("thinking") or {}).get("levels", [])
+        return ModelRoute(key, window, effort_levels=tuple(levels)), datetime.now(UTC)
+
+    async def load_named_route(self, model: str) -> tuple[ModelRoute, datetime]:
+        if model.startswith("subscription:"):
+            return await self.load_subscription_route(model)
         if model.startswith("local:"):
             return await self.local.load_named_route(model)
         remote = self.remote_catalog

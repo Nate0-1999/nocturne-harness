@@ -161,7 +161,7 @@ async def resolve_offer(server, requested):
     raise T3Error("This tool, account and model are unavailable on the signed-in subscription.")
 
 
-async def subscription_window(server, tool, slug) -> int:
+async def subscription_window(server, tool, slug) -> int | None:
     """Ask only for metadata, after the private server confirms the signed-in offer."""
     client = await server.client()
     binary = server._settings()["providerInstances"][tool]["config"]["binaryPath"]
@@ -242,10 +242,10 @@ async def subscription_window(server, tool, slug) -> int:
             return window
     except (OSError, subprocess.SubprocessError, ValueError, AttributeError, KeyError, TypeError):
         pass
-    raise T3Error("The tool did not report a context size for this model. Choose another model.")
+    return None
 
 
-def terminal_context(projection, run):
+def _terminal_usage(projection, run):
     """T3's last provider request for this attempt, excluding previous runs and retries."""
     attempt = run.get("activeAttemptId")
     if not attempt:
@@ -259,7 +259,33 @@ def terminal_context(projection, run):
         and type(turn.get("ordinal")) is int
     )
     last = max(turns, key=lambda turn: turn["ordinal"], default={})
-    usage = last.get("tokenUsage")
+    return last.get("tokenUsage")
+
+
+async def measured_window(server, binding, key):
+    """Read the last measured window from this journal's bound native conversation."""
+    if not binding or binding["source"] != key:
+        return None
+    client = await server.client()
+    if binding["environment"] != hashlib.sha256(client.environment_id.encode()).hexdigest():
+        return None
+    try:
+        projection = await client.call(
+            "orchestration.getThreadProjection", {"threadId": binding["native_thread"]}
+        )
+    except (OSError, TimeoutError, T3Error):
+        return None
+    for run in sorted(projection["runs"], key=lambda run: run["ordinal"], reverse=True):
+        if run["status"] == "completed":
+            usage = _terminal_usage(projection, run)
+            window = usage.get("maxTokens") if isinstance(usage, dict) else None
+            if type(window) is int and window > 0:
+                return window
+    return None
+
+
+def terminal_context(projection, run):
+    usage = _terminal_usage(projection, run)
     if not isinstance(usage, dict):
         return None
     counts = tuple(usage.get(field) for field in ("maxTokens", "inputTokens", "outputTokens"))
