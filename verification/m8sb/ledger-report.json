@@ -7,13 +7,13 @@
     {
       "repo": "harness",
       "base": "1dd38d61d07f7d8b4546199ec08cda1e98285a2f",
-      "head": "f474293684c044fcdabd9bc5e7b0af1b85b8df8f"
+      "head": "d5a1f1d426d5734f845590d82204c009cd83056f"
     }
   ],
   "unmapped": {
     "harness/src/harness/__init__.py": "Paired release metadata only.",
     "harness/src/harness/symphony_context.py": "Inherited from the M8SY base of this stacked draft.",
-    "harness/src/harness/symphony_result.py": "Reads the judged result, previews its project diff and applies only the confirmed fast-forward.",
+    "harness/src/harness/symphony_result.py": "Reads the recorded starting commit, previews the judged changes and applies the approved fast-forward only from that commit.",
     "harness/tests/test_agent.py": "Automated regression or package-version assertion.",
     "harness/tests/test_symphony_runtime.py": "Automated regression or package-version assertion.",
     "harness/tests/test_symphony_worker.py": "Automated regression or package-version assertion.",
@@ -259,7 +259,7 @@
       "verdict": "PASS",
       "screenshot": "FL-085.png",
       "flag": "",
-      "observed": "An installed real worker completed in its own worktree. All three judges passed and the Deck returned the result to the human. The project stayed at its original SHA until explicit approval. Reopening review in the installed merged build showed the question and both choices at phone width without a swipe."
+      "observed": "A real Symphony completed on main. Review there offered approval. On release, one commit behind its start, the installed card displayed the refusal and saved branch at both widths. Two approval submissions kept release at its original commit and preserved the judged result."
     },
     "FL-098": {
       "label": "The symphony lifecycle shows its human touchpoints, the human prompt and any interjection or steering, so they can be seen.",
